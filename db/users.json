@@ -1,0 +1,387 @@
+[{
+  "_id": {
+    "$oid": "61e4a3e743a7bdd798a97123"
+  },
+  "o": {
+    "$oid": "61e4a3e743a7bdd798a97106"
+  },
+  "s": "all",
+  "fn": "Max",
+  "sn": "Mustermann",
+  "un": "manager",
+  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "loginAttempts": 0,
+  "email": "musteremail@example.com",
+  "role": "office",
+  "manager": true,
+  "notifications": {
+    "comment": false,
+    "dplNew": false,
+    "dplFinal": false,
+    "dplChanged": false,
+    "dplRejected": false,
+    "surveyComplete": false,
+    "surveyFailed": false
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "61e4a3e743a7bdd798a97125"
+  },
+  "o": {
+    "$oid": "61e4a3e743a7bdd798a97106"
+  },
+  "s": "sec0",
+  "fn": "Mátyás",
+  "sn": "Bicsák",
+  "birthday": {
+    "$date": "1981-10-20T23:00:00Z"
+  },
+  "un": "Bicsak",
+  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "loginAttempts": 7,
+  "email": "dienstplan@bicsak.de",
+  "role": "member",
+  "scheduler": true,
+  "notifications": {
+    "comment": false,
+    "dplNew": false,
+    "dplFinal": false,
+    "dplChanged": false,
+    "dplRejected": false,
+    "surveyComplete": false,
+    "surveyFailed": false
+  },
+  "__v": 0,
+  "lockUntil": 1642383255752
+},{
+  "_id": {
+    "$oid": "61e4a3e743a7bdd798a97127"
+  },
+  "o": {
+    "$oid": "61e4a3e743a7bdd798a97106"
+  },
+  "s": "sec0",
+  "fn": "Cornelia",
+  "sn": "Thorspecken",
+  "birthday": {
+    "$date": {
+      "$numberLong": "-347850000000"
+    }
+  },
+  "un": "Thorspecken",
+  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "loginAttempts": 0,
+  "email": "thorspecken@googlemail.com",
+  "role": "member",
+  "scheduler": false,
+  "notifications": {
+    "comment": false,
+    "dplNew": false,
+    "dplFinal": false,
+    "dplChanged": false,
+    "dplRejected": false,
+    "surveyComplete": false,
+    "surveyFailed": false
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "61e4a3e743a7bdd798a97129"
+  },
+  "o": {
+    "$oid": "61e4a3e743a7bdd798a97106"
+  },
+  "s": "sec0",
+  "fn": "Jessica",
+  "sn": "Jiang",
+  "birthday": {
+    "$date": "1993-01-04T23:00:00Z"
+  },
+  "un": "Jiang",
+  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "loginAttempts": 0,
+  "email": "jessicajiangflute@hotmail.com",
+  "role": "member",
+  "scheduler": false,
+  "notifications": {
+    "comment": false,
+    "dplNew": false,
+    "dplFinal": false,
+    "dplChanged": false,
+    "dplRejected": false,
+    "surveyComplete": false,
+    "surveyFailed": false
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "61e4a3e743a7bdd798a9712b"
+  },
+  "o": {
+    "$oid": "61e4a3e743a7bdd798a97106"
+  },
+  "s": "sec0",
+  "fn": "Thomas",
+  "sn": "Richter",
+  "birthday": {
+    "$date": {
+      "$numberLong": "-426906000000"
+    }
+  },
+  "un": "Richter",
+  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "loginAttempts": 0,
+  "email": "richter-wiesbaden@t-online.de",
+  "role": "member",
+  "scheduler": false,
+  "notifications": {
+    "comment": false,
+    "dplNew": false,
+    "dplFinal": false,
+    "dplChanged": false,
+    "dplRejected": false,
+    "surveyComplete": false,
+    "surveyFailed": false
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "61e4a3e743a7bdd798a9712d"
+  },
+  "o": {
+    "$oid": "61e4a3e743a7bdd798a97106"
+  },
+  "s": "all",
+  "fn": "Clara",
+  "sn": "Holzapfel",
+  "birthday": {
+    "$date": {
+      "$numberLong": "-3600000"
+    }
+  },
+  "un": "Holzapfel",
+  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "loginAttempts": 14,
+  "email": "c.holzapfel@staatstheater-wiesbaden.de",
+  "role": "office",
+  "manager": false,
+  "notifications": {
+    "comment": false,
+    "dplNew": false,
+    "dplFinal": false,
+    "dplChanged": false,
+    "dplRejected": false,
+    "surveyComplete": false,
+    "surveyFailed": false
+  },
+  "__v": 0,
+  "lockUntil": 1642468260856
+},{
+  "_id": {
+    "$oid": "61e4a3e743a7bdd798a9712f"
+  },
+  "o": {
+    "$oid": "61e4a3e743a7bdd798a97106"
+  },
+  "s": "sec0",
+  "fn": "Kerstin",
+  "sn": "Bicsák",
+  "birthday": {
+    "$date": {
+      "$numberLong": "-3600000"
+    }
+  },
+  "un": "Kerle",
+  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "loginAttempts": 0,
+  "email": "kerstin.bicsak@web.de",
+  "role": "friend",
+  "notifications": {
+    "comment": false,
+    "dplNew": false,
+    "dplFinal": false,
+    "dplChanged": false,
+    "dplRejected": false,
+    "surveyComplete": false,
+    "surveyFailed": false
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "61e4a3e743a7bdd798a97131"
+  },
+  "o": {
+    "$oid": "61e4a3e743a7bdd798a97106"
+  },
+  "s": "sec0",
+  "fn": "Boldi",
+  "sn": "Bicsák",
+  "birthday": {
+    "$date": {
+      "$numberLong": "-3600000"
+    }
+  },
+  "un": "Lapos",
+  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "loginAttempts": 0,
+  "email": "bicsakms@hotmail.com",
+  "role": "friend",
+  "notifications": {
+    "comment": false,
+    "dplNew": false,
+    "dplFinal": false,
+    "dplChanged": false,
+    "dplRejected": false,
+    "surveyComplete": false,
+    "surveyFailed": false
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "61e4a3e743a7bdd798a97133"
+  },
+  "o": {
+    "$oid": "61e4a3e743a7bdd798a97106"
+  },
+  "s": "sec1",
+  "fn": "Peter",
+  "sn": "Brechtel",
+  "birthday": {
+    "$date": {
+      "$numberLong": "-85107600000"
+    }
+  },
+  "un": "Peter",
+  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "loginAttempts": 0,
+  "email": "peterbrechtel@gmx.de",
+  "role": "member",
+  "scheduler": true,
+  "notifications": {
+    "comment": false,
+    "dplNew": false,
+    "dplFinal": false,
+    "dplChanged": false,
+    "dplRejected": false,
+    "surveyComplete": false,
+    "surveyFailed": false
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "61e4a3e743a7bdd798a97135"
+  },
+  "o": {
+    "$oid": "61e4a3e743a7bdd798a97106"
+  },
+  "s": "sec1",
+  "fn": "Chih-Ti",
+  "sn": "Wang",
+  "birthday": {
+    "$date": "1981-10-08T23:00:00Z"
+  },
+  "un": "Chiti",
+  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "loginAttempts": 0,
+  "email": "chihtiwang@gmail.com",
+  "role": "member",
+  "scheduler": false,
+  "notifications": {
+    "comment": false,
+    "dplNew": false,
+    "dplFinal": false,
+    "dplChanged": false,
+    "dplRejected": false,
+    "surveyComplete": false,
+    "surveyFailed": false
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "61e4a3e743a7bdd798a97137"
+  },
+  "o": {
+    "$oid": "61e4a3e743a7bdd798a97106"
+  },
+  "s": "sec1",
+  "fn": "Beatrix",
+  "sn": "Lindemann",
+  "birthday": {
+    "$date": "1970-04-13T23:00:00Z"
+  },
+  "un": "Beatrix",
+  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "loginAttempts": 0,
+  "email": "beatrixfriis@gmail.com",
+  "role": "member",
+  "scheduler": false,
+  "notifications": {
+    "comment": false,
+    "dplNew": false,
+    "dplFinal": false,
+    "dplChanged": false,
+    "dplRejected": false,
+    "surveyComplete": false,
+    "surveyFailed": false
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "61e4a3e743a7bdd798a97139"
+  },
+  "o": {
+    "$oid": "61e4a3e743a7bdd798a97106"
+  },
+  "s": "sec1",
+  "fn": "Oskar",
+  "sn": "Münchgesang",
+  "birthday": {
+    "$date": "1970-04-04T23:00:00Z"
+  },
+  "un": "Oskar",
+  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "loginAttempts": 0,
+  "email": "bassoon1@gmail.com",
+  "role": "member",
+  "scheduler": false,
+  "notifications": {
+    "comment": false,
+    "dplNew": false,
+    "dplFinal": false,
+    "dplChanged": false,
+    "dplRejected": false,
+    "surveyComplete": false,
+    "surveyFailed": false
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "61e4a3e743a7bdd798a9713b"
+  },
+  "o": {
+    "$oid": "61e4a3e743a7bdd798a97106"
+  },
+  "s": "sec1",
+  "fn": "Béla",
+  "sn": "Röhl",
+  "birthday": {
+    "$date": "1970-03-23T23:00:00Z"
+  },
+  "un": "Bela",
+  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "loginAttempts": 0,
+  "email": "belsky@gmx.net",
+  "role": "member",
+  "scheduler": false,
+  "notifications": {
+    "comment": false,
+    "dplNew": false,
+    "dplFinal": false,
+    "dplChanged": false,
+    "dplRejected": false,
+    "surveyComplete": false,
+    "surveyFailed": false
+  },
+  "__v": 0
+}]

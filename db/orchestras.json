@@ -1,0 +1,228 @@
+[{
+  "_id": {
+    "$oid": "61e4a3e743a7bdd798a97106"
+  },
+  "code": "HSW",
+  "fullName": "Hessisches Staatsorchester Wiesbaden",
+  "location": "Wiesbaden",
+  "timezone": "Europe/Berlin",
+  "venues": [
+    "OPR",
+    "Großes Haus",
+    "Kurhaus"
+  ],
+  "sections": [
+    {
+      "key": "sec0",
+      "code": "Fl",
+      "name": "Flöte",
+      "maxFW": 1,
+      "_id": {
+        "$oid": "61e4a3e743a7bdd798a97107"
+      }
+    },
+    {
+      "key": "sec1",
+      "code": "Fg",
+      "name": "Fagott",
+      "maxFW": 1,
+      "_id": {
+        "$oid": "61e4a3e743a7bdd798a97108"
+      }
+    },
+    {
+      "key": "sec2",
+      "code": "Kl",
+      "name": "Klarinette",
+      "maxFW": 1,
+      "_id": {
+        "$oid": "61e4a3e743a7bdd798a97109"
+      }
+    },
+    {
+      "key": "sec3",
+      "code": "Ob",
+      "name": "Oboe",
+      "maxFW": 1,
+      "_id": {
+        "$oid": "61e4a3e743a7bdd798a9710a"
+      }
+    },
+    {
+      "key": "sec4",
+      "code": "Hr",
+      "name": "Horn",
+      "maxFW": 1,
+      "_id": {
+        "$oid": "61e4a3e743a7bdd798a9710b"
+      }
+    },
+    {
+      "key": "sec5",
+      "code": "Tp",
+      "name": "Trompete",
+      "maxFW": 1,
+      "_id": {
+        "$oid": "61e4a3e743a7bdd798a9710c"
+      }
+    },
+    {
+      "key": "sec6",
+      "code": "Pos",
+      "name": "Posaune",
+      "maxFW": 1,
+      "_id": {
+        "$oid": "61e4a3e743a7bdd798a9710d"
+      }
+    },
+    {
+      "key": "sec7",
+      "code": "Schl",
+      "name": "Schlagzeug",
+      "maxFW": 1,
+      "_id": {
+        "$oid": "61e4a3e743a7bdd798a9710e"
+      }
+    },
+    {
+      "key": "sec8",
+      "code": "Hf",
+      "name": "Harfe",
+      "maxFW": 1,
+      "_id": {
+        "$oid": "61e4a3e743a7bdd798a9710f"
+      }
+    },
+    {
+      "key": "sec9",
+      "code": "1. Vl",
+      "name": "1. Violine",
+      "maxFW": 1,
+      "_id": {
+        "$oid": "61e4a3e743a7bdd798a97110"
+      }
+    },
+    {
+      "key": "sec10",
+      "code": "2. Vl.",
+      "name": "2. Violine",
+      "maxFW": 1,
+      "_id": {
+        "$oid": "61e4a3e743a7bdd798a97111"
+      }
+    },
+    {
+      "key": "sec11",
+      "code": "Va",
+      "name": "Bratsche",
+      "maxFW": 1,
+      "_id": {
+        "$oid": "61e4a3e743a7bdd798a97112"
+      }
+    },
+    {
+      "key": "sec12",
+      "code": "Vc",
+      "name": "Cello",
+      "maxFW": 1,
+      "_id": {
+        "$oid": "61e4a3e743a7bdd798a97113"
+      }
+    },
+    {
+      "key": "sec13",
+      "code": "Kb",
+      "name": "Kontrabass",
+      "maxFW": 1,
+      "_id": {
+        "$oid": "61e4a3e743a7bdd798a97114"
+      }
+    }
+  ],
+  "categories": [
+    {
+      "subtypes": [
+        "OA",
+        "OS",
+        "BO",
+        "VBO",
+        "HP",
+        "GP"
+      ],
+      "suffixes": [
+        "OA",
+        "OS",
+        "BO",
+        "VBO",
+        "HP",
+        "GP"
+      ],
+      "locations": [
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "durations": [
+        150,
+        150,
+        180,
+        220,
+        180,
+        180
+      ],
+      "_id": {
+        "$oid": "61e4a3e743a7bdd798a97115"
+      }
+    },
+    {
+      "subtypes": [
+        "Vorst.",
+        "WA",
+        "Prem.",
+        "Konz."
+      ],
+      "suffixes": [
+        "",
+        "WA",
+        "Premiere",
+        ""
+      ],
+      "locations": [
+        1,
+        1,
+        1,
+        2
+      ],
+      "durations": [
+        180,
+        180,
+        180,
+        150
+      ],
+      "_id": {
+        "$oid": "61e4a3e743a7bdd798a97116"
+      }
+    },
+    {
+      "subtypes": [
+        "Sonst."
+      ],
+      "suffixes": [
+        ""
+      ],
+      "locations": [
+        0
+      ],
+      "durations": [
+        150
+      ],
+      "_id": {
+        "$oid": "61e4a3e743a7bdd798a97117"
+      }
+    }
+  ],
+  "__v": 0
+}]

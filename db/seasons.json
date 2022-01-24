@@ -1,0 +1,81 @@
+[{
+  "_id": {
+    "$oid": "61be6910a98ccac0f026e964"
+  },
+  "o": {
+    "$oid": "61be690fa98ccac0f026e951"
+  },
+  "label": "2017/2018",
+  "begin": {
+    "$date": "2017-08-20T22:00:00Z"
+  },
+  "end": {
+    "$date": "2018-07-01T22:00:00Z"
+  },
+  "comment": "Jessicas erste Spielzeit. Langes erste SZ.",
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "61be6910a98ccac0f026e966"
+  },
+  "o": {
+    "$oid": "61be690fa98ccac0f026e951"
+  },
+  "label": "2018/2019",
+  "begin": {
+    "$date": "2018-08-12T22:00:00Z"
+  },
+  "end": {
+    "$date": "2019-06-30T22:00:00Z"
+  },
+  "comment": "Jessicas 2. SZ",
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "61be6910a98ccac0f026e968"
+  },
+  "o": {
+    "$oid": "61be690fa98ccac0f026e951"
+  },
+  "label": "2019/2020",
+  "begin": {
+    "$date": "2019-08-11T22:00:00Z"
+  },
+  "end": {
+    "$date": "2020-07-05T22:00:00Z"
+  },
+  "comment": "Jessicas 3. SZ",
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "61be6910a98ccac0f026e96a"
+  },
+  "o": {
+    "$oid": "61be690fa98ccac0f026e951"
+  },
+  "label": "2020/2021",
+  "begin": {
+    "$date": "2020-08-16T22:00:00Z"
+  },
+  "end": {
+    "$date": "2021-07-18T22:00:00Z"
+  },
+  "comment": "",
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "61be6910a98ccac0f026e96c"
+  },
+  "o": {
+    "$oid": "61be690fa98ccac0f026e951"
+  },
+  "label": "2021/2022",
+  "begin": {
+    "$date": "2021-08-29T22:00:00Z"
+  },
+  "end": {
+    "$date": "2022-06-12T22:00:00Z"
+  },
+  "comment": "",
+  "__v": 0
+}]
