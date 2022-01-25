@@ -52,6 +52,7 @@ async function run() {
       app.use('/api/login', login);
 
       app.listen(3000);
+      console.log("Application is running...");
    }
    catch (err) {
       console.log(err);
