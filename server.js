@@ -51,6 +51,13 @@ async function run() {
       app.use('/api/seasons', seasons);
       app.use('/api/login', login);
 
+      /* final catch-all route to index.html defined last */
+      app.get('/*', (req, res) => {
+         //console.log(__dirname + '/public/index.html');
+         res.sendFile(__dirname + '/public/index.html');
+      });
+ 
+
       app.listen(3000);
       console.log("Application is running...");
    }
