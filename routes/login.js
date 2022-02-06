@@ -33,9 +33,14 @@ router.post('/', async (req, res, next) => {
                 // handle login success
                 console.log('login success');
                 const token = jwt.sign( {
-                    username: user.un,
-                    userId: user.id
-                }, process.env.JWT_PASS, { expiresIn: '7d' } );
+                    un: user.un,
+                    uid: user.id,
+                    r: user.role,
+                    m: user.manager,
+                    sch: user.scheduler,
+                    o: user.o,
+                    s: user.s
+                }, process.env.JWT_PASS, { expiresIn: '1h' } );
                 
                 return res.status(200).send({                    
                     token,
