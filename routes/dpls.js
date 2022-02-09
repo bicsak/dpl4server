@@ -24,14 +24,17 @@ router.get('/:section/:mts', verifyToken, async function(req, res) {
          res.sendStatus(403);
       else {
          if ( req.params.section !== authData.s && authData.s !== 'all' ) res.sendStatus(403);
+
+         let beginDate = new Date(req.params.mts*1000);
+         let week = {};         
          
          let dpl = await Dpl.findOne({
             o: authData.o,
-            weekBegin: new Date(req.params.mts*1000),
+            weekBegin: beginDate,
             s: req.params.section
          }).populate({
             path: 'w', 
-            select: 'dienst season',
+            select: 'dienst season editable remark',
             populate: {
                path: 'season',
                select: 'comment label begin -_id'
@@ -44,11 +47,11 @@ router.get('/:section/:mts', verifyToken, async function(req, res) {
                select: 'fn sn birthday -_id'
             }
          }).select('-absent._id');                  
-
-         let dplClient = {};         
-         if ( dpl ) {
-            
-            dplClient.dienst =  dpl.seatings.map( seating => {               
+         
+         if ( dpl ) // scheduler already created dpl for this week
+         {
+            // combine seatings and dienst data from collection week and dpl
+            week.dienst =  dpl.seatings.map( seating => {               
                let retVal = Object.assign(
                   {}, 
                   seating.toJSON(), 
@@ -62,17 +65,49 @@ router.get('/:section/:mts', verifyToken, async function(req, res) {
 
                return retVal;
             });        
-            dplClient = {
-               ...dplClient,
+            week = {
+               ...week,
+               editable: dpl.w.editable,
+               remarkManager: dpl.w.remark,
                period: dpl.p,
-               season: dpl.w.season,
-               absent: dpl.absent,
-               remark: dpl.remark,
-               closed: dpl.closed
-            };            
+               season: dpl.w.season,               
+               dpl: {
+                  closed: dpl.closed,
+                  remark: dpl.remark,
+                  absent: dpl.absent
+               }               
+            }; 
+
+         } else // there is no dpl for this week
+         {
+            let wpl = await Week.findOne({
+               o: authData.o,
+               begin: beginDate               
+            }).populate('season', 'comment label begin -_id');
+
+            if ( wpl ) {
+               week = {
+                  editable: wpl.editable,
+                  dienst: wpl.dienst,
+                  season: wpl.season,
+                  remarkManager: wpl.remark,               
+               };         
+   
+               week.period = await Period
+               .findOne({
+                  o: authData.o,
+                  s: req.params.section,
+                  begin: {$lte: beginDate}
+               })
+               .select('begin members')
+               .sort('-begin')
+               .populate('members.u', 'fn sn birthday -_id');            
+
+            } else week = null;
+            
          }               
                   
-         res.json(dplClient);
+         res.json(week);
       }
    });
    
