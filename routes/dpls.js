@@ -29,12 +29,26 @@ router.get('/:section/:mts', verifyToken, async function(req, res) {
             o: authData.o,
             weekBegin: new Date(req.params.mts*1000),
             s: req.params.section
-         }).populate('p').populate('w');                  
+         }).populate({
+            path: 'w', 
+            select: 'dienst season',
+            populate: {
+               path: 'season',
+               select: 'comment label begin -_id'
+            }            
+         }).populate({
+            path: 'p',
+            select: 'begin members.row members.initial members.start members.factor -_id',
+            populate: {
+               path: 'members.u',
+               select: 'fn sn birthday -_id'
+            }
+         }).select('-absent._id');                  
 
          let dplClient = {};         
          if ( dpl ) {
             
-            dplClient =  dpl.seatings.map( seating => {               
+            dplClient.dienst =  dpl.seatings.map( seating => {               
                let retVal = Object.assign(
                   {}, 
                   seating.toJSON(), 
@@ -44,16 +58,21 @@ router.get('/:section/:mts', verifyToken, async function(req, res) {
                delete retVal.instrumentation;
                delete retVal.d;
                delete retVal.dienstBegin;
+               delete retVal.dienstWeight;
 
                return retVal;
             });        
+            dplClient = {
+               ...dplClient,
+               period: dpl.p,
+               season: dpl.w.season,
+               absent: dpl.absent,
+               remark: dpl.remark,
+               closed: dpl.closed
+            };            
          }               
-         
-         res.json({
-            msg: 'Auth success',
-            dplDB: dpl,
-            dplClient: dplClient
-         });
+                  
+         res.json(dplClient);
       }
    });
    

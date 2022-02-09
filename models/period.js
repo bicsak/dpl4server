@@ -7,7 +7,7 @@ const periodSchema = new Schema({
     begin: Date,
     members: [ 
         {
-            u: Schema.Types.ObjectId, // _id of user
+            u: { type: Schema.Types.ObjectId, ref: 'User' }, // _id of user
             initial: String,
             row: Number,
             start: Number,
