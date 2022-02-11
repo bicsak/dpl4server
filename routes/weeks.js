@@ -48,7 +48,7 @@ router.get('/:section/:mts', verifyToken, async function(req, res) {
             }
          }).select('-absent._id');                  
          
-         if ( dpl ) // scheduler already created dpl for this week
+         if ( dpl && dpl.populated('p') && dpl.populated('w') ) // scheduler already created dpl for this week
          {
             // combine seatings and dienst data from collection week and dpl
             week.dienst =  dpl.seatings.map( seating => {               
@@ -78,33 +78,36 @@ router.get('/:section/:mts', verifyToken, async function(req, res) {
                }               
             }; 
 
-            if ( authData.r === 'member' ) {
-               week.dpl.start = dpl.start;
-               week.dpl.corr = dpl.correction;               
-               
+            if ( authData.r === 'member' ) {                              
                //TODO query doesnt work season's _id is equal, why ne??
                let lastDpl = await Dpl
                .find({
                   o: authData.o,
                   s: req.params.section,                                  
-                  p: dpl.p._id // same period            
+                  //p: dpl.p._id // same period            
                })
-               .where('weekBegin').lt(beginDate) // before this week                  
-               .populate('w', 'season')
-               .where('w.season').ne(dpl.w.season._id) // but another season TODO
+               .where('weekBegin').lt(dpl.w.season.begin).gte(dpl.p.begin) // before this week                  
+               //.populate('w', 'season')
+               //.where('w.season').ne(dpl.w.season._id) // but another season TODO
+               //.where()
                .sort('-weekBegin')
                .limit(1)                              
                .select('start delta correction weekBegin');
 
                // TODO lastDpl == [] ??
-               if ( lastDpl ) {
+               let normVal = 0;
+               if ( lastDpl.length ) {
                   console.log(lastDpl);
-                  console.log(`Utolso het: ${lastDpl[0].w.season}`);
-                  console.log(`Akt. het: ${dpl.w.season._id}`);
+                  //console.log(`Utolso het: ${lastDpl[0].w.season}`);
+                  //console.log(`Akt. het: ${dpl.w.season._id}`);
                   let endOfWeek = lastDpl[0].start.map( (val, i) => 
-                     val + lastDpl[0].correction[i] + lastDpl[0].delta[i] + dpl.p.members[i].start );                  
-                  week.dpl.norm = Math.min(...endOfWeek);
-               } else week.dpl.norm = 0;
+                     val + lastDpl[0].correction[i] + lastDpl[0].delta[i]*dpl.p.members[i].factor + dpl.p.members[i].start );                  
+                  normVal = Math.min(...endOfWeek);
+               }
+               console.log(normVal);
+
+               week.dpl.start = dpl.start.map( (val) => val-normVal );
+               week.dpl.corr = dpl.correction;               
             }
                         
 

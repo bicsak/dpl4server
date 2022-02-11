@@ -14,7 +14,7 @@ const seatingSchema = new Schema({
      * 64, 65, ...: P1/V1/... 64+x
      */
     comment: String, // scheduler's comment
-    suggestions: [ Number ], // -1 for empty field, x in [0..n-1] for + sign by member in row nr. x
+    //suggestions: [ Number ], // -1 for empty field, x in [0..n-1] for + sign by member in row nr. x
 
     dienstBegin: Date,
     dienstWeight: { type: Number, min: 0, max: 3 },
