@@ -48,6 +48,16 @@ weekSchema.virtual('dw').get(async function() {
         ).length('weeks') + 1;    
 });
 
+weekSchema.virtual('dwTotal').get(async function() {
+    //season and o must be populated!
+    if ( !this.populated('season') ) await this.populate('season');
+    if ( !this.populated('o') ) await this.populate('o');        
+    return Interval.fromDateTimes(
+        DateTime.fromJSDate(this.season.begin, { zone: this.o.timezone } ), 
+        DateTime.fromJSDate(this.season.end , { zone: this.o.timezone } )
+        ).length('weeks');    
+});
+
 weekSchema.virtual('cw').get(async function() {    
     // field o has to be populated!
     if ( !this.populated('o') ) await this.populate('o');

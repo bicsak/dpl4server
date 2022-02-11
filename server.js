@@ -12,7 +12,6 @@ const mongoUri = `mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@127.0.
 const mongoDBName = process.env.DB_NAME;
 
 const weeks = require('./routes/weeks.js');      
-const dpls = require('./routes/dpls.js');      
 const seasons = require('./routes/seasons.js');      
 const users = require('./routes/users.js');      
 const login = require('./routes/login.js');      
@@ -45,8 +44,7 @@ async function run() {
       //app.set('conn', mongoose.connection);
 
       app.use(express.static('./public'));            
-      app.use('/api/weeks', weeks);
-      app.use('/api/dpls', dpls);
+      app.use('/api/weeks', weeks);      
       app.use('/api/users', users);
       app.use('/api/seasons', seasons);
       app.use('/api/login', login);
