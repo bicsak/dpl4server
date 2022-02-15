@@ -46,8 +46,7 @@ router.post('/', async (req, res, next) => {
                     token,
                     user: user,
                     orchestra: orchestra
-                });
-                return;
+                });                
             }
         
             // otherwise we can determine why we failed
@@ -60,8 +59,7 @@ router.post('/', async (req, res, next) => {
                     console.log('Wrong PW or user not found');
                     return res.status(401).send({
                         msg: 'Username or password is incorrect!'
-                    });
-                    break;
+                    });                    
                 case reasons.MAX_ATTEMPTS:
                     // send email or otherwise notify user that account is
                     // temporarily locked

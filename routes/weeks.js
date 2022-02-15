@@ -13,7 +13,7 @@ function verifyToken(req,res,next) {
       req.token = bearerToken;
       next();
    } else {
-      req.sendStatus(403);
+      req.sendStatus(401);
    }
 }
 
@@ -21,9 +21,9 @@ router.get('/:section/:mts', verifyToken, async function(req, res) {
    
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err) 
-         res.sendStatus(403);
+         res.sendStatus(401);
       else {
-         if ( req.params.section !== authData.s && authData.s !== 'all' ) res.sendStatus(403);
+         if ( req.params.section !== authData.s && authData.s !== 'all' ) res.sendStatus(401);
 
          let beginDate = new Date(req.params.mts*1000);
          let week = {};         
@@ -50,6 +50,7 @@ router.get('/:section/:mts', verifyToken, async function(req, res) {
          
          if ( dpl && dpl.populated('p') && dpl.populated('w') ) // scheduler already created dpl for this week
          {
+            //TODO if ( !dpl.p.members.find( (m) => m.u == authData.uid ) ) res.json(null);
             // combine seatings and dienst data from collection week and dpl
             week.dienst =  dpl.seatings.map( seating => {               
                let retVal = Object.assign(
@@ -78,33 +79,24 @@ router.get('/:section/:mts', verifyToken, async function(req, res) {
                }               
             }; 
 
-            if ( authData.r === 'member' ) {                              
-               //TODO query doesnt work season's _id is equal, why ne??
+            if ( authData.r === 'member' ) {                                             
                let lastDpl = await Dpl
                .find({
                   o: authData.o,
-                  s: req.params.section,                                  
-                  //p: dpl.p._id // same period            
+                  s: req.params.section,                                                 
                })
-               .where('weekBegin').lt(dpl.w.season.begin).gte(dpl.p.begin) // before this week                  
-               //.populate('w', 'season')
-               //.where('w.season').ne(dpl.w.season._id) // but another season TODO
-               //.where()
+               .where('weekBegin').lt(dpl.w.season.begin).gte(dpl.p.begin) // before this week                                 
                .sort('-weekBegin')
                .limit(1)                              
                .select('start delta correction weekBegin');
-
-               // TODO lastDpl == [] ??
+               
                let normVal = 0;
                if ( lastDpl.length ) {
                   console.log(lastDpl);
-                  //console.log(`Utolso het: ${lastDpl[0].w.season}`);
-                  //console.log(`Akt. het: ${dpl.w.season._id}`);
                   let endOfWeek = lastDpl[0].start.map( (val, i) => 
                      val + lastDpl[0].correction[i] + lastDpl[0].delta[i]*dpl.p.members[i].factor + dpl.p.members[i].start );                  
                   normVal = Math.min(...endOfWeek);
                }
-               console.log(normVal);
 
                week.dpl.start = dpl.start.map( (val) => val-normVal );
                week.dpl.corr = dpl.correction;               
@@ -136,7 +128,7 @@ router.get('/:section/:mts', verifyToken, async function(req, res) {
                .sort('-begin')
                .limit(1)
                .populate('members.u', 'fn sn birthday -_id');    
-               week.period = p ? p[0] : null;     // TODO [] != null !!!                         
+               week.period = p.length ? p[0] : null;            
 
             } else week = null;
             
