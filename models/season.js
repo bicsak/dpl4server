@@ -7,6 +7,15 @@ const seasonSchema = new Schema({
     begin: Date,
     end: Date,
     comment: String
+}, {
+  toJSON: {
+    transform: function(doc, ret, opt) {
+      ret.begin = ret.begin.getTime();
+      ret.end = ret.end.getTime();
+
+      return ret;
+    }
+  }
 });
 
 seasonSchema.virtual('dienste', {

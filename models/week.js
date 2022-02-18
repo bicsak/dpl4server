@@ -15,6 +15,15 @@ const dienstSchema = new Schema({
     comment: String, // by manager (for example: Kleiderordnung, Anspielprobe etc.)
     seq: Number, // -1 for exluded, 0: not calculated, 1..n
     total: Number // total of performances/rehearsals this kind in the season
+}, {
+    toJSON: {
+        transform: function(doc, ret, opt) {
+            ret.begin = ret.begin.getTime();
+
+            return ret;
+
+        }
+    }
 });
 
 const weekSchema = new Schema({
@@ -36,7 +45,17 @@ const weekSchema = new Schema({
             } )        
         },
     dienst: [ dienstSchema ],    
-}, { optimisticConcurrency: true, timestamps: true });
+}, { 
+    optimisticConcurrency: true, 
+    timestamps: true,
+    toJSON: {
+        transform: function(doc, ret, opt) {            
+            ret.begin = ret.begin.getTime();
+
+            return ret;
+        }
+    }
+ });
 
 weekSchema.virtual('dw').get(async function() {
     //season and o must be populated!

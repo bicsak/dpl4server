@@ -19,6 +19,14 @@ const seatingSchema = new Schema({
     dienstBegin: Date,
     dienstWeight: { type: Number, min: 0, max: 3 },
     dienstInstr: Number // for this section only
+}, {
+    toJSON: {
+        transform: function(doc, ret, opt) {
+            ret.dienstBegin = ret.dienstBegin.getTime();
+
+            return ret;
+        }
+    }
 });
 
 const surveySchema = new Schema({
@@ -55,7 +63,18 @@ const dplSchema = new Schema({
         comment: String 
     },
     groupSurvey: surveySchema  // TODO   
-}, { collection: 'dpls', optimisticConcurrency: true, timestamps: true });
+}, { 
+    collection: 'dpls', 
+    optimisticConcurrency: true, 
+    timestamps: true,
+    toJSON: {
+        transform: function(doc, ret, opt) {
+            ret.weekBegin = ret.weekBegin.getTime();
+
+            return ret;
+        }
+    } 
+});
 
 dplSchema.method('calcDelta', async function () {
     if ( !this.populated('p') ) await this.populate('p'); 

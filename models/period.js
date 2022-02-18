@@ -15,6 +15,15 @@ const periodSchema = new Schema({
         } 
     ], 
     //weeks: [ Schema.Types.ObjectId ]        
-}, { optimisticConcurrency: true });
+}, { 
+    optimisticConcurrency: true,
+    toJSON: {
+        transform: function(doc, ret, opt) {
+            ret.begin = ret.begin.getTime();
+
+            return ret;
+        }
+    }
+ });
 
 module.exports = mongoose.model('Period', periodSchema);

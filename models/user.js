@@ -51,6 +51,7 @@ const userSchema = new Schema({
         transform: 
         function(doc, ret, opt) {
             delete ret['pw'];
+            ret.birthday = ret.birthday.getTime();
             return ret;
         }
     } 
