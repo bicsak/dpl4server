@@ -49,8 +49,7 @@ router.get('/:section/:mts', verifyToken, async function(req, res) {
          }).select('-absent._id');                  
          
          if ( dpl && dpl.populated('p') && dpl.populated('w') ) // scheduler already created dpl for this week
-         {
-            //TODO if ( !dpl.p.members.find( (m) => m.u == authData.uid ) ) res.json(null);
+         {            
             // combine seatings and dienst data from collection week and dpl
             week.dienst =  dpl.seatings.map( seating => {               
                let retVal = Object.assign(
@@ -132,8 +131,34 @@ router.get('/:section/:mts', verifyToken, async function(req, res) {
 
             } else week = null;
             
-         }               
-                  
+         }  
+                      
+         if (week && week.dpl) {            
+            // office should see dpl only if it is closed and do not see + and - signs generally...
+            if (authData.r == 'office') {
+               if ( !week.dpl.closed) week.dpl = undefined;               
+               else {
+                  week.dpl.absent = week.dpl.absent.map(
+                     (abs) => {
+                        return {
+                           am: abs.am.map(v => v == 4 ? 0 : v),
+                           pm: abs.pm.map(v => v == 4 ? 0 : v)
+                        }
+                     }
+                  ); // erase fw-s (- signs)
+
+                  week.dienst.sp = week.dienst.sp.map( v => v == 2 ? 0 : v );
+                  //erase dw-s (+ signs)
+               }
+            }
+
+            // seating data visible only for active members and scheduler...
+            if (authData.r == 'member'
+               && !authData.scheduler && !week.p.members.find( (m) => m.u == authData.uid ) ) {
+               week.dpl = undefined;
+            }
+
+         }
          res.json(week);
       }
    });
