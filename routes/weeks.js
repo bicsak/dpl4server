@@ -44,7 +44,7 @@ router.get('/:section/:mts', verifyToken, async function(req, res) {
             select: 'begin members.row members.initial members.start members.factor', // -_id
             populate: {
                path: 'members.u',
-               select: 'fn sn birthday -_id'
+               select: 'fn sn birthday'
             }
          }).select('-absent._id');                  
          
@@ -91,7 +91,7 @@ router.get('/:section/:mts', verifyToken, async function(req, res) {
                
                let normVal = 0;
                if ( lastDpl.length ) {
-                  console.log(lastDpl);
+                  //console.log(lastDpl);
                   let endOfWeek = lastDpl[0].start.map( (val, i) => 
                      val + lastDpl[0].correction[i] + lastDpl[0].delta[i]*dpl.p.members[i].factor + dpl.p.members[i].start );                  
                   normVal = Math.min(...endOfWeek);
@@ -126,7 +126,7 @@ router.get('/:section/:mts', verifyToken, async function(req, res) {
                .select('begin members')
                .sort('-begin')
                .limit(1)
-               .populate('members.u', 'fn sn birthday -_id');    
+               .populate('members.u', 'fn sn birthday');    
                week.period = p.length ? p[0] : null;            
 
             } else week = null;
@@ -153,9 +153,10 @@ router.get('/:section/:mts', verifyToken, async function(req, res) {
             }
 
             // seating data visible only for active members and scheduler...
-            if (authData.r == 'member'
-               && !authData.scheduler && !week.p.members.find( (m) => m.u == authData.uid ) ) {
-               week.dpl = undefined;
+            if ( authData.r == 'member'
+               && !authData.scheduler 
+               && !week.period.members.find( m =>  m.u._id == authData.uid ) ) {
+               week.dpl = undefined;               
             }
 
          }

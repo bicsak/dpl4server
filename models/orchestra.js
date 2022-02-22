@@ -10,9 +10,10 @@ const orchestraSchema = new Schema({
     sections: [ 
         { 
             key: String,    // "sec0"
-            code: String, // "Fl"
+            abbr: String, // "Fl"
             name: String,   // "Flöte"
-            maxFW: Number   // default: 1 max allowed FW's per week for this section    
+            maxFW: Number,   // default: 1 max allowed FW's per week for this section    
+            active: Boolean
         } 
     ],
     categories: [ 
