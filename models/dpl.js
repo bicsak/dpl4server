@@ -22,7 +22,7 @@ const seatingSchema = new Schema({
 }, {
     toJSON: {
         transform: function(doc, ret, opt) {
-            ret.dienstBegin = ret.dienstBegin.getTime();
+            if (ret.dienstBegin) ret.dienstBegin = ret.dienstBegin.getTime();
 
             return ret;
         }

@@ -5,7 +5,7 @@ const orchestraSchema = new Schema({
     code: String,   // "HSW"
     fullName: String,   // "Hessisches Staatstheater Wiesbaden"
     location: String,   // "Wiesbaden"
-    timezone: String,   // "GMT + 1..."
+    timezone: String,   // "Europe/Berlin"
     venues: [String],   // ["OPR", "Großes Haus", "Kurhaus"]
     sections: [ 
         { 

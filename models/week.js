@@ -37,6 +37,10 @@ const weekSchema = new Schema({
         of: new Schema( // undefined, if dpl for the section does not exist yet
             {
                 closed: Boolean, 
+                dplRef: {
+                    type: Schema.Types.ObjectId,
+                    ref: 'Dpl'
+                },
                 officeSurvey: {
                     type: String,
                     enum: ['inactive', 'pending', 'refused', 'confirmed'],
@@ -50,7 +54,7 @@ const weekSchema = new Schema({
     timestamps: true,
     toJSON: {
         transform: function(doc, ret, opt) {            
-            ret.begin = ret.begin.getTime();
+            if (ret.begin) ret.begin = ret.begin.getTime();
 
             return ret;
         }

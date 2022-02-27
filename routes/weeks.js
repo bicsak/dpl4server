@@ -25,19 +25,19 @@ router.get('/:section/:mts', verifyToken, async function(req, res) {
       else {
          if ( req.params.section !== authData.s && authData.s !== 'all' ) res.sendStatus(401);
 
-         let beginDate = new Date(req.params.mts*1000);
-         let week = {};         
-         
+         let beginDate = new Date(req.params.mts*1000);         
+         let week = { begin: parseInt(req.params.mts) }; // for response json data
          let dpl = await Dpl.findOne({
             o: authData.o,
             weekBegin: beginDate,
             s: req.params.section
-         }).populate({
+         }).populate('o', 'timezone')            
+         .populate({
             path: 'w', 
             select: 'dienst season editable remark',
             populate: {
                path: 'season',
-               select: 'comment label begin end' // -_id
+               select: 'label begin end' // -_id
             }            
          }).populate({
             path: 'p',
@@ -46,39 +46,57 @@ router.get('/:section/:mts', verifyToken, async function(req, res) {
                path: 'members.u',
                select: 'fn sn birthday'
             }
-         }).select('-absent._id');                  
+         }).select('-absent._id -seatings.dienstBegin -seatings.dienstInstr -seatings.dienstWeight -seatings._id');                  
          
-         if ( dpl && dpl.populated('p') && dpl.populated('w') ) // scheduler already created dpl for this week
-         {            
-            // combine seatings and dienst data from collection week and dpl
-            week.dienst =  dpl.seatings.map( seating => {               
-               let retVal = Object.assign(
-                  {}, 
-                  seating.toJSON(), 
-                  dpl.w.dienst.find( d => d._id.toString() === seating.d.toString() ).toJSON()
-               );
+         // dpl data accessible only for active members of the group and scheduler...
+         // office has access only to closed dpls
+         let dplAccess = true;         
+         if ( authData.r == 'member' && !authData.scheduler 
+            && !dpl.p.members.find( m =>  m.u._id == authData.uid ) ||
+            authData.r == 'office' && !dpl.closed ) {
+            dplAccess = false;
+         }         
 
-               delete retVal.instrumentation;
-               delete retVal.d;
-               delete retVal.dienstBegin;
-               delete retVal.dienstWeight;
+         if ( dpl && dpl.populated('p') && dpl.populated('w') && dplAccess) // scheduler already created dpl for this week
+         {
+            let myDpl = {};
 
-               return retVal;
-            });        
-            week = {
-               ...week,
-               editable: dpl.w.editable,
-               remarkManager: dpl.w.remark,
+            if ( authData.r == 'office' ) {
+               dpl.absent = dpl.absent.map(
+                  (abs) => {
+                     return {
+                        am: abs.am.map(v => v == 4 ? 0 : v),
+                        pm: abs.pm.map(v => v == 4 ? 0 : v)
+                     }
+                  }
+               ); // erase fw-s (- signs)
+
+               dpl.seatings = dpl.seatings.map( v => v == 2 ? 0 : v );
+               //erase dw-s (+ signs)
+            }
+
+            myDpl[dpl.s] = {
                period: dpl.p,
-               season: dpl.w.season,               
-               dpl: {
-                  closed: dpl.closed,
-                  remark: dpl.remark,
-                  absent: dpl.absent               
-               }               
-            }; 
+               closed: dpl.closed,
+               remark: dpl.remark, //scheduler's remark for the whole week
+               absent: dpl.absent, // Krankmeldunden, Freiwünsche etc.
+               sps: dpl.seatings // seating plans for each dienst                                  
+            };            
 
-            if ( authData.r === 'member' ) {                                             
+            let wpl = {
+               season: dpl.w.season,
+               editable: dpl.w.editable,
+               remark: dpl.w.remark,
+               dienst: dpl.w.dienst
+            };            
+            
+            if ( authData.r === 'member' ) {   
+               myDpl[dpl.s] = {
+                  ...myDpl[dpl.s],
+                  start: dpl.start,
+                  correction: dpl.correction                
+               };
+               
                let lastDpl = await Dpl
                .find({
                   o: authData.o,
@@ -95,26 +113,33 @@ router.get('/:section/:mts', verifyToken, async function(req, res) {
                   let endOfWeek = lastDpl[0].start.map( (val, i) => 
                      val + lastDpl[0].correction[i] + lastDpl[0].delta[i]*dpl.p.members[i].factor + dpl.p.members[i].start );                  
                   normVal = Math.min(...endOfWeek);
+                  myDpl[dpl.s].start = dpl.start.map( (val) => val-normVal );
                }
+            }     
+            
+            week = { 
+               ...week,
+               oTz: dpl.o.timezone,
+               wpl: wpl,
+               dpls: myDpl
+             };                                                   
+               
+            console.log(dpl);            
 
-               week.dpl.start = dpl.start.map( (val) => val-normVal );
-               week.dpl.corr = dpl.correction;               
-            }
-                        
-
-         } else // there is no dpl for this week
-         {
+         } 
+         else { // there is no dpl for this week                     
             let wpl = await Week.findOne({
                o: authData.o,
                begin: beginDate               
-            }).populate('season', 'comment label begin end -_id');
+            }).populate('season', 'label begin end -_id')
+            .populate('o', 'timezone')
+            .select('-dpls -begin -_id');
 
             if ( wpl ) {
                week = {
-                  editable: wpl.editable,
-                  dienst: wpl.dienst,
-                  season: wpl.season,
-                  remarkManager: wpl.remark,               
+                  ...week,
+                  oTz: wpl.o.timezone,
+                  wpl: wpl                  
                };         
                
                let p = await Period
@@ -127,39 +152,10 @@ router.get('/:section/:mts', verifyToken, async function(req, res) {
                .sort('-begin')
                .limit(1)
                .populate('members.u', 'fn sn birthday');    
-               week.period = p.length ? p[0] : null;            
-
-            } else week = null;
-            
+               if (p.length) week.assignedPeriods[req.params.section] = p[0];
+            }            
          }  
-                      
-         if (week && week.dpl) {            
-            // office should see dpl only if it is closed and do not see + and - signs generally...
-            if (authData.r == 'office') {
-               if ( !week.dpl.closed) week.dpl = undefined;               
-               else {
-                  week.dpl.absent = week.dpl.absent.map(
-                     (abs) => {
-                        return {
-                           am: abs.am.map(v => v == 4 ? 0 : v),
-                           pm: abs.pm.map(v => v == 4 ? 0 : v)
-                        }
-                     }
-                  ); // erase fw-s (- signs)
-
-                  week.dienst.sp = week.dienst.sp.map( v => v == 2 ? 0 : v );
-                  //erase dw-s (+ signs)
-               }
-            }
-
-            // seating data visible only for active members and scheduler...
-            if ( authData.r == 'member'
-               && !authData.scheduler 
-               && !week.period.members.find( m =>  m.u._id == authData.uid ) ) {
-               week.dpl = undefined;               
-            }
-
-         }
+                    
          res.json(week);
       }
    });
