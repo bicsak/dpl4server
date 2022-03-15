@@ -7,15 +7,17 @@ const orchestraSchema = new Schema({
     location: String,   // "Wiesbaden"
     timezone: String,   // "Europe/Berlin"
     venues: [String],   // ["OPR", "Großes Haus", "Kurhaus"]
-    sections: [ 
+    sections: { 
+        type: Map,
+        of: new Schema(
         { 
-            key: String,    // "sec0"
+            //key: String,    // "sec0"
             abbr: String, // "Fl"
             name: String,   // "Flöte"
             maxFW: Number,   // default: 1 max allowed FW's per week for this section    
             active: Boolean
-        } 
-    ],
+        })
+    },
     categories: [ 
         {
             subtypes: [String], /* ["OA", "OS", "BO", "VBO", "HP", "GP"], 
