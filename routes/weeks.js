@@ -197,7 +197,21 @@ router.get('/:mts', verifyToken, async function(req, res) {
 });
 
 router.get('/:section/:mts', verifyToken, async function(req, res) {
-   
+
+   jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
+      if (err) 
+         res.sendStatus(401);
+      else {
+         let resp = await createWeekDataRaw(req.params.mts, authData, req.params.section); 
+         console.log(resp);
+         console.log(req.params.section);
+         res.json( resp );
+      }
+   });
+
+
+
+/*   
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err) 
          res.sendStatus(401);
@@ -367,7 +381,7 @@ router.get('/:section/:mts', verifyToken, async function(req, res) {
          console.log(week);
       }
    });
-   
+   */
 });
 
 router.post('/', function(req, res){
