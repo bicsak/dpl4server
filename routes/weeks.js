@@ -88,8 +88,7 @@ async function createWeekDataRaw(begin, authData, sec) {
                      return {
                         sp: seatingObj.sp.fill(0),
                         d: seatingObj.d,
-                        ext: 0,
-                        comment: ''
+                        ext: 0                        
                      };
                   }
                );
