@@ -6,8 +6,9 @@ const { Schema } = mongoose;
 const dienstSchema = new Schema({    
     name: String,
     begin: Date,
+    prod: { type: Schema.Types.ObjectId, ref: 'Production' },
     category: { type: Number, min: 0, max: 2 },
-    subtype: { type: Number, min: 0, max: 5 },
+    subtype: { type: Number, min: 0, max: 6 },
     weight: { type: Number, min: 0, max: 3 },
     duration: Number, // or undefined for auto duration calculation
     location: String, // or undefined for auto location detection

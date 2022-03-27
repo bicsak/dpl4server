@@ -9,10 +9,12 @@ const dienstExtRefSchema = new Schema({
     d: Schema.Types.ObjectId, // _id of dienst subdoc in week
     season: { type: Schema.Types.ObjectId, ref: 'Season' },
     w: { type: Schema.Types.ObjectId, ref: 'Week' },
+    prod: { type: Schema.Types.ObjectId, ref: 'Production' },
     name: String,
     begin: Date,
     category: { type: Number, min: 0, max: 2 },
     subtype: { type: Number, min: 0, max: 5 },
+    suffix: String, // only for non-standard rehearsal types (like BM, Aufnahme KHP etc.)
     weight: { type: Number, min: 0, max: 3 },
     instrumentation: { type: Map, of: Number },
     seq: Number, // 0: not calculated (not shown), otherwise >= 1 - if total == -1, set manually
