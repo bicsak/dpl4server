@@ -139,21 +139,20 @@ async function createWeekDataRaw(begin, authData, sec) {
                let lastDplDoc = await Dpl
                .find({
                   o: authData.o,
-                  s: dplDocs[i].sec,                                                 
+                  s: dplDocs[i].s,                                                 
                })
                .where('weekBegin').lt(wplDoc.season.begin).gte(dplDocs[i].p.begin) // before this week                                 
                .sort('-weekBegin')
                .limit(1)                              
-               .select('start delta correction weekBegin');
-               
+               .select('start delta correction weekBegin');               
                let normVal = 0;
                if ( lastDplDoc.length ) {
                   //console.log(lastDpl);
                   let endOfWeek = lastDplDoc[0].start.map( (val, j) => 
                      val + lastDplDoc[0].correction[j] + lastDplDoc[0].delta[j]*dplDocs[i].p.members[j].factor + dplDocs[i].p.members[j].start );                  
-                  normVal = Math.min(...endOfWeek);
+                  normVal = Math.min(...endOfWeek);                  
                   dplRaw[dplDocs[i].s].start = dplDocs[i].start.map( (val) => val-normVal );
-               }
+               }               
             }                                                                                                              
          }
                            
