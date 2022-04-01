@@ -60,9 +60,15 @@ router.get('/:season', verifyToken, async function(req, res) {
                 "$in": aggregatedDienst.map( x => x._id )
             } } )
         .select('name comment duration firstDienst')
-        .populate('firstDienst', 'begin -_id');        
+        .populate( { 
+           path: 'firstDienst', 
+           select: 'begin -_id', 
+           options: {
+              transform: doc => doc == null ? null : doc.begin.getTime()
+            }
+         });        
         console.log(resp);
-          res.json( resp );
+         res.json( resp );
  
 
 
