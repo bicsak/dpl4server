@@ -14,6 +14,7 @@ const mongoDBName = process.env.DB_NAME;
 const weeks = require('./routes/weeks.js');      
 const seasons = require('./routes/seasons.js');      
 const productions = require('./routes/productions.js');      
+const dienste = require('./routes/dienste.js');      
 const users = require('./routes/users.js');      
 const login = require('./routes/login.js');      
 
@@ -49,6 +50,7 @@ async function run() {
       app.use('/api/users', users);
       app.use('/api/seasons', seasons);
       app.use('/api/productions', productions);
+      app.use('/api/dienste', dienste);
       app.use('/api/login', login);
 
       /* final catch-all route to index.html defined last */

@@ -17,6 +17,24 @@ function verifyToken(req,res,next) {
    }
 }
 
+router.get('/', verifyToken, async function(req, res) {
+   jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
+      if (err) 
+         res.sendStatus(401);
+      else {
+        console.log(`loading Productions for ${req.query.q}...`);
+
+          let resp = await Production.find( { 
+              o: authData.o,              
+              name: { $regex: req.query.q, $options: '^' }
+            } ).limit(10).select('name');                
+         console.log(resp);
+        res.json( resp ); 
+
+      }
+   });
+});
+
 router.get('/:season', verifyToken, async function(req, res) {
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err) 
