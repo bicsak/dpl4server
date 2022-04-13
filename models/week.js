@@ -9,9 +9,13 @@ const dienstSchema = new Schema({
     prod: { type: Schema.Types.ObjectId, ref: 'Production' },
     category: { type: Number, min: 0, max: 2 },
     subtype: { type: Number, min: 0, max: 6 },
+    suffix: String,
     weight: { type: Number, min: 0, max: 3 },
-    duration: Number, // or undefined for auto duration calculation
-    location: String, // or undefined for auto location detection
+    duration: Number, // or undefined for auto duration calculation    
+    location: { // or undefined for auto location detection
+        full: { type: String }, 
+        abbr: { type: String }
+    },
     instrumentation: { type: Map, of: Number },
     comment: String, // by manager (for example: Kleiderordnung, Anspielprobe etc.)
     seq: Number, // -1 for exluded, 0: not calculated, 1..n
