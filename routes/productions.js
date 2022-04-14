@@ -77,7 +77,7 @@ router.get('/:season', verifyToken, async function(req, res) {
             _id: {
                 "$in": aggregatedDienst.map( x => x._id )
             } } )
-        .select('name comment duration firstDienst')
+        .select('name comment duration firstDienst instrumentation extra')
         .populate( { 
            path: 'firstDienst', 
            select: 'begin -_id', 

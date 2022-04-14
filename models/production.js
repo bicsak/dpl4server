@@ -4,7 +4,16 @@ const { Schema } = mongoose;
 const productionSchema = new Schema({
     o: { type: Schema.Types.ObjectId, ref: 'Orchestra' }, 
     name: String, 
-    comment: String, // Musikalische Leitung, Regisseur, Konzertprogramm etc.    
+    comment: String, // Musikalische Leitung, Regisseur, Konzertprogramm etc. 
+    extra: String, // optional, extra instruments (Celesta, Harp, Alt-Saxofon etc.)   
+    instrumentation: {
+        type: Map,
+        of: new Schema(
+        {             
+            count: Number, // 4
+            extra: String // "3. auch Picc." / "E.H" etc.
+        })
+    }, // template instrumentation. Dienst-Besetzung kann abweichen!
     firstDienst: { type: Schema.Types.ObjectId, ref: 'DienstExtRef' },
     lastDienst: { type: Schema.Types.ObjectId, ref: 'DienstExtRef' },    
     duration: Number // optional, only if duration is specified for this prod
