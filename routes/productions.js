@@ -77,14 +77,21 @@ router.get('/:season', verifyToken, async function(req, res) {
             _id: {
                 "$in": aggregatedDienst.map( x => x._id )
             } } )
-        .select('name comment duration firstDienst instrumentation extra')
+        .select('name comment duration firstDienst lastDienst instrumentation extra')
         .populate( { 
            path: 'firstDienst', 
            select: 'begin -_id', 
            options: {
               transform: doc => doc == null ? null : doc.begin.getTime()
             }
-         });        
+         })
+         .populate( { 
+            path: 'lastDienst', 
+            select: 'begin -_id', 
+            options: {
+               transform: doc => doc == null ? null : doc.begin.getTime()
+             }
+          });        
         console.log(resp);
          res.json( resp );
  
