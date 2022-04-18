@@ -4,20 +4,9 @@ let router = express.Router();
 const jwt = require('jsonwebtoken');
 const Production = require('../models/production');
 const DienstExtRef = require('../models/dienst');
+const Week = require('../models/week');
 
-function verifyToken(req,res,next) {
-   const bearerHeader = req.headers['authorization'];
-   if ( typeof bearerHeader !== 'undefined' ) {
-      const bearer = bearerHeader.split(' ');
-      const bearerToken = bearer[1];
-      req.token = bearerToken;
-      next();
-   } else {
-      req.sendStatus(401);
-   }
-}
-
-router.get('/', verifyToken, async function(req, res) {
+router.get('/', async function(req, res) {
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err) 
          res.sendStatus(401);
@@ -35,7 +24,7 @@ router.get('/', verifyToken, async function(req, res) {
    });
 });
 
-router.get('/:season', verifyToken, async function(req, res) {
+router.get('/:season', async function(req, res) {
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err) 
          res.sendStatus(401);
@@ -44,30 +33,15 @@ router.get('/:season', verifyToken, async function(req, res) {
         console.log(req.params.season)         ;
 
         aggregatedDienst = await DienstExtRef.aggregate( [        
-            { "$match": { /*'begin': {'$lt' : new Date()} } */ 
+            { "$match": {  
                 season: new mongoose.Types.ObjectId(req.params.season),
                 o: new mongoose.Types.ObjectId(authData.o),
                 category: { $ne: 2 } 
             } },
-            //{ "$unwind": { 'path': '$dienst'} },
-            /*{ "$match": { 
-              'dienst.category': { '$ne': 2 }, // no special dienste
-              'dienst.total': { '$ne': -1 } }  // no excluded dienste
-            },*/
+            
             { "$group": { 
-              "_id": "$prod"/*,
-              "dienste": {
-                '$push': {
-                  begin: "$dienst.begin", 
-                  cat: "$dienst.category", 
-                  subtype: "$dienst.subtype", 
-                  seq: "$dienst.seq", 
-                  total: "$dienst.total",
-                  did: "$dienst._id"
-                }
-              }  */
-            } }/*,          
-            { "$sort": {'dienst.begin': 1} }        */
+              "_id": "$prod"
+            } }
           ]);
           console.log(aggregatedDienst);
 
@@ -94,8 +68,6 @@ router.get('/:season', verifyToken, async function(req, res) {
           });        
         console.log(resp);
          res.json( resp );
- 
-
 
       }
    });
@@ -104,6 +76,67 @@ router.get('/:season', verifyToken, async function(req, res) {
 router.post('/', function(req, res){
    res.send('POST route on weeks.');
 });
+
+router.patch('/:id', async function(req, res) { 
+   jwt.verify(req.token, process.env.JWT_PASS, async function (err, authData) {  
+      const changes = req.body;
+      console.log(`PATCH request for prod id:  ${req.params.id}`);
+   
+      if ( changes.name ) {         
+         console.log(`New name: ${changes.name}`);
+         // Update document in productions collection
+         await Production.findOneAndUpdate( { 
+            o: authData.o,
+            _id: req.params.id
+         }, {
+            name: changes.name
+         });
+         
+         // Update name field for all dienst in DienstExtRef collection
+         await DienstExtRef.updateMany(
+            { o: authData.o,
+              prod: req.params.id
+            },
+            {
+               name: changes.name
+            }
+         );
+
+         // Update name field for all dienst embedded in Week collection
+         await Week.updateMany(
+            { o: authData.o },
+            { "$set": { "dienst.$[elem].name": changes.name } },
+            { multi: true,
+              arrayFilters: [ { "elem.prod": req.params.id } ] }
+         );
+         
+         res.json( {name: changes.name} );
+      } else {
+         console.log( changes );
+         let update = {
+            comment: changes.comment,
+            duration: changes.duration,
+            extra: changes.extra,            
+         };
+         let instrumentation = {};
+         for ( let i = 0; i < 13; i++ ) {
+            if ( changes['sec'+i] ) instrumentation['sec'+i] = changes['sec'+i];
+         }
+         if ( instrumentation != {} ) update.instrumentation = instrumentation;
+
+         console.log(update);
+         
+         // Update document in productions collection
+         await Production.findOneAndUpdate( { 
+            o: authData.o,
+            _id: req.params.id
+         }, update);
+         
+         res.json( update );
+
+      }
+   } );   
+} );
 
 //export this router to use in our index.js
 module.exports = router;

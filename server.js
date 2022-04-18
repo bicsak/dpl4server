@@ -5,6 +5,8 @@ if (process.env.NODE_ENV !== 'production') {
 var express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+
+const verifyToken = require('./middleware/verifytoken');
 //var { MongoClient } = require( 'mongodb' );
 
 //const mongoUri = "mongodb://myUserAdmin:csakMalajDB@127.0.0.1:27017";
@@ -46,11 +48,17 @@ async function run() {
       //app.set('conn', mongoose.connection);
 
       app.use(express.static('./public'));            
-      app.use('/api/weeks', weeks);      
-      app.use('/api/users', users);
-      app.use('/api/seasons', seasons);
-      app.use('/api/productions', productions);
-      app.use('/api/dienste', dienste);
+      
+      app.use('/api/weeks', verifyToken, weeks);      
+            
+      app.use('/api/users', verifyToken, users);
+            
+      app.use('/api/seasons', verifyToken, seasons);      
+      
+      app.use('/api/productions', verifyToken, productions);      
+      
+      app.use('/api/dienste', verifyToken, dienste);      
+      
       app.use('/api/login', login);
 
       /* final catch-all route to index.html defined last */
