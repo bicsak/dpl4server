@@ -5,18 +5,6 @@ const Dpl = require('../models/dpl');
 const Period = require('../models/period');
 const Week = require('../models/week');
 
-function verifyToken(req,res,next) {
-   const bearerHeader = req.headers['authorization'];
-   if ( typeof bearerHeader !== 'undefined' ) {
-      const bearer = bearerHeader.split(' ');
-      const bearerToken = bearer[1];
-      req.token = bearerToken;
-      next();
-   } else {
-      req.sendStatus(401);
-   }
-}
-
 async function createWeekDataRaw(begin, authData, sec) {
    let beginDate = new Date(begin*1000); 
 
@@ -182,7 +170,7 @@ async function createWeekDataRaw(begin, authData, sec) {
    return weekRaw;          
 }
 
-router.get('/:mts', verifyToken, async function(req, res) {
+router.get('/:mts', async function(req, res) {
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err) 
          res.sendStatus(401);
@@ -194,7 +182,7 @@ router.get('/:mts', verifyToken, async function(req, res) {
    });
 });
 
-router.get('/:section/:mts', verifyToken, async function(req, res) {
+router.get('/:section/:mts', async function(req, res) {
 
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err) 

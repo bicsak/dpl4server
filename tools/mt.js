@@ -587,7 +587,7 @@ async function run(hc) {
 
               let prodInstr = {};
               for ( const key in instr ) {
-                prodInstr[key] = { count: instr[key] };
+                prodInstr[key] = { count: instr[key], extra: '' };
               }              
               
               let prodDoc = new Production( {
