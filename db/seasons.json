@@ -1,80 +1,100 @@
 [{
   "_id": {
-    "$oid": "61be6910a98ccac0f026e964"
+    "$oid": "626328a8ae25596d65eb76a0"
   },
   "o": {
-    "$oid": "61be690fa98ccac0f026e951"
+    "$oid": "626328a8ae25596d65eb768b"
   },
   "label": "2017/2018",
   "begin": {
-    "$date": "2017-08-20T22:00:00Z"
+    "$date": {
+      "$numberLong": "1503266400000"
+    }
   },
   "end": {
-    "$date": "2018-07-01T22:00:00Z"
+    "$date": {
+      "$numberLong": "1530482400000"
+    }
   },
   "comment": "Jessicas erste Spielzeit. Langes erste SZ.",
   "__v": 0
 },{
   "_id": {
-    "$oid": "61be6910a98ccac0f026e966"
+    "$oid": "626328a8ae25596d65eb76a2"
   },
   "o": {
-    "$oid": "61be690fa98ccac0f026e951"
+    "$oid": "626328a8ae25596d65eb768b"
   },
   "label": "2018/2019",
   "begin": {
-    "$date": "2018-08-12T22:00:00Z"
+    "$date": {
+      "$numberLong": "1534111200000"
+    }
   },
   "end": {
-    "$date": "2019-06-30T22:00:00Z"
+    "$date": {
+      "$numberLong": "1561932000000"
+    }
   },
   "comment": "Jessicas 2. SZ",
   "__v": 0
 },{
   "_id": {
-    "$oid": "61be6910a98ccac0f026e968"
+    "$oid": "626328a8ae25596d65eb76a4"
   },
   "o": {
-    "$oid": "61be690fa98ccac0f026e951"
+    "$oid": "626328a8ae25596d65eb768b"
   },
   "label": "2019/2020",
   "begin": {
-    "$date": "2019-08-11T22:00:00Z"
+    "$date": {
+      "$numberLong": "1565560800000"
+    }
   },
   "end": {
-    "$date": "2020-07-05T22:00:00Z"
+    "$date": {
+      "$numberLong": "1593986400000"
+    }
   },
   "comment": "Jessicas 3. SZ",
   "__v": 0
 },{
   "_id": {
-    "$oid": "61be6910a98ccac0f026e96a"
+    "$oid": "626328a8ae25596d65eb76a6"
   },
   "o": {
-    "$oid": "61be690fa98ccac0f026e951"
+    "$oid": "626328a8ae25596d65eb768b"
   },
   "label": "2020/2021",
   "begin": {
-    "$date": "2020-08-16T22:00:00Z"
+    "$date": {
+      "$numberLong": "1597615200000"
+    }
   },
   "end": {
-    "$date": "2021-07-18T22:00:00Z"
+    "$date": {
+      "$numberLong": "1626645600000"
+    }
   },
   "comment": "",
   "__v": 0
 },{
   "_id": {
-    "$oid": "61be6910a98ccac0f026e96c"
+    "$oid": "626328a8ae25596d65eb76a8"
   },
   "o": {
-    "$oid": "61be690fa98ccac0f026e951"
+    "$oid": "626328a8ae25596d65eb768b"
   },
   "label": "2021/2022",
   "begin": {
-    "$date": "2021-08-29T22:00:00Z"
+    "$date": {
+      "$numberLong": "1630274400000"
+    }
   },
   "end": {
-    "$date": "2022-06-12T22:00:00Z"
+    "$date": {
+      "$numberLong": "1656280800000"
+    }
   },
   "comment": "",
   "__v": 0

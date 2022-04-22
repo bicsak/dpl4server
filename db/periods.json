@@ -1,0 +1,193 @@
+[{
+  "_id": {
+    "$oid": "626328a8ae25596d65eb76c4"
+  },
+  "o": {
+    "$oid": "626328a8ae25596d65eb768b"
+  },
+  "s": "sec0",
+  "begin": {
+    "$date": {
+      "$numberLong": "1503266400000"
+    }
+  },
+  "members": [
+    {
+      "u": {
+        "$oid": "626328a8ae25596d65eb76ac"
+      },
+      "initial": "MB",
+      "row": 0,
+      "start": 0,
+      "factor": 1,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb76c5"
+      }
+    },
+    {
+      "u": {
+        "$oid": "626328a8ae25596d65eb76ae"
+      },
+      "initial": "CT",
+      "row": 1,
+      "start": 0,
+      "factor": 1,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb76c6"
+      }
+    },
+    {
+      "u": {
+        "$oid": "626328a8ae25596d65eb76b0"
+      },
+      "initial": "JJ",
+      "row": 2,
+      "start": 0,
+      "factor": 1,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb76c7"
+      }
+    },
+    {
+      "u": {
+        "$oid": "626328a8ae25596d65eb76b2"
+      },
+      "initial": "TR",
+      "row": 3,
+      "start": 0,
+      "factor": 1,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb76c8"
+      }
+    }
+  ],
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "626328a8ae25596d65eb76ca"
+  },
+  "o": {
+    "$oid": "626328a8ae25596d65eb768b"
+  },
+  "s": "sec3",
+  "begin": {
+    "$date": {
+      "$numberLong": "1503266400000"
+    }
+  },
+  "members": [
+    {
+      "u": {
+        "$oid": "626328a8ae25596d65eb76ba"
+      },
+      "initial": "PB",
+      "row": 0,
+      "start": 0,
+      "factor": 1,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb76cb"
+      }
+    },
+    {
+      "u": {
+        "$oid": "626328a8ae25596d65eb76c2"
+      },
+      "initial": "BR",
+      "row": 1,
+      "start": 0,
+      "factor": 1,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb76cc"
+      }
+    },
+    {
+      "u": {
+        "$oid": "626328a8ae25596d65eb76be"
+      },
+      "initial": "BL",
+      "row": 2,
+      "start": 0,
+      "factor": 1,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb76cd"
+      }
+    },
+    {
+      "u": {
+        "$oid": "626328a8ae25596d65eb76c0"
+      },
+      "initial": "OM",
+      "row": 3,
+      "start": 0,
+      "factor": 1,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb76ce"
+      }
+    }
+  ],
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "626328a8ae25596d65eb76cf"
+  },
+  "o": {
+    "$oid": "626328a8ae25596d65eb768b"
+  },
+  "s": "sec3",
+  "begin": {
+    "$date": {
+      "$numberLong": "1575846000000"
+    }
+  },
+  "members": [
+    {
+      "u": {
+        "$oid": "626328a8ae25596d65eb76ba"
+      },
+      "initial": "PB",
+      "row": 0,
+      "start": 90,
+      "factor": 1,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb76d0"
+      }
+    },
+    {
+      "u": {
+        "$oid": "626328a8ae25596d65eb76bc"
+      },
+      "initial": "CW",
+      "row": 1,
+      "start": 90,
+      "factor": 1,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb76d1"
+      }
+    },
+    {
+      "u": {
+        "$oid": "626328a8ae25596d65eb76be"
+      },
+      "initial": "BL",
+      "row": 2,
+      "start": 89,
+      "factor": 1,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb76d2"
+      }
+    },
+    {
+      "u": {
+        "$oid": "626328a8ae25596d65eb76c0"
+      },
+      "initial": "OM",
+      "row": 3,
+      "start": 79,
+      "factor": 1,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb76d3"
+      }
+    }
+  ],
+  "__v": 0
+}]

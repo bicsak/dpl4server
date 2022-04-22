@@ -1,17 +1,22 @@
 [{
   "_id": {
-    "$oid": "61e4a3e743a7bdd798a97123"
+    "$oid": "626328a8ae25596d65eb76aa"
   },
   "o": {
-    "$oid": "61e4a3e743a7bdd798a97106"
+    "$oid": "626328a8ae25596d65eb768b"
   },
   "s": "all",
   "fn": "Max",
   "sn": "Mustermann",
+  "birthday": {
+    "$date": {
+      "$numberLong": "0"
+    }
+  },
   "un": "manager",
-  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
   "loginAttempts": 0,
-  "email": "musteremail@example.com",
+  "email": "bicsak@gmx.net",
   "role": "office",
   "manager": true,
   "notifications": {
@@ -26,21 +31,23 @@
   "__v": 0
 },{
   "_id": {
-    "$oid": "61e4a3e743a7bdd798a97125"
+    "$oid": "626328a8ae25596d65eb76ac"
   },
   "o": {
-    "$oid": "61e4a3e743a7bdd798a97106"
+    "$oid": "626328a8ae25596d65eb768b"
   },
   "s": "sec0",
   "fn": "Mátyás",
   "sn": "Bicsák",
   "birthday": {
-    "$date": "1981-10-20T23:00:00Z"
+    "$date": {
+      "$numberLong": "372466800000"
+    }
   },
-  "un": "Bicsak",
-  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
-  "loginAttempts": 7,
-  "email": "dienstplan@bicsak.de",
+  "un": "m.bicsak",
+  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
+  "loginAttempts": 0,
+  "email": "bicsak@gmx.net",
   "role": "member",
   "scheduler": true,
   "notifications": {
@@ -52,14 +59,13 @@
     "surveyComplete": false,
     "surveyFailed": false
   },
-  "__v": 0,
-  "lockUntil": 1642383255752
+  "__v": 0
 },{
   "_id": {
-    "$oid": "61e4a3e743a7bdd798a97127"
+    "$oid": "626328a8ae25596d65eb76ae"
   },
   "o": {
-    "$oid": "61e4a3e743a7bdd798a97106"
+    "$oid": "626328a8ae25596d65eb768b"
   },
   "s": "sec0",
   "fn": "Cornelia",
@@ -69,10 +75,10 @@
       "$numberLong": "-347850000000"
     }
   },
-  "un": "Thorspecken",
-  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "un": "c.thorspecken",
+  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
   "loginAttempts": 0,
-  "email": "thorspecken@googlemail.com",
+  "email": "bicsak@gmx.net",
   "role": "member",
   "scheduler": false,
   "notifications": {
@@ -87,21 +93,23 @@
   "__v": 0
 },{
   "_id": {
-    "$oid": "61e4a3e743a7bdd798a97129"
+    "$oid": "626328a8ae25596d65eb76b0"
   },
   "o": {
-    "$oid": "61e4a3e743a7bdd798a97106"
+    "$oid": "626328a8ae25596d65eb768b"
   },
   "s": "sec0",
   "fn": "Jessica",
   "sn": "Jiang",
   "birthday": {
-    "$date": "1993-01-04T23:00:00Z"
+    "$date": {
+      "$numberLong": "726188400000"
+    }
   },
-  "un": "Jiang",
-  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "un": "j.jiang",
+  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
   "loginAttempts": 0,
-  "email": "jessicajiangflute@hotmail.com",
+  "email": "bicsak@gmx.net",
   "role": "member",
   "scheduler": false,
   "notifications": {
@@ -116,10 +124,10 @@
   "__v": 0
 },{
   "_id": {
-    "$oid": "61e4a3e743a7bdd798a9712b"
+    "$oid": "626328a8ae25596d65eb76b2"
   },
   "o": {
-    "$oid": "61e4a3e743a7bdd798a97106"
+    "$oid": "626328a8ae25596d65eb768b"
   },
   "s": "sec0",
   "fn": "Thomas",
@@ -129,10 +137,10 @@
       "$numberLong": "-426906000000"
     }
   },
-  "un": "Richter",
-  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "un": "t.richter",
+  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
   "loginAttempts": 0,
-  "email": "richter-wiesbaden@t-online.de",
+  "email": "bicsak@gmx.net",
   "role": "member",
   "scheduler": false,
   "notifications": {
@@ -147,23 +155,23 @@
   "__v": 0
 },{
   "_id": {
-    "$oid": "61e4a3e743a7bdd798a9712d"
+    "$oid": "626328a8ae25596d65eb76b4"
   },
   "o": {
-    "$oid": "61e4a3e743a7bdd798a97106"
+    "$oid": "626328a8ae25596d65eb768b"
   },
   "s": "all",
-  "fn": "Clara",
-  "sn": "Holzapfel",
+  "fn": "Alexandra",
+  "sn": "Koch",
   "birthday": {
     "$date": {
       "$numberLong": "-3600000"
     }
   },
-  "un": "Holzapfel",
-  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
-  "loginAttempts": 14,
-  "email": "c.holzapfel@staatstheater-wiesbaden.de",
+  "un": "a.koch",
+  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
+  "loginAttempts": 0,
+  "email": "bicsak@gmx.net",
   "role": "office",
   "manager": false,
   "notifications": {
@@ -175,14 +183,13 @@
     "surveyComplete": false,
     "surveyFailed": false
   },
-  "__v": 0,
-  "lockUntil": 1642468260856
+  "__v": 0
 },{
   "_id": {
-    "$oid": "61e4a3e743a7bdd798a9712f"
+    "$oid": "626328a8ae25596d65eb76b6"
   },
   "o": {
-    "$oid": "61e4a3e743a7bdd798a97106"
+    "$oid": "626328a8ae25596d65eb768b"
   },
   "s": "sec0",
   "fn": "Kerstin",
@@ -192,10 +199,10 @@
       "$numberLong": "-3600000"
     }
   },
-  "un": "Kerle",
-  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "un": "k.bicsak",
+  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
   "loginAttempts": 0,
-  "email": "kerstin.bicsak@web.de",
+  "email": "bicsak@gmx.net",
   "role": "friend",
   "notifications": {
     "comment": false,
@@ -209,10 +216,10 @@
   "__v": 0
 },{
   "_id": {
-    "$oid": "61e4a3e743a7bdd798a97131"
+    "$oid": "626328a8ae25596d65eb76b8"
   },
   "o": {
-    "$oid": "61e4a3e743a7bdd798a97106"
+    "$oid": "626328a8ae25596d65eb768b"
   },
   "s": "sec0",
   "fn": "Boldi",
@@ -222,10 +229,10 @@
       "$numberLong": "-3600000"
     }
   },
-  "un": "Lapos",
-  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "un": "b.bicsak",
+  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
   "loginAttempts": 0,
-  "email": "bicsakms@hotmail.com",
+  "email": "bicsak@gmx.net",
   "role": "friend",
   "notifications": {
     "comment": false,
@@ -239,12 +246,12 @@
   "__v": 0
 },{
   "_id": {
-    "$oid": "61e4a3e743a7bdd798a97133"
+    "$oid": "626328a8ae25596d65eb76ba"
   },
   "o": {
-    "$oid": "61e4a3e743a7bdd798a97106"
+    "$oid": "626328a8ae25596d65eb768b"
   },
-  "s": "sec1",
+  "s": "sec3",
   "fn": "Peter",
   "sn": "Brechtel",
   "birthday": {
@@ -252,10 +259,10 @@
       "$numberLong": "-85107600000"
     }
   },
-  "un": "Peter",
-  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "un": "p.brechtel",
+  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
   "loginAttempts": 0,
-  "email": "peterbrechtel@gmx.de",
+  "email": "bicsak@gmx.net",
   "role": "member",
   "scheduler": true,
   "notifications": {
@@ -270,21 +277,23 @@
   "__v": 0
 },{
   "_id": {
-    "$oid": "61e4a3e743a7bdd798a97135"
+    "$oid": "626328a8ae25596d65eb76bc"
   },
   "o": {
-    "$oid": "61e4a3e743a7bdd798a97106"
+    "$oid": "626328a8ae25596d65eb768b"
   },
-  "s": "sec1",
+  "s": "sec3",
   "fn": "Chih-Ti",
   "sn": "Wang",
   "birthday": {
-    "$date": "1981-10-08T23:00:00Z"
+    "$date": {
+      "$numberLong": "371430000000"
+    }
   },
-  "un": "Chiti",
-  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "un": "c.wang",
+  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
   "loginAttempts": 0,
-  "email": "chihtiwang@gmail.com",
+  "email": "bicsak@gmx.net",
   "role": "member",
   "scheduler": false,
   "notifications": {
@@ -299,21 +308,23 @@
   "__v": 0
 },{
   "_id": {
-    "$oid": "61e4a3e743a7bdd798a97137"
+    "$oid": "626328a8ae25596d65eb76be"
   },
   "o": {
-    "$oid": "61e4a3e743a7bdd798a97106"
+    "$oid": "626328a8ae25596d65eb768b"
   },
-  "s": "sec1",
+  "s": "sec3",
   "fn": "Beatrix",
   "sn": "Lindemann",
   "birthday": {
-    "$date": "1970-04-13T23:00:00Z"
+    "$date": {
+      "$numberLong": "8895600000"
+    }
   },
-  "un": "Beatrix",
-  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "un": "b.lindemann",
+  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
   "loginAttempts": 0,
-  "email": "beatrixfriis@gmail.com",
+  "email": "bicsak@gmx.net",
   "role": "member",
   "scheduler": false,
   "notifications": {
@@ -328,21 +339,23 @@
   "__v": 0
 },{
   "_id": {
-    "$oid": "61e4a3e743a7bdd798a97139"
+    "$oid": "626328a8ae25596d65eb76c0"
   },
   "o": {
-    "$oid": "61e4a3e743a7bdd798a97106"
+    "$oid": "626328a8ae25596d65eb768b"
   },
-  "s": "sec1",
+  "s": "sec3",
   "fn": "Oskar",
   "sn": "Münchgesang",
   "birthday": {
-    "$date": "1970-04-04T23:00:00Z"
+    "$date": {
+      "$numberLong": "8118000000"
+    }
   },
-  "un": "Oskar",
-  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "un": "o.munchgesang",
+  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
   "loginAttempts": 0,
-  "email": "bassoon1@gmail.com",
+  "email": "bicsak@gmx.net",
   "role": "member",
   "scheduler": false,
   "notifications": {
@@ -357,21 +370,23 @@
   "__v": 0
 },{
   "_id": {
-    "$oid": "61e4a3e743a7bdd798a9713b"
+    "$oid": "626328a8ae25596d65eb76c2"
   },
   "o": {
-    "$oid": "61e4a3e743a7bdd798a97106"
+    "$oid": "626328a8ae25596d65eb768b"
   },
-  "s": "sec1",
+  "s": "sec3",
   "fn": "Béla",
   "sn": "Röhl",
   "birthday": {
-    "$date": "1970-03-23T23:00:00Z"
+    "$date": {
+      "$numberLong": "7081200000"
+    }
   },
-  "un": "Bela",
-  "pw": "$2a$10$o2lZhRngp8cNEBjRw4PGHufCL1sGAEw2LtmdIGndYCNs2Lrlso7rW",
+  "un": "b.rohl",
+  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
   "loginAttempts": 0,
-  "email": "belsky@gmx.net",
+  "email": "bicsak@gmx.net",
   "role": "member",
   "scheduler": false,
   "notifications": {

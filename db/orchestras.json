@@ -1,161 +1,172 @@
 [{
   "_id": {
-    "$oid": "61e4a3e743a7bdd798a97106"
+    "$oid": "626328a8ae25596d65eb768b"
   },
   "code": "HSW",
   "fullName": "Hessisches Staatsorchester Wiesbaden",
   "location": "Wiesbaden",
   "timezone": "Europe/Berlin",
   "venues": [
-    "OPR",
-    "Großes Haus",
-    "Kurhaus"
-  ],
-  "sections": [
     {
-      "key": "sec0",
-      "code": "Fl",
-      "name": "Flöte",
-      "maxFW": 1,
+      "full": "OPR",
+      "abbr": "OPR",
       "_id": {
-        "$oid": "61e4a3e743a7bdd798a97107"
+        "$oid": "626328a8ae25596d65eb768c"
       }
     },
     {
-      "key": "sec1",
-      "code": "Fg",
-      "name": "Fagott",
-      "maxFW": 1,
+      "full": "Großes Haus",
+      "abbr": "GH",
       "_id": {
-        "$oid": "61e4a3e743a7bdd798a97108"
+        "$oid": "626328a8ae25596d65eb768d"
       }
     },
     {
-      "key": "sec2",
-      "code": "Kl",
-      "name": "Klarinette",
-      "maxFW": 1,
+      "full": "Kurhaus",
+      "abbr": "KH",
       "_id": {
-        "$oid": "61e4a3e743a7bdd798a97109"
-      }
-    },
-    {
-      "key": "sec3",
-      "code": "Ob",
-      "name": "Oboe",
-      "maxFW": 1,
-      "_id": {
-        "$oid": "61e4a3e743a7bdd798a9710a"
-      }
-    },
-    {
-      "key": "sec4",
-      "code": "Hr",
-      "name": "Horn",
-      "maxFW": 1,
-      "_id": {
-        "$oid": "61e4a3e743a7bdd798a9710b"
-      }
-    },
-    {
-      "key": "sec5",
-      "code": "Tp",
-      "name": "Trompete",
-      "maxFW": 1,
-      "_id": {
-        "$oid": "61e4a3e743a7bdd798a9710c"
-      }
-    },
-    {
-      "key": "sec6",
-      "code": "Pos",
-      "name": "Posaune",
-      "maxFW": 1,
-      "_id": {
-        "$oid": "61e4a3e743a7bdd798a9710d"
-      }
-    },
-    {
-      "key": "sec7",
-      "code": "Schl",
-      "name": "Schlagzeug",
-      "maxFW": 1,
-      "_id": {
-        "$oid": "61e4a3e743a7bdd798a9710e"
-      }
-    },
-    {
-      "key": "sec8",
-      "code": "Hf",
-      "name": "Harfe",
-      "maxFW": 1,
-      "_id": {
-        "$oid": "61e4a3e743a7bdd798a9710f"
-      }
-    },
-    {
-      "key": "sec9",
-      "code": "1. Vl",
-      "name": "1. Violine",
-      "maxFW": 1,
-      "_id": {
-        "$oid": "61e4a3e743a7bdd798a97110"
-      }
-    },
-    {
-      "key": "sec10",
-      "code": "2. Vl.",
-      "name": "2. Violine",
-      "maxFW": 1,
-      "_id": {
-        "$oid": "61e4a3e743a7bdd798a97111"
-      }
-    },
-    {
-      "key": "sec11",
-      "code": "Va",
-      "name": "Bratsche",
-      "maxFW": 1,
-      "_id": {
-        "$oid": "61e4a3e743a7bdd798a97112"
-      }
-    },
-    {
-      "key": "sec12",
-      "code": "Vc",
-      "name": "Cello",
-      "maxFW": 1,
-      "_id": {
-        "$oid": "61e4a3e743a7bdd798a97113"
-      }
-    },
-    {
-      "key": "sec13",
-      "code": "Kb",
-      "name": "Kontrabass",
-      "maxFW": 1,
-      "_id": {
-        "$oid": "61e4a3e743a7bdd798a97114"
+        "$oid": "626328a8ae25596d65eb768e"
       }
     }
   ],
+  "sections": {
+    "sec0": {
+      "abbr": "Fl",
+      "name": "Flöte",
+      "maxFW": 1,
+      "active": true,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb768f"
+      }
+    },
+    "sec1": {
+      "abbr": "Ob",
+      "name": "Oboe",
+      "maxFW": 1,
+      "active": false,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb7690"
+      }
+    },
+    "sec2": {
+      "abbr": "Kl",
+      "name": "Klarinette",
+      "maxFW": 1,
+      "active": false,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb7691"
+      }
+    },
+    "sec3": {
+      "abbr": "Fg",
+      "name": "Fagott",
+      "maxFW": 1,
+      "active": true,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb7692"
+      }
+    },
+    "sec4": {
+      "abbr": "Hr",
+      "name": "Horn",
+      "maxFW": 1,
+      "active": false,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb7693"
+      }
+    },
+    "sec5": {
+      "abbr": "Tp",
+      "name": "Trompete",
+      "maxFW": 1,
+      "active": false,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb7694"
+      }
+    },
+    "sec6": {
+      "abbr": "Pos",
+      "name": "Posaune",
+      "maxFW": 1,
+      "active": false,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb7695"
+      }
+    },
+    "sec7": {
+      "abbr": "Tb",
+      "name": "Tuba",
+      "maxFW": 1,
+      "active": false,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb7696"
+      }
+    },
+    "sec8": {
+      "abbr": "1. Vl",
+      "name": "1. Violine",
+      "maxFW": 1,
+      "active": false,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb7697"
+      }
+    },
+    "sec9": {
+      "abbr": "2. Vl.",
+      "name": "2. Violine",
+      "maxFW": 1,
+      "active": false,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb7698"
+      }
+    },
+    "sec10": {
+      "abbr": "Va",
+      "name": "Bratsche",
+      "maxFW": 1,
+      "active": false,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb7699"
+      }
+    },
+    "sec11": {
+      "abbr": "Vc",
+      "name": "Cello",
+      "maxFW": 1,
+      "active": false,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb769a"
+      }
+    },
+    "sec12": {
+      "abbr": "Kb",
+      "name": "Kontrabass",
+      "maxFW": 1,
+      "active": false,
+      "_id": {
+        "$oid": "626328a8ae25596d65eb769b"
+      }
+    }
+  },
   "categories": [
     {
       "subtypes": [
         "OA",
         "OS",
         "BO",
-        "VBO",
+        "vBO",
         "HP",
-        "GP"
+        "GP",
+        "..."
       ],
       "suffixes": [
         "OA",
         "OS",
         "BO",
-        "VBO",
+        "vBO",
         "HP",
-        "GP"
+        "GP",
+        ""
       ],
       "locations": [
         0,
@@ -163,7 +174,8 @@
         1,
         1,
         1,
-        1
+        1,
+        0
       ],
       "durations": [
         150,
@@ -171,10 +183,11 @@
         180,
         220,
         180,
-        180
+        180,
+        150
       ],
       "_id": {
-        "$oid": "61e4a3e743a7bdd798a97115"
+        "$oid": "626328a8ae25596d65eb769c"
       }
     },
     {
@@ -203,7 +216,7 @@
         150
       ],
       "_id": {
-        "$oid": "61e4a3e743a7bdd798a97116"
+        "$oid": "626328a8ae25596d65eb769d"
       }
     },
     {
@@ -220,7 +233,7 @@
         150
       ],
       "_id": {
-        "$oid": "61e4a3e743a7bdd798a97117"
+        "$oid": "626328a8ae25596d65eb769e"
       }
     }
   ],
