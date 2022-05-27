@@ -14,26 +14,32 @@ const reasons = {
     MAX_ATTEMPTS: 2
 };
 
-const userSchema = new Schema({
-    o: { type: Schema.Types.ObjectId, ref: 'Orchestra' },
-    s: String, // section, not required
-    
-    fn: String,
-    sn: String,
+const userSchema = new Schema({        
+    fn: String, // first name
+    sn: String, // surname
     birthday: Date,
 
-    un: String,    //username
+    //un: String,    //username
+    email: String, // this is the username; also used to contact person if pw forgotten
     pw: String,    //password
 
     loginAttempts: { type: Number, required: true, default: 0 },
-    lockUntil: { type: Number },
+    lockUntil: { type: Number },    
 
-    email: String,
+    profiles: [
+        {
+            //_id = _id of doc in profiles collection
+            o: { type: Schema.Types.ObjectId, ref: 'Orchestra'  },
+            role: { type: String },
+            manager: { type: Boolean },
+            section: { type: String }
+        }
+    ]
 
-    role: { type: String, enum: ['office', 'member', 'friend'] },    
-    manager: Boolean,
-    scheduler: Boolean,
-    notifications: { type: Map, of: Boolean},
+    //role: { type: String, enum: ['office', 'member', 'friend'] },    
+    //manager: Boolean,
+    //scheduler: Boolean,
+    //notifications: { type: Map, of: Boolean},
     /*possible notification keys:         
                 enum: [
                     'comment', 

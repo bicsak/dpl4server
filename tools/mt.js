@@ -73,6 +73,7 @@ async function run(hc) {
 
       const Orchestra = require('../models/orchestra');
       const User = require('../models/user');
+      const Profile = require('../models/profile');
       const Season = require('../models/season');
       const Week = require('../models/week');
       const Dpl = require('../models/dpl');
@@ -96,7 +97,7 @@ async function run(hc) {
         "4" : 3 // Konzert
       };  
       
-      let newLoginNames = {
+      /*let newLoginNames = {
         "Bicsak": "m.bicsak",
         "Thorspecken": "c.thorspecken",
         "Jiang": "j.jiang",
@@ -109,7 +110,7 @@ async function run(hc) {
         "Beatrix": "b.lindemann",
         "Oskar": "o.munchgesang",
         "Bela": "b.rohl"
-      }
+      }*/
 
       //************** ORCHESTRA ****************/
       mongoose.connection.db.dropCollection('orchestras', function(err, result) {
@@ -181,11 +182,16 @@ async function run(hc) {
         await season.save();
       }
       
-      //*********** USERS ******************
+      //*********** USERS && PROFILES ******************
       mongoose.connection.db.dropCollection('users', function(err, result) {
         if (err) console.log("No existing users collection");
         if (result) console.log("Users collection deleted");         
       });            
+      mongoose.connection.db.dropCollection('profiles', function(err, result) {
+        if (err) console.log("No existing profiles collection");
+        if (result) console.log("Profiles collection deleted");         
+      });            
+
       let n = {
         comment: false,
         dplNew: false,
@@ -195,7 +201,7 @@ async function run(hc) {
         surveyComplete: false,
         surveyFailed: false
       };      
-      
+      /*
       let userManager = new User( {          
         o: hsw._id,
         un: 'manager',
@@ -209,37 +215,120 @@ async function run(hc) {
         notifications: n,        
         s: 'all'
       });        
-      await userManager.save();  
+      await userManager.save();  */
+
+      let userManager = new User( {                  
+        email: 'bicsak@gmx.net',
+        pw: hc,
+        fn: 'Ilya',
+        sn: 'Jossifov',                
+        birthday: new Date('1970-01-01T00:00:00.000Z'),
+        profiles: [],
+      });        
+      await userManager.save();
       
+      let profileManager = new Profile( {
+        o: hsw._id,
+        role: 'office',        
+        manager: true,        
+        section: 'all',
+        
+        user: userManager._id,        
+
+        email: 'bicsak@gmx.net',
+        notifications: n,        
+
+        userFn: 'Ilya',
+        userSn: 'Jossifov',
+        userBirthday: new Date('1970-01-01T00:00:00.000Z'),
+      } );
+      await profileManager.save();
+      userManager.profiles.push( {
+        _id: profileManager._id,
+        o: hsw._id,
+        role: 'office',
+        manager: true,
+        section: 'all'
+      });
+      await userManager.save();
+
+
       let flUsersDictionary = []; let fgUsersDictionary = [];
+      let sec = "sec0";                         
 
       let userRows = await mysqlDb.query(
         `SELECT id_user,login_name,pw,first_name,surname,usergroup,email,birthday 
         FROM fl3_user`);       
-      for ( let currentUser of userRows ) {
-        let sec = "sec0"; let obj = {}; let r = "member";
+      for ( let currentUser of userRows ) {        
+        const newUser = await User.findOneAndUpdate(
+          { email: currentUser.email },
+          { $set: { 
+            pw: hc,
+            fn: currentUser.first_name,
+            sn: currentUser.surname,
+            birthday: currentUser.birthday 
+          } },
+          { upsert: true, new: true } 
+        );
+        
+        let r = ''; let s = sec;
+        switch (currentUser.usergroup) {
+          case 10: r = 'office'; s = 'all'; break;
+          case 20: r = 'friend'; break;
+          default: r = 'musician';
+        }
+
+        let newProfile = new Profile( {
+          o: hsw._id,
+          role: r,
+          section: s,
+          manager: false,
+
+          user: newUser._id,
+
+          userFn: currentUser.first_name,
+          userSn: currentUser.surname,
+          userBd: currentUser.birthday
+        });
+        await newProfile.save();
+
+        newUser.profiles.push( {
+          _id: newProfile._id,
+          o: hsw._id,
+          role: r,
+          manager: false,
+          section: s
+        });
+        await newUser.save();
+
 
         if ( currentUser.usergroup == 100 ) { // scheduler 
-          obj.scheduler = true; 
-        } else if ( currentUser.usergroup == 10 ) { // office
-          r = "office"; sec = 'all'; obj.manager = false;
-        } else if ( currentUser.usergroup == 20 ) { //friend
-          r = "friend";
-        } else obj.scheduler = false;
-        let user = new User( {...obj,          
-          o: hsw._id,
-          un: newLoginNames[currentUser.login_name],
-          pw: /*currentUser.pw*/ hc,
-          fn: currentUser.first_name,
-          sn: currentUser.surname,
-          birthday: currentUser.birthday,
-          email: /*currentUser.email*/ 'bicsak@gmx.net',
-          role: r,          
-          notifications: n,          
-          s: sec
-        });        
-        await user.save();  
-        flUsersDictionary[currentUser.id_user] = user._id;
+          /* Insert extra profile into profile colelction */
+          let profile = new Profile( {
+            o: hsw._id,
+            role: 'scheduler',
+            section: sec,
+            manager: false,
+  
+            user: newUser._id,
+  
+            userFn: currentUser.first_name,
+            userSn: currentUser.surname,
+            userBd: currentUser.birthday
+          });
+          await profile.save();
+
+          newUser.profiles.push( {
+            _id: profile._id,
+            o: hsw._id,
+            role: 'scheduler',
+            manager: false,
+            section: sec
+          });
+          await newUser.save();
+        }
+
+        flUsersDictionary[currentUser.id_user] = newProfile._id;
       }
       
       sec = "sec3"; 
@@ -247,27 +336,72 @@ async function run(hc) {
         `SELECT id_user,login_name,pw,first_name,surname,usergroup,email,birthday 
         FROM fg3_user WHERE usergroup>20`); // for fg only friends, members and scheduler
       for ( let currentUser of userRows ) {
-        let obj = {}; let r = "member";
+                
+        const newUser = await User.findOneAndUpdate(
+          { email: currentUser.email },
+          { $set: { 
+            pw: hc,
+            fn: currentUser.first_name,
+            sn: currentUser.surname,
+            birthday: currentUser.birthday 
+          } },
+          { upsert: true, new: true } 
+        );
+        
+        let r = 'friend';
+        if ( currentUser.usergroup != 20 ) r = 'musician';        
+
+        let newProfile = new Profile( {
+          o: hsw._id,
+          role: r,
+          section: sec,
+          manager: false,
+
+          user: newUser._id,
+
+          userFn: currentUser.first_name,
+          userSn: currentUser.surname,
+          userBd: currentUser.birthday
+        });
+        await newProfile.save();
+
+        newUser.profiles.push( {
+          _id: newProfile._id,
+          o: hsw._id,
+          role: r,
+          manager: false,
+          section: sec
+        });
+        await newUser.save();
+
 
         if ( currentUser.usergroup == 100 ) { // scheduler 
-          obj.scheduler = true; 
-        } else if ( currentUser.usergroup == 20 ) { //friend
-          r = "friend";
-        } else obj.scheduler = false;
-        let user = new User( {    ...obj,      
-          o: hsw._id,
-          un: newLoginNames[currentUser.login_name],
-          pw: /*currentUser.pw*/ hc,
-          fn: currentUser.first_name,
-          sn: currentUser.surname,
-          birthday: currentUser.birthday,
-          email: /*currentUser.email*/ 'bicsak@gmx.net',
-          role: r,          
-          notifications: n,          
-          s: sec
-        });        
-        await user.save();  
-        fgUsersDictionary[currentUser.id_user] = user._id;              
+          /* Insert extra profile into profile colelction */
+          let profile = new Profile( {
+            o: hsw._id,
+            role: 'scheduler',
+            section: sec,
+            manager: false,
+  
+            user: newUser._id,
+  
+            userFn: currentUser.first_name,
+            userSn: currentUser.surname,
+            userBd: currentUser.birthday
+          });
+          await profile.save();
+
+          newUser.profiles.push( {
+            _id: profile._id,
+            o: hsw._id,
+            role: 'scheduler',
+            manager: false,
+            section: sec
+          });
+          await newUser.save();
+        }
+
+        flUsersDictionary[currentUser.id_user] = newProfile._id;          
       }
 
       /************ PERIODS *********** */
@@ -289,7 +423,7 @@ async function run(hc) {
         };        
         
         newFlPeriods[p.begin.toISOString()].members.push( {
-          u: flUsersDictionary[p.id_user],
+          prof: flUsersDictionary[p.id_user],
           initial: p.initial,
           row: p.dplrow,
           start: p.offset,
@@ -317,7 +451,7 @@ async function run(hc) {
         };
 
         newFgPeriods[p.begin.toISOString()].members.push( {
-          u: fgUsersDictionary[p.id_user],
+          prof: fgUsersDictionary[p.id_user],
           initial: p.initial,
           row: p.dplrow,
           start: p.offset,
@@ -481,7 +615,7 @@ async function run(hc) {
           for ( let i = 0; i < comments.length; i++) {                        
             meta.comments.push( {
               message: comments[i].message,
-              u: fgUsersDictionary[comments[i].id_user], 
+              prof: fgUsersDictionary[comments[i].id_user], 
               reactions: [-1, -1, -1, -1],             
               deleted: false,
               timestamp: comments[i].posted
@@ -860,7 +994,10 @@ async function run(hc) {
        const database = client.db(mongoDBName);       
               
        await database.collection("orchestras").createIndex( { code: 1 }, { unique: true } );
-       await database.collection("users").createIndex( { o: 1, un: 1 }, { unique: true } );
+       await database.collection("users").createIndex( { email: 1 }, { unique: true } );
+       await database.collection("profiles").createIndex( { 
+         user: 1, o: 1, role: 1, section: 1 
+        }, { unique: true } );
        await database.collection("periods").createIndex( { o: 1, s: 1, begin: 1 }, { unique: true });
        await database.collection("dplmetas").createIndex( { o: 1, dpl: 1 }, { unique: true });       
        await database.collection("seasons").createIndex( { o: 1, begin: 1 }, { unique: true });
