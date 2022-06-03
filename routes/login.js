@@ -11,42 +11,36 @@ let router = express.Router();
 router.post('/', async (req, res, next) => {
     try {
         //console.log(`${req.body.username}, ${req.body.password}`);
-        let splitted = req.body.username.split('/', 2);        
-        if ( splitted.length < 2 ) {
-            splitted.push(splitted[0]);
-            splitted[0] = 'HSW';
-        } else splitted[0] = splitted[0].toUpperCase();
-        //console.log(splitted);
-        let orchestra = await Orchestra.findOne( { code: splitted[0] } );
-        //console.log(orchestra);
-        if ( !orchestra ) {
-            return res.status(401).send( {
-                msg: 'No orchestra found!'
-            } );
-        }  
         
-        User.getAuthenticated(orchestra.id, splitted[1], req.body.password, function(err, user, reason) {
+        User.getAuthenticated(req.body.username, req.body.password, function(err, user, reason) {
             if (err) throw err;
         
             // login was successful if we have a user
             if (user && reason !== User.failedLogin.MAX_ATTEMPTS) {
                 // handle login success
                 console.log('login success');
-                const token = jwt.sign( {
-                    un: user.un,
-                    uid: user.id,
-                    r: user.role,
-                    m: user.manager,
-                    sch: user.scheduler,
-                    o: user.o,
-                    s: user.s
+
+                user.token = jwt.sign({
+                    user: user._id                    
                 }, process.env.JWT_PASS, { expiresIn: '1h' } );
+                user.populate('profiles.o');
+
+                user.profiles.forEach( (currVal, ind, arr) => {
+                    arr[ind].token = jwt.sign({
+                        user: user._id,
+                        pid: currVal._id,
+                        r: currVal.role,
+                        m: currVal.manager,
+                        o: currVal.o._id,
+                        s: currVal.section
+                    }, process.env.JWT_PASS, { expiresIn: '1h' } );
+                });
                 
-                return res.status(200).send({                    
+                return res.status(200).send(/*{                    
                     token,
                     user: user,
                     orchestra: orchestra
-                });                
+                }*/ user);                
             }
         
             // otherwise we can determine why we failed

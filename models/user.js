@@ -57,6 +57,8 @@ const userSchema = new Schema({
         transform: 
         function(doc, ret, opt) {
             delete ret['pw'];
+            delete ret['loginAttempts'];
+            delete ret['lockUntil'];
             ret.birthday = ret.birthday.getTime();
             return ret;
         }
@@ -103,8 +105,8 @@ userSchema.methods.incLoginAttempts = function(cb) {
     return this.updateOne(updates, cb); 
 };
 
-userSchema.statics.getAuthenticated = function(orchestra, username, password, cb) { 
-    this.findOne({ o: orchestra, un: username }, function(err, user) { 
+userSchema.statics.getAuthenticated = function(username, password, cb) { 
+    this.findOne({ email: username }, function(err, user) { 
         if (err) return cb(err);
         // make sure the user exists
         if (!user) {
