@@ -23,11 +23,16 @@ router.post('/', async (req, res, next) => {
                 user.token = jwt.sign({
                     user: user._id                    
                 }, process.env.JWT_PASS, { expiresIn: '1h' } );
-                user.populate('profiles.o');
+                //user.populate('profiles.o');                
+                
+                let response = user.toJSON();
+                response.token = jwt.sign({
+                    user: user._id                    
+                }, process.env.JWT_PASS, { expiresIn: '1h' } );                
 
-                user.profiles.forEach( (currVal, ind, arr) => {
+                response.profiles.forEach( (currVal, ind, arr) => {
                     arr[ind].token = jwt.sign({
-                        user: user._id,
+                        user: response._id,
                         pid: currVal._id,
                         r: currVal.role,
                         m: currVal.manager,
@@ -35,12 +40,13 @@ router.post('/', async (req, res, next) => {
                         s: currVal.section
                     }, process.env.JWT_PASS, { expiresIn: '1h' } );
                 });
+                //console.log(response);
                 
                 return res.status(200).send(/*{                    
                     token,
                     user: user,
                     orchestra: orchestra
-                }*/ user);                
+                }*/ response);                
             }
         
             // otherwise we can determine why we failed

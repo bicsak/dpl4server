@@ -147,7 +147,7 @@ userSchema.statics.getAuthenticated = function(username, password, cb) {
                 return cb(null, null, reasons.PASSWORD_INCORRECT);
             });
         });
-    });
+    }).populate('profiles.o');
 };
 
 module.exports = mongoose.model('User', userSchema);
