@@ -26,7 +26,7 @@ const profileSchema = new Schema({
 
     userFn: String,
     userSn: String,
-    userBirthday: Date,
+    userBirthday: Date
 }, {
     toJSON: {
         transform: 

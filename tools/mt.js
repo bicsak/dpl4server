@@ -252,7 +252,8 @@ async function run(hc) {
         await userManager.save();
 
 
-        let flUsersDictionary = []; let fgUsersDictionary = [];
+        //let flUsersDictionary = []; let fgUsersDictionary = [];
+        let flUsersDictionary = {}; let fgUsersDictionary = {};
         let sec = "sec0";                         
 
         let userRows = await mysqlDb.query(
@@ -287,7 +288,7 @@ async function run(hc) {
 
             userFn: currentUser.first_name,
             userSn: currentUser.surname,
-            userBd: currentUser.birthday
+            userBirthday: currentUser.birthday
           });
           await newProfile.save();
 
@@ -313,7 +314,7 @@ async function run(hc) {
     
               userFn: currentUser.first_name,
               userSn: currentUser.surname,
-              userBd: currentUser.birthday
+              userBirthday: currentUser.birthday
             });
             await profile.save();
 
@@ -360,7 +361,7 @@ async function run(hc) {
 
             userFn: currentUser.first_name,
             userSn: currentUser.surname,
-            userBd: currentUser.birthday
+            userBirthday: currentUser.birthday
           });
           await newProfile.save();
 
@@ -386,7 +387,7 @@ async function run(hc) {
     
               userFn: currentUser.first_name,
               userSn: currentUser.surname,
-              userBd: currentUser.birthday
+              userBirthday: currentUser.birthday
             });
             await profile.save();
 
@@ -400,8 +401,12 @@ async function run(hc) {
             await newUser.save();
           }
 
-          flUsersDictionary[currentUser.id_user] = newProfile._id;          
+          fgUsersDictionary[currentUser.id_user] = newProfile._id;          
         }
+
+        //console.log(flUsersDictionary);
+        //console.log(fgUsersDictionary);
+
 
         /************ PERIODS *********** */      
         let newFlPeriods = {};      
@@ -892,7 +897,7 @@ async function run(hc) {
          * Fill seqnr, total for all dienst (BO1, 2, 3/6...)
          *****************************************/       
         for ( let s of seasons ) {
-          console.log(`Working on season ${s.begin}-${s.end}...`);
+          //console.log(`Working on season ${s.begin}-${s.end}...`);
   
           aggregatedDienst = await Week.aggregate( [        
             { "$match": { 
@@ -921,7 +926,7 @@ async function run(hc) {
           ]);
   
           for ( let p of aggregatedDienst ) {
-            console.log( `Working on production ${p._id}...` );
+            //console.log( `Working on production ${p._id}...` );
             let max = {
               r: [0, 0, 0, 0, 0, 0], // rehearsals
               p: 0 // performance
@@ -955,7 +960,7 @@ async function run(hc) {
               );
             } 
           } 
-          console.log('*****************************');         
+          
         }  
       }
 
