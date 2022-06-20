@@ -1,6 +1,6 @@
 [{
   "_id": {
-    "$oid": "626328a8ae25596d65eb768b"
+    "$oid": "62b0cbb803f37c78a6822bbf"
   },
   "code": "HSW",
   "fullName": "Hessisches Staatsorchester Wiesbaden",
@@ -11,21 +11,21 @@
       "full": "OPR",
       "abbr": "OPR",
       "_id": {
-        "$oid": "626328a8ae25596d65eb768c"
+        "$oid": "62b0cbb803f37c78a6822bc0"
       }
     },
     {
       "full": "Großes Haus",
       "abbr": "GH",
       "_id": {
-        "$oid": "626328a8ae25596d65eb768d"
+        "$oid": "62b0cbb803f37c78a6822bc1"
       }
     },
     {
       "full": "Kurhaus",
       "abbr": "KH",
       "_id": {
-        "$oid": "626328a8ae25596d65eb768e"
+        "$oid": "62b0cbb803f37c78a6822bc2"
       }
     }
   ],
@@ -36,7 +36,7 @@
       "maxFW": 1,
       "active": true,
       "_id": {
-        "$oid": "626328a8ae25596d65eb768f"
+        "$oid": "62b0cbb903f37c78a6822bc3"
       }
     },
     "sec1": {
@@ -45,7 +45,7 @@
       "maxFW": 1,
       "active": false,
       "_id": {
-        "$oid": "626328a8ae25596d65eb7690"
+        "$oid": "62b0cbb903f37c78a6822bc4"
       }
     },
     "sec2": {
@@ -54,7 +54,7 @@
       "maxFW": 1,
       "active": false,
       "_id": {
-        "$oid": "626328a8ae25596d65eb7691"
+        "$oid": "62b0cbb903f37c78a6822bc5"
       }
     },
     "sec3": {
@@ -63,7 +63,7 @@
       "maxFW": 1,
       "active": true,
       "_id": {
-        "$oid": "626328a8ae25596d65eb7692"
+        "$oid": "62b0cbb903f37c78a6822bc6"
       }
     },
     "sec4": {
@@ -72,7 +72,7 @@
       "maxFW": 1,
       "active": false,
       "_id": {
-        "$oid": "626328a8ae25596d65eb7693"
+        "$oid": "62b0cbb903f37c78a6822bc7"
       }
     },
     "sec5": {
@@ -81,7 +81,7 @@
       "maxFW": 1,
       "active": false,
       "_id": {
-        "$oid": "626328a8ae25596d65eb7694"
+        "$oid": "62b0cbb903f37c78a6822bc8"
       }
     },
     "sec6": {
@@ -90,7 +90,7 @@
       "maxFW": 1,
       "active": false,
       "_id": {
-        "$oid": "626328a8ae25596d65eb7695"
+        "$oid": "62b0cbb903f37c78a6822bc9"
       }
     },
     "sec7": {
@@ -99,7 +99,7 @@
       "maxFW": 1,
       "active": false,
       "_id": {
-        "$oid": "626328a8ae25596d65eb7696"
+        "$oid": "62b0cbb903f37c78a6822bca"
       }
     },
     "sec8": {
@@ -108,7 +108,7 @@
       "maxFW": 1,
       "active": false,
       "_id": {
-        "$oid": "626328a8ae25596d65eb7697"
+        "$oid": "62b0cbb903f37c78a6822bcb"
       }
     },
     "sec9": {
@@ -117,7 +117,7 @@
       "maxFW": 1,
       "active": false,
       "_id": {
-        "$oid": "626328a8ae25596d65eb7698"
+        "$oid": "62b0cbb903f37c78a6822bcc"
       }
     },
     "sec10": {
@@ -126,7 +126,7 @@
       "maxFW": 1,
       "active": false,
       "_id": {
-        "$oid": "626328a8ae25596d65eb7699"
+        "$oid": "62b0cbb903f37c78a6822bcd"
       }
     },
     "sec11": {
@@ -135,7 +135,7 @@
       "maxFW": 1,
       "active": false,
       "_id": {
-        "$oid": "626328a8ae25596d65eb769a"
+        "$oid": "62b0cbb903f37c78a6822bce"
       }
     },
     "sec12": {
@@ -144,7 +144,7 @@
       "maxFW": 1,
       "active": false,
       "_id": {
-        "$oid": "626328a8ae25596d65eb769b"
+        "$oid": "62b0cbb903f37c78a6822bcf"
       }
     }
   },
@@ -187,7 +187,7 @@
         150
       ],
       "_id": {
-        "$oid": "626328a8ae25596d65eb769c"
+        "$oid": "62b0cbb903f37c78a6822bd0"
       }
     },
     {
@@ -216,7 +216,7 @@
         150
       ],
       "_id": {
-        "$oid": "626328a8ae25596d65eb769d"
+        "$oid": "62b0cbb903f37c78a6822bd1"
       }
     },
     {
@@ -233,7 +233,247 @@
         150
       ],
       "_id": {
-        "$oid": "626328a8ae25596d65eb769e"
+        "$oid": "62b0cbb903f37c78a6822bd2"
+      }
+    }
+  ],
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbd303f37c78a68290bb"
+  },
+  "code": "TOW",
+  "fullName": "Test Orchester Wiesbaden",
+  "location": "Wiesbaden",
+  "timezone": "Europe/Berlin",
+  "venues": [
+    {
+      "full": "OPR",
+      "abbr": "OPR",
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290bc"
+      }
+    },
+    {
+      "full": "Großes Haus",
+      "abbr": "GH",
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290bd"
+      }
+    },
+    {
+      "full": "Kurhaus",
+      "abbr": "KH",
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290be"
+      }
+    }
+  ],
+  "sections": {
+    "sec0": {
+      "abbr": "Fl",
+      "name": "Flöte",
+      "maxFW": 1,
+      "active": true,
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290bf"
+      }
+    },
+    "sec1": {
+      "abbr": "Ob",
+      "name": "Oboe",
+      "maxFW": 1,
+      "active": false,
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290c0"
+      }
+    },
+    "sec2": {
+      "abbr": "Kl",
+      "name": "Klarinette",
+      "maxFW": 1,
+      "active": false,
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290c1"
+      }
+    },
+    "sec3": {
+      "abbr": "Fg",
+      "name": "Fagott",
+      "maxFW": 1,
+      "active": true,
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290c2"
+      }
+    },
+    "sec4": {
+      "abbr": "Hr",
+      "name": "Horn",
+      "maxFW": 1,
+      "active": false,
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290c3"
+      }
+    },
+    "sec5": {
+      "abbr": "Tp",
+      "name": "Trompete",
+      "maxFW": 1,
+      "active": false,
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290c4"
+      }
+    },
+    "sec6": {
+      "abbr": "Pos",
+      "name": "Posaune",
+      "maxFW": 1,
+      "active": false,
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290c5"
+      }
+    },
+    "sec7": {
+      "abbr": "Tb",
+      "name": "Tuba",
+      "maxFW": 1,
+      "active": false,
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290c6"
+      }
+    },
+    "sec8": {
+      "abbr": "1. Vl",
+      "name": "1. Violine",
+      "maxFW": 1,
+      "active": false,
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290c7"
+      }
+    },
+    "sec9": {
+      "abbr": "2. Vl.",
+      "name": "2. Violine",
+      "maxFW": 1,
+      "active": false,
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290c8"
+      }
+    },
+    "sec10": {
+      "abbr": "Va",
+      "name": "Bratsche",
+      "maxFW": 1,
+      "active": false,
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290c9"
+      }
+    },
+    "sec11": {
+      "abbr": "Vc",
+      "name": "Cello",
+      "maxFW": 1,
+      "active": false,
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290ca"
+      }
+    },
+    "sec12": {
+      "abbr": "Kb",
+      "name": "Kontrabass",
+      "maxFW": 1,
+      "active": false,
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290cb"
+      }
+    }
+  },
+  "categories": [
+    {
+      "subtypes": [
+        "OA",
+        "OS",
+        "BO",
+        "vBO",
+        "HP",
+        "GP",
+        "..."
+      ],
+      "suffixes": [
+        "OA",
+        "OS",
+        "BO",
+        "vBO",
+        "HP",
+        "GP",
+        ""
+      ],
+      "locations": [
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      "durations": [
+        150,
+        150,
+        180,
+        220,
+        180,
+        180,
+        150
+      ],
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290cc"
+      }
+    },
+    {
+      "subtypes": [
+        "Vorst.",
+        "WA",
+        "Prem.",
+        "Konz."
+      ],
+      "suffixes": [
+        "",
+        "WA",
+        "Premiere",
+        ""
+      ],
+      "locations": [
+        1,
+        1,
+        1,
+        2
+      ],
+      "durations": [
+        180,
+        180,
+        180,
+        150
+      ],
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290cd"
+      }
+    },
+    {
+      "subtypes": [
+        "Sonst."
+      ],
+      "suffixes": [
+        ""
+      ],
+      "locations": [
+        0
+      ],
+      "durations": [
+        150
+      ],
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290ce"
       }
     }
   ],

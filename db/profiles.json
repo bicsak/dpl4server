@@ -1,0 +1,651 @@
+[{
+  "_id": {
+    "$oid": "62b0cbb903f37c78a6822bdf"
+  },
+  "o": {
+    "$oid": "62b0cbb803f37c78a6822bbf"
+  },
+  "role": "office",
+  "section": "all",
+  "manager": true,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db08"
+  },
+  "email": "bicsak@gmx.net",
+  "notifications": {
+    "comment": false,
+    "dplNew": false,
+    "dplFinal": false,
+    "dplChanged": false,
+    "dplRejected": false,
+    "surveyComplete": false,
+    "surveyFailed": false
+  },
+  "userFn": "Ilya",
+  "userSn": "Jossifov",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "0"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbb903f37c78a6822be4"
+  },
+  "o": {
+    "$oid": "62b0cbb803f37c78a6822bbf"
+  },
+  "role": "musician",
+  "section": "sec0",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db0c"
+  },
+  "userFn": "Mátyás",
+  "userSn": "Bicsák",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "372466800000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbb903f37c78a6822be8"
+  },
+  "o": {
+    "$oid": "62b0cbb803f37c78a6822bbf"
+  },
+  "role": "scheduler",
+  "section": "sec0",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db0c"
+  },
+  "userFn": "Mátyás",
+  "userSn": "Bicsák",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "372466800000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbb903f37c78a6822bed"
+  },
+  "o": {
+    "$oid": "62b0cbb803f37c78a6822bbf"
+  },
+  "role": "musician",
+  "section": "sec0",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db12"
+  },
+  "userFn": "Cornelia",
+  "userSn": "Thorspecken",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "-347850000000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbb903f37c78a6822bf2"
+  },
+  "o": {
+    "$oid": "62b0cbb803f37c78a6822bbf"
+  },
+  "role": "musician",
+  "section": "sec0",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db16"
+  },
+  "userFn": "Jessica",
+  "userSn": "Jiang",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "726188400000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbb903f37c78a6822bf7"
+  },
+  "o": {
+    "$oid": "62b0cbb803f37c78a6822bbf"
+  },
+  "role": "musician",
+  "section": "sec0",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db1a"
+  },
+  "userFn": "Thomas",
+  "userSn": "Richter",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "-426906000000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbb903f37c78a6822bfc"
+  },
+  "o": {
+    "$oid": "62b0cbb803f37c78a6822bbf"
+  },
+  "role": "office",
+  "section": "all",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db1e"
+  },
+  "userFn": "Alexandra",
+  "userSn": "Koch",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "-3600000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbb903f37c78a6822c01"
+  },
+  "o": {
+    "$oid": "62b0cbb803f37c78a6822bbf"
+  },
+  "role": "friend",
+  "section": "sec0",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db22"
+  },
+  "userFn": "Kerstin",
+  "userSn": "Bicsák",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "-3600000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbb903f37c78a6822c06"
+  },
+  "o": {
+    "$oid": "62b0cbb803f37c78a6822bbf"
+  },
+  "role": "friend",
+  "section": "sec0",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db26"
+  },
+  "userFn": "Boldi",
+  "userSn": "Bicsák",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "-3600000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbb903f37c78a6822c0b"
+  },
+  "o": {
+    "$oid": "62b0cbb803f37c78a6822bbf"
+  },
+  "role": "musician",
+  "section": "sec3",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db2a"
+  },
+  "userFn": "Peter",
+  "userSn": "Brechtel",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "-85107600000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbb903f37c78a6822c0f"
+  },
+  "o": {
+    "$oid": "62b0cbb803f37c78a6822bbf"
+  },
+  "role": "scheduler",
+  "section": "sec3",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db2a"
+  },
+  "userFn": "Peter",
+  "userSn": "Brechtel",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "-85107600000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbb903f37c78a6822c14"
+  },
+  "o": {
+    "$oid": "62b0cbb803f37c78a6822bbf"
+  },
+  "role": "musician",
+  "section": "sec3",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db30"
+  },
+  "userFn": "Chih-Ti",
+  "userSn": "Wang",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "371430000000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbb903f37c78a6822c19"
+  },
+  "o": {
+    "$oid": "62b0cbb803f37c78a6822bbf"
+  },
+  "role": "musician",
+  "section": "sec3",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db34"
+  },
+  "userFn": "Beatrix",
+  "userSn": "Lindemann",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "8895600000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbb903f37c78a6822c1e"
+  },
+  "o": {
+    "$oid": "62b0cbb803f37c78a6822bbf"
+  },
+  "role": "musician",
+  "section": "sec3",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db38"
+  },
+  "userFn": "Oskar",
+  "userSn": "Münchgesang",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "8118000000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbb903f37c78a6822c23"
+  },
+  "o": {
+    "$oid": "62b0cbb803f37c78a6822bbf"
+  },
+  "role": "musician",
+  "section": "sec3",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db3c"
+  },
+  "userFn": "Béla",
+  "userSn": "Röhl",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "7081200000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbd303f37c78a68290db"
+  },
+  "o": {
+    "$oid": "62b0cbd303f37c78a68290bb"
+  },
+  "role": "office",
+  "section": "all",
+  "manager": true,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db08"
+  },
+  "email": "bicsak@gmx.net",
+  "notifications": {
+    "comment": false,
+    "dplNew": false,
+    "dplFinal": false,
+    "dplChanged": false,
+    "dplRejected": false,
+    "surveyComplete": false,
+    "surveyFailed": false
+  },
+  "userFn": "Ilya",
+  "userSn": "Jossifov",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "0"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbd303f37c78a68290e0"
+  },
+  "o": {
+    "$oid": "62b0cbd303f37c78a68290bb"
+  },
+  "role": "musician",
+  "section": "sec0",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db0c"
+  },
+  "userFn": "Mátyás",
+  "userSn": "Bicsák",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "372466800000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbd303f37c78a68290e4"
+  },
+  "o": {
+    "$oid": "62b0cbd303f37c78a68290bb"
+  },
+  "role": "scheduler",
+  "section": "sec0",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db0c"
+  },
+  "userFn": "Mátyás",
+  "userSn": "Bicsák",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "372466800000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbd303f37c78a68290e9"
+  },
+  "o": {
+    "$oid": "62b0cbd303f37c78a68290bb"
+  },
+  "role": "musician",
+  "section": "sec0",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db12"
+  },
+  "userFn": "Cornelia",
+  "userSn": "Thorspecken",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "-347850000000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbd303f37c78a68290ee"
+  },
+  "o": {
+    "$oid": "62b0cbd303f37c78a68290bb"
+  },
+  "role": "musician",
+  "section": "sec0",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db16"
+  },
+  "userFn": "Jessica",
+  "userSn": "Jiang",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "726188400000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbd303f37c78a68290f3"
+  },
+  "o": {
+    "$oid": "62b0cbd303f37c78a68290bb"
+  },
+  "role": "musician",
+  "section": "sec0",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db1a"
+  },
+  "userFn": "Thomas",
+  "userSn": "Richter",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "-426906000000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbd303f37c78a68290f8"
+  },
+  "o": {
+    "$oid": "62b0cbd303f37c78a68290bb"
+  },
+  "role": "office",
+  "section": "all",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db1e"
+  },
+  "userFn": "Alexandra",
+  "userSn": "Koch",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "-3600000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbd303f37c78a68290fd"
+  },
+  "o": {
+    "$oid": "62b0cbd303f37c78a68290bb"
+  },
+  "role": "friend",
+  "section": "sec0",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db22"
+  },
+  "userFn": "Kerstin",
+  "userSn": "Bicsák",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "-3600000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbd303f37c78a6829102"
+  },
+  "o": {
+    "$oid": "62b0cbd303f37c78a68290bb"
+  },
+  "role": "friend",
+  "section": "sec0",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db26"
+  },
+  "userFn": "Boldi",
+  "userSn": "Bicsák",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "-3600000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbd303f37c78a6829107"
+  },
+  "o": {
+    "$oid": "62b0cbd303f37c78a68290bb"
+  },
+  "role": "musician",
+  "section": "sec3",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db2a"
+  },
+  "userFn": "Peter",
+  "userSn": "Brechtel",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "-85107600000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbd303f37c78a682910b"
+  },
+  "o": {
+    "$oid": "62b0cbd303f37c78a68290bb"
+  },
+  "role": "scheduler",
+  "section": "sec3",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db2a"
+  },
+  "userFn": "Peter",
+  "userSn": "Brechtel",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "-85107600000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbd303f37c78a6829110"
+  },
+  "o": {
+    "$oid": "62b0cbd303f37c78a68290bb"
+  },
+  "role": "musician",
+  "section": "sec3",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db30"
+  },
+  "userFn": "Chih-Ti",
+  "userSn": "Wang",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "371430000000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbd303f37c78a6829115"
+  },
+  "o": {
+    "$oid": "62b0cbd303f37c78a68290bb"
+  },
+  "role": "musician",
+  "section": "sec3",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db34"
+  },
+  "userFn": "Beatrix",
+  "userSn": "Lindemann",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "8895600000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbd303f37c78a682911a"
+  },
+  "o": {
+    "$oid": "62b0cbd303f37c78a68290bb"
+  },
+  "role": "musician",
+  "section": "sec3",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db38"
+  },
+  "userFn": "Oskar",
+  "userSn": "Münchgesang",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "8118000000"
+    }
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbd303f37c78a682911f"
+  },
+  "o": {
+    "$oid": "62b0cbd303f37c78a68290bb"
+  },
+  "role": "musician",
+  "section": "sec3",
+  "manager": false,
+  "user": {
+    "$oid": "62b0cbb9f52c08566813db3c"
+  },
+  "userFn": "Béla",
+  "userSn": "Röhl",
+  "userBirthday": {
+    "$date": {
+      "$numberLong": "7081200000"
+    }
+  },
+  "__v": 0
+}]

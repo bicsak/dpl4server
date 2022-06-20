@@ -1,402 +1,552 @@
 [{
   "_id": {
-    "$oid": "626328a8ae25596d65eb76aa"
+    "$oid": "62b0cbb9f52c08566813db08"
   },
-  "o": {
-    "$oid": "626328a8ae25596d65eb768b"
-  },
-  "s": "all",
-  "fn": "Max",
-  "sn": "Mustermann",
+  "email": "bicsak@gmx.net",
+  "__v": 2,
   "birthday": {
     "$date": {
       "$numberLong": "0"
     }
   },
-  "un": "manager",
-  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
+  "fn": "Ilya",
   "loginAttempts": 0,
-  "email": "bicsak@gmx.net",
-  "role": "office",
-  "manager": true,
-  "notifications": {
-    "comment": false,
-    "dplNew": false,
-    "dplFinal": false,
-    "dplChanged": false,
-    "dplRejected": false,
-    "surveyComplete": false,
-    "surveyFailed": false
-  },
-  "__v": 0
+  "profiles": [
+    {
+      "o": {
+        "$oid": "62b0cbb803f37c78a6822bbf"
+      },
+      "role": "office",
+      "manager": true,
+      "section": "all",
+      "_id": {
+        "$oid": "62b0cbb903f37c78a6822bdf"
+      }
+    },
+    {
+      "o": {
+        "$oid": "62b0cbd303f37c78a68290bb"
+      },
+      "role": "office",
+      "manager": true,
+      "section": "all",
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290db"
+      }
+    }
+  ],
+  "pw": "$2a$10$mCPwokbEHyJY08EAwoRuy.VNF1VvGwaoSYN8Mc5gwtnNH.Pdtjj4G",
+  "sn": "Yossifov"
 },{
   "_id": {
-    "$oid": "626328a8ae25596d65eb76ac"
+    "$oid": "62b0cbb9f52c08566813db0c"
   },
-  "o": {
-    "$oid": "626328a8ae25596d65eb768b"
-  },
-  "s": "sec0",
-  "fn": "Mátyás",
-  "sn": "Bicsák",
+  "email": "dienstplan@bicsak.de",
+  "__v": 4,
   "birthday": {
     "$date": {
       "$numberLong": "372466800000"
     }
   },
-  "un": "m.bicsak",
-  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
+  "fn": "Mátyás",
   "loginAttempts": 0,
-  "email": "bicsak@gmx.net",
-  "role": "member",
-  "scheduler": true,
-  "notifications": {
-    "comment": false,
-    "dplNew": false,
-    "dplFinal": false,
-    "dplChanged": false,
-    "dplRejected": false,
-    "surveyComplete": false,
-    "surveyFailed": false
-  },
-  "__v": 0
+  "profiles": [
+    {
+      "o": {
+        "$oid": "62b0cbb803f37c78a6822bbf"
+      },
+      "role": "musician",
+      "manager": false,
+      "section": "sec0",
+      "_id": {
+        "$oid": "62b0cbb903f37c78a6822be4"
+      }
+    },
+    {
+      "o": {
+        "$oid": "62b0cbb803f37c78a6822bbf"
+      },
+      "role": "scheduler",
+      "manager": false,
+      "section": "sec0",
+      "_id": {
+        "$oid": "62b0cbb903f37c78a6822be8"
+      }
+    },
+    {
+      "o": {
+        "$oid": "62b0cbd303f37c78a68290bb"
+      },
+      "role": "musician",
+      "manager": false,
+      "section": "sec0",
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290e0"
+      }
+    },
+    {
+      "o": {
+        "$oid": "62b0cbd303f37c78a68290bb"
+      },
+      "role": "scheduler",
+      "manager": false,
+      "section": "sec0",
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290e4"
+      }
+    }
+  ],
+  "pw": "$2a$10$mCPwokbEHyJY08EAwoRuy.VNF1VvGwaoSYN8Mc5gwtnNH.Pdtjj4G",
+  "sn": "Bicsák"
 },{
   "_id": {
-    "$oid": "626328a8ae25596d65eb76ae"
+    "$oid": "62b0cbb9f52c08566813db12"
   },
-  "o": {
-    "$oid": "626328a8ae25596d65eb768b"
-  },
-  "s": "sec0",
-  "fn": "Cornelia",
-  "sn": "Thorspecken",
+  "email": "thorspecken@googlemail.com",
+  "__v": 2,
   "birthday": {
     "$date": {
       "$numberLong": "-347850000000"
     }
   },
-  "un": "c.thorspecken",
-  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
+  "fn": "Cornelia",
   "loginAttempts": 0,
-  "email": "bicsak@gmx.net",
-  "role": "member",
-  "scheduler": false,
-  "notifications": {
-    "comment": false,
-    "dplNew": false,
-    "dplFinal": false,
-    "dplChanged": false,
-    "dplRejected": false,
-    "surveyComplete": false,
-    "surveyFailed": false
-  },
-  "__v": 0
+  "profiles": [
+    {
+      "o": {
+        "$oid": "62b0cbb803f37c78a6822bbf"
+      },
+      "role": "musician",
+      "manager": false,
+      "section": "sec0",
+      "_id": {
+        "$oid": "62b0cbb903f37c78a6822bed"
+      }
+    },
+    {
+      "o": {
+        "$oid": "62b0cbd303f37c78a68290bb"
+      },
+      "role": "musician",
+      "manager": false,
+      "section": "sec0",
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290e9"
+      }
+    }
+  ],
+  "pw": "$2a$10$mCPwokbEHyJY08EAwoRuy.VNF1VvGwaoSYN8Mc5gwtnNH.Pdtjj4G",
+  "sn": "Thorspecken"
 },{
   "_id": {
-    "$oid": "626328a8ae25596d65eb76b0"
+    "$oid": "62b0cbb9f52c08566813db16"
   },
-  "o": {
-    "$oid": "626328a8ae25596d65eb768b"
-  },
-  "s": "sec0",
-  "fn": "Jessica",
-  "sn": "Jiang",
+  "email": "jessicaflute123@gmail.com",
+  "__v": 2,
   "birthday": {
     "$date": {
       "$numberLong": "726188400000"
     }
   },
-  "un": "j.jiang",
-  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
+  "fn": "Jessica",
   "loginAttempts": 0,
-  "email": "bicsak@gmx.net",
-  "role": "member",
-  "scheduler": false,
-  "notifications": {
-    "comment": false,
-    "dplNew": false,
-    "dplFinal": false,
-    "dplChanged": false,
-    "dplRejected": false,
-    "surveyComplete": false,
-    "surveyFailed": false
-  },
-  "__v": 0
+  "profiles": [
+    {
+      "o": {
+        "$oid": "62b0cbb803f37c78a6822bbf"
+      },
+      "role": "musician",
+      "manager": false,
+      "section": "sec0",
+      "_id": {
+        "$oid": "62b0cbb903f37c78a6822bf2"
+      }
+    },
+    {
+      "o": {
+        "$oid": "62b0cbd303f37c78a68290bb"
+      },
+      "role": "musician",
+      "manager": false,
+      "section": "sec0",
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290ee"
+      }
+    }
+  ],
+  "pw": "$2a$10$mCPwokbEHyJY08EAwoRuy.VNF1VvGwaoSYN8Mc5gwtnNH.Pdtjj4G",
+  "sn": "Jiang"
 },{
   "_id": {
-    "$oid": "626328a8ae25596d65eb76b2"
+    "$oid": "62b0cbb9f52c08566813db1a"
   },
-  "o": {
-    "$oid": "626328a8ae25596d65eb768b"
-  },
-  "s": "sec0",
-  "fn": "Thomas",
-  "sn": "Richter",
+  "email": "richter-wiesbaden@t-online.de",
+  "__v": 2,
   "birthday": {
     "$date": {
       "$numberLong": "-426906000000"
     }
   },
-  "un": "t.richter",
-  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
+  "fn": "Thomas",
   "loginAttempts": 0,
-  "email": "bicsak@gmx.net",
-  "role": "member",
-  "scheduler": false,
-  "notifications": {
-    "comment": false,
-    "dplNew": false,
-    "dplFinal": false,
-    "dplChanged": false,
-    "dplRejected": false,
-    "surveyComplete": false,
-    "surveyFailed": false
-  },
-  "__v": 0
+  "profiles": [
+    {
+      "o": {
+        "$oid": "62b0cbb803f37c78a6822bbf"
+      },
+      "role": "musician",
+      "manager": false,
+      "section": "sec0",
+      "_id": {
+        "$oid": "62b0cbb903f37c78a6822bf7"
+      }
+    },
+    {
+      "o": {
+        "$oid": "62b0cbd303f37c78a68290bb"
+      },
+      "role": "musician",
+      "manager": false,
+      "section": "sec0",
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290f3"
+      }
+    }
+  ],
+  "pw": "$2a$10$mCPwokbEHyJY08EAwoRuy.VNF1VvGwaoSYN8Mc5gwtnNH.Pdtjj4G",
+  "sn": "Richter"
 },{
   "_id": {
-    "$oid": "626328a8ae25596d65eb76b4"
+    "$oid": "62b0cbb9f52c08566813db1e"
   },
-  "o": {
-    "$oid": "626328a8ae25596d65eb768b"
+  "email": "a.koch@staatstheater-wiesbaden.de",
+  "__v": 2,
+  "birthday": {
+    "$date": {
+      "$numberLong": "-3600000"
+    }
   },
-  "s": "all",
   "fn": "Alexandra",
-  "sn": "Koch",
+  "loginAttempts": 0,
+  "profiles": [
+    {
+      "o": {
+        "$oid": "62b0cbb803f37c78a6822bbf"
+      },
+      "role": "office",
+      "manager": false,
+      "section": "all",
+      "_id": {
+        "$oid": "62b0cbb903f37c78a6822bfc"
+      }
+    },
+    {
+      "o": {
+        "$oid": "62b0cbd303f37c78a68290bb"
+      },
+      "role": "office",
+      "manager": false,
+      "section": "all",
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290f8"
+      }
+    }
+  ],
+  "pw": "$2a$10$mCPwokbEHyJY08EAwoRuy.VNF1VvGwaoSYN8Mc5gwtnNH.Pdtjj4G",
+  "sn": "Koch"
+},{
+  "_id": {
+    "$oid": "62b0cbb9f52c08566813db22"
+  },
+  "email": "kerstin.bicsak@web.de",
+  "__v": 2,
   "birthday": {
     "$date": {
       "$numberLong": "-3600000"
     }
   },
-  "un": "a.koch",
-  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
-  "loginAttempts": 0,
-  "email": "bicsak@gmx.net",
-  "role": "office",
-  "manager": false,
-  "notifications": {
-    "comment": false,
-    "dplNew": false,
-    "dplFinal": false,
-    "dplChanged": false,
-    "dplRejected": false,
-    "surveyComplete": false,
-    "surveyFailed": false
-  },
-  "__v": 0
-},{
-  "_id": {
-    "$oid": "626328a8ae25596d65eb76b6"
-  },
-  "o": {
-    "$oid": "626328a8ae25596d65eb768b"
-  },
-  "s": "sec0",
   "fn": "Kerstin",
-  "sn": "Bicsák",
+  "loginAttempts": 0,
+  "profiles": [
+    {
+      "o": {
+        "$oid": "62b0cbb803f37c78a6822bbf"
+      },
+      "role": "friend",
+      "manager": false,
+      "section": "sec0",
+      "_id": {
+        "$oid": "62b0cbb903f37c78a6822c01"
+      }
+    },
+    {
+      "o": {
+        "$oid": "62b0cbd303f37c78a68290bb"
+      },
+      "role": "friend",
+      "manager": false,
+      "section": "sec0",
+      "_id": {
+        "$oid": "62b0cbd303f37c78a68290fd"
+      }
+    }
+  ],
+  "pw": "$2a$10$mCPwokbEHyJY08EAwoRuy.VNF1VvGwaoSYN8Mc5gwtnNH.Pdtjj4G",
+  "sn": "Bicsák"
+},{
+  "_id": {
+    "$oid": "62b0cbb9f52c08566813db26"
+  },
+  "email": "bicsakms@hotmail.com",
+  "__v": 2,
   "birthday": {
     "$date": {
       "$numberLong": "-3600000"
     }
   },
-  "un": "k.bicsak",
-  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
-  "loginAttempts": 0,
-  "email": "bicsak@gmx.net",
-  "role": "friend",
-  "notifications": {
-    "comment": false,
-    "dplNew": false,
-    "dplFinal": false,
-    "dplChanged": false,
-    "dplRejected": false,
-    "surveyComplete": false,
-    "surveyFailed": false
-  },
-  "__v": 0
-},{
-  "_id": {
-    "$oid": "626328a8ae25596d65eb76b8"
-  },
-  "o": {
-    "$oid": "626328a8ae25596d65eb768b"
-  },
-  "s": "sec0",
   "fn": "Boldi",
-  "sn": "Bicsák",
-  "birthday": {
-    "$date": {
-      "$numberLong": "-3600000"
-    }
-  },
-  "un": "b.bicsak",
-  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
   "loginAttempts": 0,
-  "email": "bicsak@gmx.net",
-  "role": "friend",
-  "notifications": {
-    "comment": false,
-    "dplNew": false,
-    "dplFinal": false,
-    "dplChanged": false,
-    "dplRejected": false,
-    "surveyComplete": false,
-    "surveyFailed": false
-  },
-  "__v": 0
+  "profiles": [
+    {
+      "o": {
+        "$oid": "62b0cbb803f37c78a6822bbf"
+      },
+      "role": "friend",
+      "manager": false,
+      "section": "sec0",
+      "_id": {
+        "$oid": "62b0cbb903f37c78a6822c06"
+      }
+    },
+    {
+      "o": {
+        "$oid": "62b0cbd303f37c78a68290bb"
+      },
+      "role": "friend",
+      "manager": false,
+      "section": "sec0",
+      "_id": {
+        "$oid": "62b0cbd303f37c78a6829102"
+      }
+    }
+  ],
+  "pw": "$2a$10$mCPwokbEHyJY08EAwoRuy.VNF1VvGwaoSYN8Mc5gwtnNH.Pdtjj4G",
+  "sn": "Bicsák"
 },{
   "_id": {
-    "$oid": "626328a8ae25596d65eb76ba"
+    "$oid": "62b0cbb9f52c08566813db2a"
   },
-  "o": {
-    "$oid": "626328a8ae25596d65eb768b"
-  },
-  "s": "sec3",
-  "fn": "Peter",
-  "sn": "Brechtel",
+  "email": "peterbrechtel@gmx.de",
+  "__v": 4,
   "birthday": {
     "$date": {
       "$numberLong": "-85107600000"
     }
   },
-  "un": "p.brechtel",
-  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
+  "fn": "Peter",
   "loginAttempts": 0,
-  "email": "bicsak@gmx.net",
-  "role": "member",
-  "scheduler": true,
-  "notifications": {
-    "comment": false,
-    "dplNew": false,
-    "dplFinal": false,
-    "dplChanged": false,
-    "dplRejected": false,
-    "surveyComplete": false,
-    "surveyFailed": false
-  },
-  "__v": 0
+  "profiles": [
+    {
+      "o": {
+        "$oid": "62b0cbb803f37c78a6822bbf"
+      },
+      "role": "musician",
+      "manager": false,
+      "section": "sec3",
+      "_id": {
+        "$oid": "62b0cbb903f37c78a6822c0b"
+      }
+    },
+    {
+      "o": {
+        "$oid": "62b0cbb803f37c78a6822bbf"
+      },
+      "role": "scheduler",
+      "manager": false,
+      "section": "sec3",
+      "_id": {
+        "$oid": "62b0cbb903f37c78a6822c0f"
+      }
+    },
+    {
+      "o": {
+        "$oid": "62b0cbd303f37c78a68290bb"
+      },
+      "role": "musician",
+      "manager": false,
+      "section": "sec3",
+      "_id": {
+        "$oid": "62b0cbd303f37c78a6829107"
+      }
+    },
+    {
+      "o": {
+        "$oid": "62b0cbd303f37c78a68290bb"
+      },
+      "role": "scheduler",
+      "manager": false,
+      "section": "sec3",
+      "_id": {
+        "$oid": "62b0cbd303f37c78a682910b"
+      }
+    }
+  ],
+  "pw": "$2a$10$mCPwokbEHyJY08EAwoRuy.VNF1VvGwaoSYN8Mc5gwtnNH.Pdtjj4G",
+  "sn": "Brechtel"
 },{
   "_id": {
-    "$oid": "626328a8ae25596d65eb76bc"
+    "$oid": "62b0cbb9f52c08566813db30"
   },
-  "o": {
-    "$oid": "626328a8ae25596d65eb768b"
-  },
-  "s": "sec3",
-  "fn": "Chih-Ti",
-  "sn": "Wang",
+  "email": "chitiwang1009@hotmail.com",
+  "__v": 2,
   "birthday": {
     "$date": {
       "$numberLong": "371430000000"
     }
   },
-  "un": "c.wang",
-  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
+  "fn": "Chih-Ti",
   "loginAttempts": 0,
-  "email": "bicsak@gmx.net",
-  "role": "member",
-  "scheduler": false,
-  "notifications": {
-    "comment": false,
-    "dplNew": false,
-    "dplFinal": false,
-    "dplChanged": false,
-    "dplRejected": false,
-    "surveyComplete": false,
-    "surveyFailed": false
-  },
-  "__v": 0
+  "profiles": [
+    {
+      "o": {
+        "$oid": "62b0cbb803f37c78a6822bbf"
+      },
+      "role": "musician",
+      "manager": false,
+      "section": "sec3",
+      "_id": {
+        "$oid": "62b0cbb903f37c78a6822c14"
+      }
+    },
+    {
+      "o": {
+        "$oid": "62b0cbd303f37c78a68290bb"
+      },
+      "role": "musician",
+      "manager": false,
+      "section": "sec3",
+      "_id": {
+        "$oid": "62b0cbd303f37c78a6829110"
+      }
+    }
+  ],
+  "pw": "$2a$10$mCPwokbEHyJY08EAwoRuy.VNF1VvGwaoSYN8Mc5gwtnNH.Pdtjj4G",
+  "sn": "Wang"
 },{
   "_id": {
-    "$oid": "626328a8ae25596d65eb76be"
+    "$oid": "62b0cbb9f52c08566813db34"
   },
-  "o": {
-    "$oid": "626328a8ae25596d65eb768b"
-  },
-  "s": "sec3",
-  "fn": "Beatrix",
-  "sn": "Lindemann",
+  "email": "beatrixfriis@gmail.com",
+  "__v": 2,
   "birthday": {
     "$date": {
       "$numberLong": "8895600000"
     }
   },
-  "un": "b.lindemann",
-  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
+  "fn": "Beatrix",
   "loginAttempts": 0,
-  "email": "bicsak@gmx.net",
-  "role": "member",
-  "scheduler": false,
-  "notifications": {
-    "comment": false,
-    "dplNew": false,
-    "dplFinal": false,
-    "dplChanged": false,
-    "dplRejected": false,
-    "surveyComplete": false,
-    "surveyFailed": false
-  },
-  "__v": 0
+  "profiles": [
+    {
+      "o": {
+        "$oid": "62b0cbb803f37c78a6822bbf"
+      },
+      "role": "musician",
+      "manager": false,
+      "section": "sec3",
+      "_id": {
+        "$oid": "62b0cbb903f37c78a6822c19"
+      }
+    },
+    {
+      "o": {
+        "$oid": "62b0cbd303f37c78a68290bb"
+      },
+      "role": "musician",
+      "manager": false,
+      "section": "sec3",
+      "_id": {
+        "$oid": "62b0cbd303f37c78a6829115"
+      }
+    }
+  ],
+  "pw": "$2a$10$mCPwokbEHyJY08EAwoRuy.VNF1VvGwaoSYN8Mc5gwtnNH.Pdtjj4G",
+  "sn": "Lindemann"
 },{
   "_id": {
-    "$oid": "626328a8ae25596d65eb76c0"
+    "$oid": "62b0cbb9f52c08566813db38"
   },
-  "o": {
-    "$oid": "626328a8ae25596d65eb768b"
-  },
-  "s": "sec3",
-  "fn": "Oskar",
-  "sn": "Münchgesang",
+  "email": "bassoon1@gmail.com",
+  "__v": 2,
   "birthday": {
     "$date": {
       "$numberLong": "8118000000"
     }
   },
-  "un": "o.munchgesang",
-  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
+  "fn": "Oskar",
   "loginAttempts": 0,
-  "email": "bicsak@gmx.net",
-  "role": "member",
-  "scheduler": false,
-  "notifications": {
-    "comment": false,
-    "dplNew": false,
-    "dplFinal": false,
-    "dplChanged": false,
-    "dplRejected": false,
-    "surveyComplete": false,
-    "surveyFailed": false
-  },
-  "__v": 0
+  "profiles": [
+    {
+      "o": {
+        "$oid": "62b0cbb803f37c78a6822bbf"
+      },
+      "role": "musician",
+      "manager": false,
+      "section": "sec3",
+      "_id": {
+        "$oid": "62b0cbb903f37c78a6822c1e"
+      }
+    },
+    {
+      "o": {
+        "$oid": "62b0cbd303f37c78a68290bb"
+      },
+      "role": "musician",
+      "manager": false,
+      "section": "sec3",
+      "_id": {
+        "$oid": "62b0cbd303f37c78a682911a"
+      }
+    }
+  ],
+  "pw": "$2a$10$mCPwokbEHyJY08EAwoRuy.VNF1VvGwaoSYN8Mc5gwtnNH.Pdtjj4G",
+  "sn": "Münchgesang"
 },{
   "_id": {
-    "$oid": "626328a8ae25596d65eb76c2"
+    "$oid": "62b0cbb9f52c08566813db3c"
   },
-  "o": {
-    "$oid": "626328a8ae25596d65eb768b"
-  },
-  "s": "sec3",
-  "fn": "Béla",
-  "sn": "Röhl",
+  "email": "belsky@gmx.net",
+  "__v": 2,
   "birthday": {
     "$date": {
       "$numberLong": "7081200000"
     }
   },
-  "un": "b.rohl",
-  "pw": "$2a$10$MpMbbjTEpVNyf/e8KqnB3.lxY2WobxfiHheGzFJbLmv.FHA0l0kui",
+  "fn": "Béla",
   "loginAttempts": 0,
-  "email": "bicsak@gmx.net",
-  "role": "member",
-  "scheduler": false,
-  "notifications": {
-    "comment": false,
-    "dplNew": false,
-    "dplFinal": false,
-    "dplChanged": false,
-    "dplRejected": false,
-    "surveyComplete": false,
-    "surveyFailed": false
-  },
-  "__v": 0
+  "profiles": [
+    {
+      "o": {
+        "$oid": "62b0cbb803f37c78a6822bbf"
+      },
+      "role": "musician",
+      "manager": false,
+      "section": "sec3",
+      "_id": {
+        "$oid": "62b0cbb903f37c78a6822c23"
+      }
+    },
+    {
+      "o": {
+        "$oid": "62b0cbd303f37c78a68290bb"
+      },
+      "role": "musician",
+      "manager": false,
+      "section": "sec3",
+      "_id": {
+        "$oid": "62b0cbd303f37c78a682911f"
+      }
+    }
+  ],
+  "pw": "$2a$10$mCPwokbEHyJY08EAwoRuy.VNF1VvGwaoSYN8Mc5gwtnNH.Pdtjj4G",
+  "sn": "Röhl"
 }]

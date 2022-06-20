@@ -1,9 +1,9 @@
 [{
   "_id": {
-    "$oid": "626328a8ae25596d65eb76a0"
+    "$oid": "62b0cbb903f37c78a6822bd4"
   },
   "o": {
-    "$oid": "626328a8ae25596d65eb768b"
+    "$oid": "62b0cbb803f37c78a6822bbf"
   },
   "label": "2017/2018",
   "begin": {
@@ -20,10 +20,10 @@
   "__v": 0
 },{
   "_id": {
-    "$oid": "626328a8ae25596d65eb76a2"
+    "$oid": "62b0cbb903f37c78a6822bd6"
   },
   "o": {
-    "$oid": "626328a8ae25596d65eb768b"
+    "$oid": "62b0cbb803f37c78a6822bbf"
   },
   "label": "2018/2019",
   "begin": {
@@ -40,10 +40,10 @@
   "__v": 0
 },{
   "_id": {
-    "$oid": "626328a8ae25596d65eb76a4"
+    "$oid": "62b0cbb903f37c78a6822bd8"
   },
   "o": {
-    "$oid": "626328a8ae25596d65eb768b"
+    "$oid": "62b0cbb803f37c78a6822bbf"
   },
   "label": "2019/2020",
   "begin": {
@@ -60,10 +60,10 @@
   "__v": 0
 },{
   "_id": {
-    "$oid": "626328a8ae25596d65eb76a6"
+    "$oid": "62b0cbb903f37c78a6822bda"
   },
   "o": {
-    "$oid": "626328a8ae25596d65eb768b"
+    "$oid": "62b0cbb803f37c78a6822bbf"
   },
   "label": "2020/2021",
   "begin": {
@@ -80,10 +80,10 @@
   "__v": 0
 },{
   "_id": {
-    "$oid": "626328a8ae25596d65eb76a8"
+    "$oid": "62b0cbb903f37c78a6822bdc"
   },
   "o": {
-    "$oid": "626328a8ae25596d65eb768b"
+    "$oid": "62b0cbb803f37c78a6822bbf"
   },
   "label": "2021/2022",
   "begin": {
@@ -93,7 +93,107 @@
   },
   "end": {
     "$date": {
-      "$numberLong": "1656280800000"
+      "$numberLong": "1658700000000"
+    }
+  },
+  "comment": "",
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbd303f37c78a68290d0"
+  },
+  "o": {
+    "$oid": "62b0cbd303f37c78a68290bb"
+  },
+  "label": "2017/2018",
+  "begin": {
+    "$date": {
+      "$numberLong": "1503266400000"
+    }
+  },
+  "end": {
+    "$date": {
+      "$numberLong": "1530482400000"
+    }
+  },
+  "comment": "Jessicas erste Spielzeit. Langes erste SZ.",
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbd303f37c78a68290d2"
+  },
+  "o": {
+    "$oid": "62b0cbd303f37c78a68290bb"
+  },
+  "label": "2018/2019",
+  "begin": {
+    "$date": {
+      "$numberLong": "1534111200000"
+    }
+  },
+  "end": {
+    "$date": {
+      "$numberLong": "1561932000000"
+    }
+  },
+  "comment": "Jessicas 2. SZ",
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbd303f37c78a68290d4"
+  },
+  "o": {
+    "$oid": "62b0cbd303f37c78a68290bb"
+  },
+  "label": "2019/2020",
+  "begin": {
+    "$date": {
+      "$numberLong": "1565560800000"
+    }
+  },
+  "end": {
+    "$date": {
+      "$numberLong": "1593986400000"
+    }
+  },
+  "comment": "Jessicas 3. SZ",
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbd303f37c78a68290d6"
+  },
+  "o": {
+    "$oid": "62b0cbd303f37c78a68290bb"
+  },
+  "label": "2020/2021",
+  "begin": {
+    "$date": {
+      "$numberLong": "1597615200000"
+    }
+  },
+  "end": {
+    "$date": {
+      "$numberLong": "1626645600000"
+    }
+  },
+  "comment": "",
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "62b0cbd303f37c78a68290d8"
+  },
+  "o": {
+    "$oid": "62b0cbd303f37c78a68290bb"
+  },
+  "label": "2021/2022",
+  "begin": {
+    "$date": {
+      "$numberLong": "1630274400000"
+    }
+  },
+  "end": {
+    "$date": {
+      "$numberLong": "1658700000000"
     }
   },
   "comment": "",
