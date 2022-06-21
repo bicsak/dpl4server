@@ -498,7 +498,7 @@ async function run(hc) {
           let monday = `${weekBegin.getFullYear()}-${pad(weekBegin.getMonth()+1)}-${pad(weekBegin.getDate())}`;        
 
           let result = await mysqlDb.query(
-            `SELECT remark,id_week,period FROM fl3_week WHERE monday='${monday}'`);
+            `SELECT remark,status,id_week,period FROM fl3_week WHERE monday='${monday}'`);
           if ( result.length ) {
             week.fl_id = result[0].id_week; 
             week.fl_p = result[0].period.toISOString();       
@@ -516,7 +516,7 @@ async function run(hc) {
               remark: result[0].remark,
               weekBegin: weekBegin,
               weekEditable: true,
-              closed: true,
+              closed: result[0].status==1,
               correction: newCorr,
               delta: Array(newFlPeriods[week.fl_p].members.length).fill(0),
               start: Array(newFlPeriods[week.fl_p].members.length).fill(0),
