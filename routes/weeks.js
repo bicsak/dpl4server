@@ -118,7 +118,7 @@ async function createWeekDataRaw(begin, authData, sec) {
 
 
             /* Dienstzahlen --- only if authorized and single section request */
-            if ( authData.r === 'musician' && sec ) {   
+            if ( (authData.r === 'musician' || authData.r === 'scheduler') && sec ) {   
                dplRaw[dplDocs[i].s] = {
                   ...dplRaw[dplDocs[i].s],
                   start: dplDocs[i].start,
