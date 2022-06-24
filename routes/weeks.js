@@ -16,6 +16,7 @@ async function createWeekDataRaw(begin, authData, sec) {
       begin: beginDate               
    }).populate('season', 'label begin end -_id')
    .populate('o', 'timezone')
+   .populate('dienst.prod')
    .select('-dpls -begin');
 
    if ( wplDoc ) {
