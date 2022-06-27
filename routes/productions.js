@@ -83,10 +83,10 @@ router.patch('/:id', async function(req, res) {
          res.sendStatus(401);
       else {  
          const changes = req.body;
-         console.log(`PATCH request for prod id:  ${req.params.id}`);
+         //console.log(`PATCH request for prod id:  ${req.params.id}`);
       
          if ( changes.name ) {         
-            console.log(`New name: ${changes.name}`);
+            //console.log(`New name: ${changes.name}`);
             // Update document in productions collection
             await Production.findOneAndUpdate( { 
                o: authData.o,
@@ -115,7 +115,7 @@ router.patch('/:id', async function(req, res) {
             
             res.json( {name: changes.name} );
          } else {
-            console.log( changes );
+            //console.log( changes );
             /*let update = {
                comment: changes.comment,
                duration: changes.duration,

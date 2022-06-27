@@ -178,8 +178,7 @@ router.get('/:mts', async function(req, res) {
       if (err) 
          res.sendStatus(401);
       else {
-         let resp = await createWeekDataRaw(req.params.mts, authData); 
-         console.log(resp);
+         let resp = await createWeekDataRaw(req.params.mts, authData);          
          res.json( resp );
       }
    });
@@ -190,13 +189,39 @@ router.get('/:section/:mts', async function(req, res) {
       if (err) 
          res.sendStatus(401);
       else {
-         let resp = await createWeekDataRaw(req.params.mts, authData, req.params.section); 
-         console.log(resp);
-         console.log(req.params.section);
+         let resp = await createWeekDataRaw(req.params.mts, authData, req.params.section);          
          res.json( resp );
       }
    });
 });
+
+router.patch('/:mts', async function(req, res) {
+   jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
+      if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }
+      if ( req.body.path === '/remark' ) {
+         if ( req.body.op === 'replace' ) {            
+            await Week.findOneAndUpdate( { 
+               o: authData.o,
+               begin: new Date(req.params.mts * 1000)
+            }, {
+               remark: req.body.value
+            });
+            res.json( { remark: req.body.value } ); 
+            return;
+         } else {            
+            await Week.findOneAndUpdate( { 
+               o: authData.o,
+               begin: new Date(req.params.mts * 1000)
+            }, {
+               remark: null
+            });
+            res.sendStatus( 204 ); 
+            return;
+         }
+      }      
+   });
+});
+
 
 router.post('/', function(req, res){
    res.send('POST route on weeks.');
