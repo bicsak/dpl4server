@@ -10,7 +10,9 @@ const verifyToken = require('./middleware/verifytoken');
 //var { MongoClient } = require( 'mongodb' );
 
 //const mongoUri = "mongodb://myUserAdmin:csakMalajDB@127.0.0.1:27017";
-const mongoUri = `mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@127.0.0.1:27017`;
+//const mongoUri = `mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@127.0.0.1:27017`;
+//const mongoUri = `mongodb://Malaj:27017,Malaj:27018,Malaj:27019?replicaSet=rs`;
+const mongoUri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.js8ztlf.mongodb.net/test`;
 const mongoDBName = process.env.DB_NAME;
 
 const weeks = require('./routes/weeks.js');      

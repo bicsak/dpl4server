@@ -2,6 +2,10 @@
  * Data Migration Tool DPL3 -> DPL4
  * MySQL -> MongoDB
  **************************/
+ if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
+
 const util = require( 'util' );
 const bcrypt = require('bcryptjs');
 const mysql = require( 'mysql' );
@@ -9,7 +13,8 @@ const { MongoClient } = require( 'mongodb' );
 
 const mongoose = require('mongoose');
 
-const mongoUri = "mongodb://myUserAdmin:csakMalajDB@127.0.0.1:27017";
+//const mongoUri = "mongodb://myUserAdmin:csakMalajDB@127.0.0.1:27017";
+const mongoUri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.js8ztlf.mongodb.net/test`;
 const mongoDBName = "odp_test";
 
 const client = new MongoClient(mongoUri, {

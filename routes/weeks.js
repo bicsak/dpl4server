@@ -1,6 +1,7 @@
 let express = require('express');
 const jwt = require('jsonwebtoken');
 let router = express.Router();
+const mongoose = require('mongoose');
 const Dpl = require('../models/dpl');
 const Period = require('../models/period');
 const Week = require('../models/week');
@@ -208,7 +209,7 @@ router.patch('/:mts', async function(req, res) {
             });
             res.json( { remark: req.body.value } ); 
             return;
-         } else {            
+         } else if (req.body.op === 'remove' ) {            
             await Week.findOneAndUpdate( { 
                o: authData.o,
                begin: new Date(req.params.mts * 1000)
@@ -218,7 +219,41 @@ router.patch('/:mts', async function(req, res) {
             res.sendStatus( 204 ); 
             return;
          }
-      }      
+      } else if ( req.body.path === '/editable' && req.body.op === 'replace' ) {
+
+         const session = await mongoose.connection.startSession();
+         try {
+            session.startTransaction();
+            weekDoc = await Week.findOneAndUpdate( { 
+               o: authData.o,
+               begin: new Date(req.params.mts * 1000)
+            }, {
+               editable: req.body.value
+            }, { session } );
+   
+            await Dpl.updateMany( { 
+               o: authData.o,
+               w: weekDoc._id
+            }, {
+               weekEditable: req.body.value
+            }, { session } );
+
+            await session.commitTransaction();
+         } catch(error) {
+            console.log('error, aborting transaction');
+            console.log(error);
+            await session.abortTransaction();
+         }
+         session.endSession();
+
+
+         /*await session.withTransaction(() => {
+            return Customer.create([{ name: 'Test' }], { session: session })
+          });*/         
+
+         res.json( { editable: req.body.value } ); //TODO
+         return;
+      }
    });
 });
 
