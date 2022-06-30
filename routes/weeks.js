@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const Dpl = require('../models/dpl');
 const Period = require('../models/period');
 const Week = require('../models/week');
+const Dienst = require('../models/dienst');
 const Profile = require('../models/profile');
 
 async function createWeekDataRaw(begin, authData, sec) {
@@ -244,18 +245,71 @@ router.patch('/:mts', async function(req, res) {
             console.log(error);
             await session.abortTransaction();
          }
-         session.endSession();
+         session.endSession();       
 
-
-         /*await session.withTransaction(() => {
-            return Customer.create([{ name: 'Test' }], { session: session })
-          });*/         
-
-         res.json( { editable: req.body.value } ); //TODO
+         res.json( { editable: req.body.value } ); //TODO push-notifications
          return;
       }
    });
 });
+
+router.patch('/:mts/:did', async function(req, res) {
+   jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
+      if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }
+      if ( req.body.path === '/instr' ) {
+         if ( req.body.op === 'replace' ) { 
+            const session = await mongoose.connection.startSession();
+            try {
+               session.startTransaction();                       
+               let weekDoc = await Week.findOneAndUpdate({
+                  'dienst._id': req.params.did
+               }, {
+                  '$set': { 'dienst.$.instrumentation': req.body.value }               
+               }, { session } );
+               await Dienst.findByIdAndUpdate(req.params.did, {
+                  '$set': { 'instrumentation': req.body.value }               
+               }, { session } );
+               /*Object.entries(req.body.value).forEach( async ([key, value]) => {
+                  await Dpl.findOneAndUpdate({
+                     o: authData.o,
+                     s: key,
+                     w: weekDoc._id,
+                     'seatings.d': req.params.did
+                  }, {
+                     'seatings.$.dienstInstr': value
+                  }, { session } );
+                  //does not work because anonym function promise (async) in try-catch block
+               });*/               
+
+               for (const key in req.body.value) {
+                  if (req.body.value.hasOwnProperty(key)) {
+                     await Dpl.findOneAndUpdate({
+                        o: authData.o,
+                        s: key,
+                        w: weekDoc._id,
+                        'seatings.d': req.params.did
+                     }, {
+                        'seatings.$.dienstInstr': req.body.value[key]
+                     }, { session } );
+                      
+                  }
+               }
+               await session.commitTransaction();
+            } catch(error) {
+               console.log('error, aborting transaction');
+               console.log(error);
+               await session.abortTransaction();
+            }
+            session.endSession();
+
+            res.json( { instrumentation: req.body.value } );            
+            return;
+         } 
+      }
+   });
+});
+
+
 
 
 router.post('/', function(req, res){

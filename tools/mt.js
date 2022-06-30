@@ -15,7 +15,7 @@ const mongoose = require('mongoose');
 
 //const mongoUri = "mongodb://myUserAdmin:csakMalajDB@127.0.0.1:27017";
 const mongoUri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.js8ztlf.mongodb.net/test`;
-const mongoDBName = "odp_test";
+const mongoDBName = "odp_test" /* "odp_production" */;
 
 const client = new MongoClient(mongoUri, {
   useNewUrlParser: true,

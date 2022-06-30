@@ -5,8 +5,7 @@ const { Schema } = mongoose;
 // for typeahead and OA1, 2,... counting
 // compund index on o+name+begin
 const dienstExtRefSchema = new Schema({
-    o: { type: Schema.Types.ObjectId, ref: 'Orchestra' },    
-    d: Schema.Types.ObjectId, // _id of dienst subdoc in week
+    o: { type: Schema.Types.ObjectId, ref: 'Orchestra' },        
     season: { type: Schema.Types.ObjectId, ref: 'Season' },
     w: { type: Schema.Types.ObjectId, ref: 'Week' },
     prod: { type: Schema.Types.ObjectId, ref: 'Production' },
