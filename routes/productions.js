@@ -16,7 +16,13 @@ router.get('/', async function(req, res) {
           let resp = await Production.find( { 
               o: authData.o,              
               name: { $regex: req.query.q, $options: '^' }
-            } ).limit(10).select('name');                
+            } ).limit(10).select('name duration firstDienst').populate({
+               path: 'firstDienst',
+               select: 'begin -_id',
+               options: {
+                  transform: doc => doc == null ? null : doc.begin.getTime()
+               }
+            });                
          console.log(resp);
         res.json( resp ); 
 

@@ -28,7 +28,7 @@ router.get('/', verifyToken, async function(req, res) {
               o: authData.o,
               category: 2,
               name: { $regex: req.query.q, $options: '^' }
-            } ).limit(10).select('name');                
+            } ).limit(10).select('name -_id');                
             res.json( resp ); 
          } else {
             
