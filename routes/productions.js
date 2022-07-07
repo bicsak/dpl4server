@@ -101,24 +101,26 @@ router.patch('/:id', async function(req, res) {
                name: changes.name
             });
             
-            // Update name field for all dienst in DienstExtRef collection
-            await DienstExtRef.updateMany(
-               { o: authData.o,
-               prod: req.params.id
-               },
-               {
-                  name: changes.name
-               }
-            );
+            if ( changes.all ) {
+               // Update name field for all dienst in DienstExtRef collection
+               await DienstExtRef.updateMany(
+                  { o: authData.o,
+                  prod: req.params.id
+                  },
+                  {
+                     name: changes.name
+                  }
+               );
+               
 
-            // Update name field for all dienst embedded in Week collection
-            await Week.updateMany(
-               { o: authData.o },
-               { "$set": { "dienst.$[elem].name": changes.name } },
-               { multi: true,
-               arrayFilters: [ { "elem.prod": req.params.id } ] }
-            );
-            
+               // Update name field for all dienst embedded in Week collection
+               await Week.updateMany(
+                  { o: authData.o },
+                  { "$set": { "dienst.$[elem].name": changes.name } },
+                  { multi: true,
+                  arrayFilters: [ { "elem.prod": req.params.id } ] }
+               );
+            }
             res.json( {name: changes.name} );
          } else {
             //console.log( changes );

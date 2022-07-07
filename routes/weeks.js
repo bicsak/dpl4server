@@ -18,7 +18,18 @@ async function createWeekDataRaw(begin, authData, sec) {
       begin: beginDate               
    }).populate('season', 'label begin end -_id')
    .populate('o', 'timezone')
-   .populate('dienst.prod')
+   //.populate('dienst.prod')
+   .populate({
+      path: 'dienst.prod',
+      populate: {
+         path: 'firstDienst',
+         select: 'begin -_id',
+         options: {
+            transform: doc => doc == null ? null : doc.begin.getTime()
+         }
+      },
+      select: 'duration name firstDienst'
+   })
    .select('-dpls -begin');
 
    if ( wplDoc ) {
