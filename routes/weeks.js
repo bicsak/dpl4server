@@ -321,6 +321,18 @@ router.patch('/:mts/:did', async function(req, res) {
 });
 
 
+router.delete('/:mts/:did', async function(req, res) {
+   jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
+      if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }
+      // TODO delete dienst
+      // recalc OA1, etc.
+      // recalc dienstzahlen for all dpls
+      // return new week plan
+   });
+});
+
+
+
 
 
 router.post('/', function(req, res){
