@@ -186,6 +186,68 @@ async function createWeekDataRaw(begin, authData, sec) {
    return weekRaw;          
 }
 
+async function renumberProduction(sId /* season */, pId /* prod id */ ) {
+   /***************************************
+   * Fill seqnr, total for all dienst (BO1, 2, 3/6...)
+   *****************************************/       
+ 
+   aggregatedDienst = await Week.aggregate( [        
+     { "$match": { season: sId }  }, // specified season
+     { "$unwind": { 'path': '$dienst'} },
+     { "$match": { 
+       'dienst.category': { '$ne': 2 }, // no special dienste
+       'dienst.subtype': { '$ne': 6}, // no extra rehearsal type (with special suffix)
+       'dienst.total': { '$ne': -1 } ,  // no excluded dienste
+       'dienst.prod': pId} // specified production
+     },     
+     { "$project": {  
+            _id: 0, // no week doc id
+          'dienst.begin': 1, 
+          'dienst.category': 1, 
+          'dienst.subtype': 1, 
+          'dienst.seq': 1, 
+          'dienst.total': 1,
+          'dienst._id': 1       
+    } },                  
+    { newRoot: '$dienst' },
+    { "$sort": { begin: 1 } }        
+   ] );
+   
+     let max = {
+       r: [0, 0, 0, 0, 0, 0], // rehearsals
+       p: 0 // performance
+     }; 
+
+     for ( let d of aggregatedDienst ) {
+       if ( d.category == 0 ) {                          
+         let rehearsalType = d.subtype;
+         if ( d.subtype == 3 ) /* vBO */ {
+           rehearsalType = 2;
+         }
+         d.seq = ++max.r[rehearsalType];                             
+       } else {        
+         d.seq = ++max.p;                          
+       }
+     }
+
+     for ( let d of aggregatedDienst ) {
+       let rehearsalType = d.subtype;
+       if ( d.subtype == 3 ) rehearsalType = 2;
+       await Week.findOneAndUpdate(
+         {'dienst._id': d._id},
+         { 'dienst.$.seq': d.seq, 
+           'dienst.$.total': d.category == 0 ? max.r[rehearsalType] : max.p //d.total
+         }
+       );                        
+       await DienstExtRef.updateOne(
+         { _id: d._id },
+         { 'seq': d.seq, 
+         'total': d.category == 0 ? max.r[rehearsalType] : max.p //d.total
+         }
+       );
+     }    
+}
+
 router.get('/:mts', async function(req, res) {
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err) 
@@ -267,6 +329,8 @@ router.patch('/:mts', async function(req, res) {
 router.patch('/:mts/:did', async function(req, res) {
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }
+
+      // TODO req.body is an array of {op:..., path: ..., value: ...}
       if ( req.body.path === '/instr' ) {
          if ( req.body.op === 'replace' ) { 
             const session = await mongoose.connection.startSession();
@@ -324,22 +388,49 @@ router.patch('/:mts/:did', async function(req, res) {
 router.delete('/:mts/:did', async function(req, res) {
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }
-      // TODO delete dienst from weeks coll.
-      // delete dienst from dienst ext ref coll.
-      // recalc OA1, etc. for season ans production (if not sonst.)
+      console.log(`Deleting Dienst req ${req.params.mts}, ${req.params.did}`);
+      // read dienst to get season id and prod id for renumber function
+      dienstDoc = await DienstExtRef.findOne( { _id: req.params.did } );
+
+      // delete dienst from weeks coll
+      await Week.updateOne( { _id: req.params.mts }, // todo not correct, need id
+      { $pull: { dienste: { $elemMatch: {_id: req.params.did} } } } );
+
+      //delete dienst from dienstextref coll
+      await DienstExtRef.deleteOne( { _id: req.params.id } );
+      
+      // recalc OA1, etc. for season and production (if not sonst. dienst): 
+      await renumberProduction(dienstDoc.s._id, dienstDoc.prod._id);
+      
+      //TODO
       // recalc dienstzahlen for all dpls
       // delete seatings subdocs from all dpls
+      
       // return new week plan
+      let resp = await createWeekDataRaw(req.params.mts, authData);          
+      res.json( resp );            
    });
 });
 
 
+router.post('/:mts', async function(req, res) {
+   jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
+      if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }
+      // TODO create new dienst 
 
+      // insert new dienst for week id :mts
+      // with or without dienst instrumentation (paste / new)
+      // insert new week for dienst ext ref collection
+      // recalc OA1, etc. for season and production (if not sonst. dienst)      
+      // add seatings subdocs for all dpls
+      // return new week plan
+   });
+});
 
-
+/*
 router.post('/', function(req, res){
    res.send('POST route on weeks.');
-});
+});*/
 
 //export this router to use in our index.js
 module.exports = router;
