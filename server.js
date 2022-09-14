@@ -8,7 +8,7 @@ const cors = require('cors');
 
 const verifyToken = require('./middleware/verifytoken');
 //var { MongoClient } = require( 'mongodb' );
-//Proba
+//Proba meg egy
 //const mongoUri = "mongodb://myUserAdmin:csakMalajDB@127.0.0.1:27017";
 //const mongoUri = `mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@127.0.0.1:27017`;
 //const mongoUri = `mongodb://Malaj:27017,Malaj:27018,Malaj:27019?replicaSet=rs`;
