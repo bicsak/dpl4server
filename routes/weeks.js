@@ -28,7 +28,7 @@ async function createWeekDataRaw(begin, authData, sec) {
             transform: doc => doc == null ? null : doc.begin.getTime()
          }
       },
-      select: 'duration name firstDienst'
+      select: 'duration name firstDienst instrumentation'
    })
    .select('-dpls -begin');
 
