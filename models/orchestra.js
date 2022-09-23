@@ -29,7 +29,14 @@ const orchestraSchema = new Schema({
             locations: [Number], // [0, 0, 1, 1, 1, 1, 0], [1, 1, 1, 2], [0]
             durations: [Number] // [150, 150, 180, 220, 180, 180, 150], [180, 180, 180, 180], [150]
         }
-    ]    
+    ],
+    writeLock: new Schema( {
+            action: String,
+            ts: { type: Date, default: Date.now },
+            role: String,
+            phase: String,
+            uniqueId: Schema.Types.ObjectId,
+        }, { required: false })            
 });
 
 module.exports = mongoose.model('Orchestra', orchestraSchema);

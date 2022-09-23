@@ -24,11 +24,6 @@ const login = require('./routes/login.js');
 let app = express();
 app.use(express.json());
 app.use(cors());
-/*
-const client = new MongoClient("mongodb://myUserAdmin:csakMalajDB@127.0.0.1:27017", {
-   useNewUrlParser: true,
-   useUnifiedTopology: true,
-});*/
 
 async function run() {
    try {      
