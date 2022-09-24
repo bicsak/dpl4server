@@ -37,6 +37,6 @@ const orchestraSchema = new Schema({
             phase: String,
             uniqueId: Schema.Types.ObjectId,
         }, { required: false })            
-});
+}, { optimisticConcurrency: true });
 
 module.exports = mongoose.model('Orchestra', orchestraSchema);
