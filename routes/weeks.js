@@ -8,6 +8,8 @@ const Week = require('../models/week');
 const Dienst = require('../models/dienst');
 const Profile = require('../models/profile');
 
+const orchLock = require('../my_modules/orch-lock');
+
 async function createWeekDataRaw(begin, authData, sec) {
    let beginDate = new Date(begin*1000); 
 
@@ -248,6 +250,23 @@ async function renumberProduction(sId /* season */, pId /* prod id */ ) {
      }    
 }
 
+// Change editable flag for week in a transaction
+async function changeEditable( session, params ) {              
+    let weekDoc = await Week.findOneAndUpdate( { 
+        o: params.o,
+        begin: params.begin
+    }, {
+        editable: params.editable
+    }, { session: session } );    
+
+    await Dpl.updateMany( { 
+        o: params.o,
+        w: weekDoc._id
+    }, {
+        weekEditable: params.editable
+    }, { session: session } );   
+} // End of transaction function
+
 router.get('/:mts', async function(req, res) {
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err) 
@@ -295,9 +314,21 @@ router.patch('/:mts', async function(req, res) {
          }
       } else if ( req.body.path === '/editable' && req.body.op === 'replace' ) {
 
-         const session = await mongoose.connection.startSession();
+         const session = await mongoose.connection.startSession( { readPreference: { mode: "primary" } } );
          try {
-            session.startTransaction();
+            await orchLock.runTransactionWithRetryAndOrchLock({
+               o: authData.o,
+               session: session,
+               txnFunc: changeEditable,
+               txnFuncParams: {
+                  o: authData.o,
+                  begin: new Date(req.params.mts * 1000),
+                  editable: req.body.value
+               },
+               txnName: 'changeEditable',
+               role: 'manager'
+           });    
+            /*session.startTransaction();
             weekDoc = await Week.findOneAndUpdate( { 
                o: authData.o,
                begin: new Date(req.params.mts * 1000)
@@ -312,13 +343,13 @@ router.patch('/:mts', async function(req, res) {
                weekEditable: req.body.value
             }, { session } );
 
-            await session.commitTransaction();
+            await session.commitTransaction();*/
          } catch(error) {
-            console.log('error, aborting transaction');
+            //console.log('error, aborting transaction');
             console.log(error);
-            await session.abortTransaction();
+            //await session.abortTransaction();
          }
-         session.endSession();       
+         finally { session.endSession(); }         
 
          res.json( { editable: req.body.value } ); //TODO push-notifications
          return;

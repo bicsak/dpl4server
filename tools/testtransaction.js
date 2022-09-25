@@ -9,38 +9,40 @@ const Week = require('../models/week');
 const o = new mongoose.Types.ObjectId('632245e7eb6de7ceb1cc7c86');
 
 // Runs the txnFunc and retries if TransientTransactionError encountered
-async function runTransactionWithRetryAndOrchLock(txnFunc, name, role, o, session) {
+async function runTransactionWithRetryAndOrchLock(params 
+    /* txnFunc, txnName, role, o, session */) {
     let retryCount = 0;
     
-    while ( retryCount < 3 ) {
+    while ( retryCount < 10 ) {
         retryCount++;
         try {
             console.log(`${retryCount}. try...`);
-            await session.startTransaction( { 
-                readConcern: { level: /*"snapshot"*/ "majority" }, writeConcern: { w: "majority" } 
+            await params.session.startTransaction( { 
+                readConcern: { level: /*"snapshot"*/ "majority" }, 
+                writeConcern: { w: "majority" } 
             } );
             let orch = await Orchestra.findOneAndUpdate( {
-                o: o,
+                o: params.o,
             }, { writeLock: {
-                action: name,
+                txn: params.txnName,
                 ts: new Date(),
-                role: role,
-                phase: 'start',
+                role: params.role,
+                action: 'lock',
                 uniqueId: new mongoose.Types.ObjectId()
-            } }, { session: session } );
+            } }, { session: params.session } );
 
             //let oldOrch = await Orchestra.findById(orch._id);
             
-            await txnFunc(session);  // performs transaction
+            await params.txnFunc(params.session);  // performs transaction
             
             orch.writeLock =  {
-                action: name,
+                txn: params.txnName,
                 ts: new Date(),
-                role: role,
-                phase: 'end',
+                role: params.role,
+                action: 'release',
                 uniqueId: new mongoose.Types.ObjectId()
             }; 
-            await orch.save( {session: session} );
+            await orch.save( {session: params.session} );
 
             /*oldOrch.writeLock = {
                 action: name,
@@ -54,7 +56,7 @@ async function runTransactionWithRetryAndOrchLock(txnFunc, name, role, o, sessio
         } catch (error) {
             console.log("Caught exception during transaction, aborting.");
             console.log(error);            
-            await session.abortTransaction();            
+            await params.session.abortTransaction();            
             // If transient error, retry the whole transaction
             if ( error.hasOwnProperty("errorLabels") && error.errorLabels.includes("TransientTransactionError") 
             || error instanceof mongoose.Error.VersionError ) {                
@@ -65,14 +67,14 @@ async function runTransactionWithRetryAndOrchLock(txnFunc, name, role, o, sessio
             }
         }
     } 
-    await commitWithRetry(session);       
+    await commitWithRetry(params.session);       
 }
 
 // Retries commit if UnknownTransactionCommitResult encountered
 async function commitWithRetry(session) {
     let retryCount = 0;
 
-    while ( retryCount < 3 ) {
+    while ( retryCount < 10 ) {
         retryCount++;
         try {
             await session.commitTransaction(); // Uses write concern set at transaction start.
@@ -102,17 +104,22 @@ async function run() {
         mongoose.connection.on('disconnected', () => {
             console.log('Mongoose Disconnected');
         });
-        await mongoose.connect(`${mongoUri}`, {
+        /* await */ mongoose.connect(`${mongoUri}`, {
             dbName: mongoDBName,
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });
 
         // Start a session
-        var session = await mongoose.connection.startSession( { readPreference: { mode: "primary" } } );                
-        await runTransactionWithRetryAndOrchLock(changeEditable, 'changeEditable', 'manager', 
-        o, session);   
-        
+        var session =  await mongoose.connection.startSession( { 
+            readPreference: { mode: "primary" } } );                
+        await runTransactionWithRetryAndOrchLock({
+            o: o,
+            session: session,
+            txnFunc: changeEditable,
+            txnName: 'changeEditable',
+            role: 'manager'
+        });           
     } catch (err) {
         console.log(err);
         // handle the error
@@ -123,20 +130,20 @@ async function run() {
 }
 
 // Performs write operations in a transaction
-async function changeEditable(session) {              
+async function changeEditable( session ) {              
     let weekDoc = await Week.findOneAndUpdate( { 
         o: o,
         begin: new Date('2017-08-27T22:00:00.000+00:00')
     }, {
         editable: false
-    }, { session } );    
+    }, { session: session } );    
 
     await Dpl.updateMany( { 
         o: o,
         w: weekDoc._id
     }, {
         weekEditable: true
-    }, { session } );   
+    }, { session: session } );   
 } // End of transaction function
 
 run();

@@ -31,10 +31,10 @@ const orchestraSchema = new Schema({
         }
     ],
     writeLock: new Schema( {
-            action: String,
+            txn: String, // the operation
             ts: { type: Date, default: Date.now },
-            role: String,
-            phase: String,
+            role: String, // 'manager'/'scheduler'/etc.
+            action: String, // 'release'/'lock'
             uniqueId: Schema.Types.ObjectId,
         }, { required: false })            
 }, { optimisticConcurrency: true });
