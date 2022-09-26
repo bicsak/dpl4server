@@ -3,17 +3,33 @@ const Orchestra = require('../models/orchestra');
 
 const maxRetry = 10;
 
+
+exports.writeOperation = async function ( params ) {
+    const session = await mongoose.connection.startSession( { readPreference: { mode: "primary" } } );
+    
+    try {
+        var result = await runTransactionWithRetryAndOrchLock( {...params, session: session} );
+    }
+    catch ( err ) {
+        console.log(err);
+    }
+    finally {
+        session.endSession();
+    }
+    return result;
+}
+
 // Runs the txnFunc and retries if TransientTransactionError encountered
 /***********
  * @params Object:
  * txnFunc: the function to call
- * txnFuncParams: Object to call txnFunc with
+ * txnFuncParams: Object parameter to call txnFunc with
  * txnName: the name of the operation
- * role: 
+ * role: 'manager' / 'scheduler' etc.
  * o: the orchestra to lock
- * session: session object
+ * session: session object within to run the transaction
  */
-exports.runTransactionWithRetryAndOrchLock = async function ( params ) {
+runTransactionWithRetryAndOrchLock = async function ( params ) {
     let retryCount = 0;
     
     while ( retryCount < maxRetry ) {
@@ -34,7 +50,7 @@ exports.runTransactionWithRetryAndOrchLock = async function ( params ) {
                 uniqueId: new mongoose.Types.ObjectId()
             } }, { session: params.session } );           
             
-            await params.txnFunc(params.session, params.txnFuncParams);  // performs transaction
+            var result = await params.txnFunc(params.session, params.txnFuncParams);  // performs transaction            
             
             orch.writeLock =  {
                 txn: params.txnName,
@@ -61,6 +77,7 @@ exports.runTransactionWithRetryAndOrchLock = async function ( params ) {
         }
     } 
     await commitWithRetry(params.session);       
+    return result;
  }
  
  // Retries commit if UnknownTransactionCommitResult encountered

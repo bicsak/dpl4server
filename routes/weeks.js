@@ -265,6 +265,8 @@ async function changeEditable( session, params ) {
     }, {
         weekEditable: params.editable
     }, { session: session } );   
+
+    return params.editable; // TODO
 } // End of transaction function
 
 router.get('/:mts', async function(req, res) {
@@ -313,45 +315,19 @@ router.patch('/:mts', async function(req, res) {
             return;
          }
       } else if ( req.body.path === '/editable' && req.body.op === 'replace' ) {
-
-         const session = await mongoose.connection.startSession( { readPreference: { mode: "primary" } } );
-         try {
-            await orchLock.runTransactionWithRetryAndOrchLock({
+         let result = await orchLock.writeOperation( {
+            o: authData.o,   
+            txnFunc: changeEditable,
+            txnFuncParams: {
                o: authData.o,
-               session: session,
-               txnFunc: changeEditable,
-               txnFuncParams: {
-                  o: authData.o,
-                  begin: new Date(req.params.mts * 1000),
-                  editable: req.body.value
-               },
-               txnName: 'changeEditable',
-               role: 'manager'
-           });    
-            /*session.startTransaction();
-            weekDoc = await Week.findOneAndUpdate( { 
-               o: authData.o,
-               begin: new Date(req.params.mts * 1000)
-            }, {
+               begin: new Date(req.params.mts * 1000),
                editable: req.body.value
-            }, { session } );
-   
-            await Dpl.updateMany( { 
-               o: authData.o,
-               w: weekDoc._id
-            }, {
-               weekEditable: req.body.value
-            }, { session } );
+            },
+            txnName: 'changeEditable',
+            role: 'manager'
+         });                        
 
-            await session.commitTransaction();*/
-         } catch(error) {
-            //console.log('error, aborting transaction');
-            console.log(error);
-            //await session.abortTransaction();
-         }
-         finally { session.endSession(); }         
-
-         res.json( { editable: req.body.value } ); //TODO push-notifications
+         res.json( { editable: result } ); //TODO push-notifications
          return;
       }
    });

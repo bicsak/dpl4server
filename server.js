@@ -36,7 +36,7 @@ async function run() {
       mongoose.connection.on('disconnected', () => {
             console.log('Mongoose Disconnected');
       });      
-      /*await*/ mongoose.connect(`${mongoUri}`, {
+      await mongoose.connect(`${mongoUri}`, {
          dbName: mongoDBName,
          useNewUrlParser: true,
          useUnifiedTopology: true,
