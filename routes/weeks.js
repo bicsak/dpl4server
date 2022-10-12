@@ -257,14 +257,14 @@ async function changeEditable( session, params ) {
         begin: params.begin
     }, {
         editable: params.editable
-    }, { session /*: session */ } );    
+    }, { session: session } );    
 
     await Dpl.updateMany( { 
         o: params.o,
         w: weekDoc._id
     }, {
         weekEditable: params.editable
-    }, { session /*: session */ } );   
+    }, { session: session  } );   
 
     return params.editable; // TODO
 } // End of transaction function

@@ -23,7 +23,7 @@ const dienste = require('./routes/dienste.js');
 const users = require('./routes/users.js');      
 const login = require('./routes/login.js');      
 
-const Orchestra = require('../models/orchestra');
+const Orchestra = require('./models/orchestra');
 
 app.use(express.json());
 app.use(cors());
@@ -48,7 +48,7 @@ async function run() {
       //app.set('conn', mongoose.connection);
       app.set('session', session);
       // release all orchestra write locks on startup
-      await Orchestra.updateMany({}, { writeLock: false }, { session });
+      await Orchestra.updateMany({}, { writeLock: false }, { session: session });      
 
       app.use(express.static('./public'));            
       

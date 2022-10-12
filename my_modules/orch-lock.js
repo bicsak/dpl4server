@@ -16,22 +16,22 @@ exports.writeOperation = async function ( orch, txnFunc, params ) {
      */
     //const session = await mongoose.connection.startSession( { readPreference: { mode: "primary" } } );
     let retryCount = 0;
-    let orch;
+    let orchDoc;
     let session = app.get('session');
 
     // 1st step: try to lock the orchestra
-    while ( !orch && retryCount < maxRetry ) {
+    while ( !orchDoc && retryCount < maxRetry ) {
         console.log('Try to get write lock for orchestra...');
-        orch = await Orchestra.findOneAndUpdate( {
-            o: lockOptions.orch,
+        orchDoc = await Orchestra.findOneAndUpdate( {
+            o: orch,
             writeLock: false
-        }, { writeLock: true }, { session /*: session */ } );     
-        if ( !orch ) {
+        }, { writeLock: true }, { session: session } );     
+        if ( !orchDoc ) {
             await setTimeout(retryDelay + Math.random() * 100);
             retryCount++;            
         }
     }
-    if ( !orch ) return false; // could not get write Lock, exit
+    if ( !orchDoc ) return false; // could not get write Lock, exit
 
     //2nd step: start transaction and run txnFnc
     try {
@@ -41,8 +41,8 @@ exports.writeOperation = async function ( orch, txnFunc, params ) {
         console.log(err);
     } 
     finally {
-        orch.writeLock = false;
-        await orch.save();
+        orchDoc.writeLock = false;
+        await orchDoc.save();
     }   
 
     return result;    
@@ -68,6 +68,7 @@ runTransactionWithRetryAndOrchLock = async function ( txnFunc, params, session  
             } );
             
             var result = await txnFunc(session, params);  // performs transaction                                                
+            break;
         } catch (error) {
             console.log("Caught exception during transaction, aborting.");
             console.log(error);            
