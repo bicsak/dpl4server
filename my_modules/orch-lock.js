@@ -1,74 +1,81 @@
 const mongoose = require('mongoose');
 const Orchestra = require('../models/orchestra');
+var app = require('../server');
 
-const maxRetry = 10;
+const { setTimeout } = require('timers/promises');
 
+const maxRetry = 5;
+const retryDelay = 200;
 
-exports.writeOperation = async function ( params ) {
-    const session = await mongoose.connection.startSession( { readPreference: { mode: "primary" } } );
-    
+exports.writeOperation = async function ( orch, txnFunc, params ) {        
+    /**************
+     * @params
+     * orch: the orchestra to lock
+     * txnFunc: the function to call in a transaction
+     * params: params for txnFunc
+     */
+    //const session = await mongoose.connection.startSession( { readPreference: { mode: "primary" } } );
+    let retryCount = 0;
+    let orch;
+    let session = app.get('session');
+
+    // 1st step: try to lock the orchestra
+    while ( !orch && retryCount < maxRetry ) {
+        console.log('Try to get write lock for orchestra...');
+        orch = await Orchestra.findOneAndUpdate( {
+            o: lockOptions.orch,
+            writeLock: false
+        }, { writeLock: true }, { session /*: session */ } );     
+        if ( !orch ) {
+            await setTimeout(retryDelay + Math.random() * 100);
+            retryCount++;            
+        }
+    }
+    if ( !orch ) return false; // could not get write Lock, exit
+
+    //2nd step: start transaction and run txnFnc
     try {
-        var result = await runTransactionWithRetryAndOrchLock( {...params, session: session} );
+        var result = await runTransactionWithRetryAndOrchLock( txnFunc, params, session );
     }
     catch ( err ) {
         console.log(err);
-    }
+    } 
     finally {
-        session.endSession();
-    }
-    return result;
+        orch.writeLock = false;
+        await orch.save();
+    }   
+
+    return result;    
 }
 
 // Runs the txnFunc and retries if TransientTransactionError encountered
 /***********
- * @params Object:
- * txnFunc: the function to call
- * txnFuncParams: Object parameter to call txnFunc with
- * txnName: the name of the operation
- * role: 'manager' / 'scheduler' etc.
- * o: the orchestra to lock
+ * @params 
+ * txnFunc the function to run within a transaction
+ * params params for txnFunc
  * session: session object within to run the transaction
  */
-runTransactionWithRetryAndOrchLock = async function ( params ) {
+runTransactionWithRetryAndOrchLock = async function ( txnFunc, params, session  ) {
     let retryCount = 0;
     
     while ( retryCount < maxRetry ) {
         retryCount++;
         try {
-            console.log(`${retryCount}. try...`);
-            await params.session.startTransaction( { 
+            console.log('Try transaction...');
+            await session.startTransaction( { 
                 readConcern: { level: /*"snapshot"*/ "majority" }, 
                 writeConcern: { w: "majority" } 
             } );
-            let orch = await Orchestra.findOneAndUpdate( {
-                o: params.o,
-            }, { writeLock: {
-                txn: params.txnName,
-                ts: new Date(),
-                role: params.role,
-                action: 'lock',
-                uniqueId: new mongoose.Types.ObjectId()
-            } }, { session: params.session } );           
             
-            var result = await params.txnFunc(params.session, params.txnFuncParams);  // performs transaction            
-            
-            orch.writeLock =  {
-                txn: params.txnName,
-                ts: new Date(),
-                role: params.role,
-                action: 'release',
-                uniqueId: new mongoose.Types.ObjectId()
-            }; 
-            await orch.save( {session: params.session} );
-            
-            break;
+            var result = await txnFunc(session, params);  // performs transaction                                                
         } catch (error) {
             console.log("Caught exception during transaction, aborting.");
             console.log(error);            
-            await params.session.abortTransaction();            
+            await session.abortTransaction();            
             // If transient error, retry the whole transaction
             if ( error.hasOwnProperty("errorLabels") && error.errorLabels.includes("TransientTransactionError") 
-            || error instanceof mongoose.Error.VersionError ) {                
+            && retryCount < maxRetry
+            /* || error instanceof mongoose.Error.VersionError*/ ) {                
                 console.log("Transient error, retrying transaction ...");
                 continue;
             } else {                
@@ -76,7 +83,7 @@ runTransactionWithRetryAndOrchLock = async function ( params ) {
             }
         }
     } 
-    await commitWithRetry(params.session);       
+    await commitWithRetry(session);       
     return result;
  }
  
@@ -87,12 +94,14 @@ runTransactionWithRetryAndOrchLock = async function ( params ) {
     while ( retryCount < maxRetry ) {
         retryCount++;
         try {
+            console.log('Commiting transaction...');
             await session.commitTransaction(); // Uses write concern set at transaction start.
             console.log(`Transaction committed.`);
             break;
         } catch (error) {
             // Can retry commit
-            if (error.hasOwnProperty("errorLabels") && error.errorLabels.includes("UnknownTransactionCommitResult") ) {
+            if (error.hasOwnProperty("errorLabels") && error.errorLabels.includes("UnknownTransactionCommitResult") 
+            && retryCount < maxRetry ) {
                 console.log("UnknownTransactionCommitResult, retrying commit operation ...");
                 continue;
             } else {

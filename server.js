@@ -14,6 +14,8 @@ const verifyToken = require('./middleware/verifytoken');
 const mongoUri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.js8ztlf.mongodb.net/test`;
 const mongoDBName = process.env.DB_NAME;
 
+var app = module.exports = express();
+
 const weeks = require('./routes/weeks.js');      
 const seasons = require('./routes/seasons.js');      
 const productions = require('./routes/productions.js');      
@@ -21,7 +23,8 @@ const dienste = require('./routes/dienste.js');
 const users = require('./routes/users.js');      
 const login = require('./routes/login.js');      
 
-let app = express();
+const Orchestra = require('../models/orchestra');
+
 app.use(express.json());
 app.use(cors());
 
@@ -40,21 +43,20 @@ async function run() {
          dbName: mongoDBName,
          useNewUrlParser: true,
          useUnifiedTopology: true,
-      });                        
+      }); 
+      const session = await mongoose.connection.startSession( { readPreference: { mode: "primary" } } );                       
       //app.set('conn', mongoose.connection);
+      app.set('session', session);
+      // release all orchestra write locks on startup
+      await Orchestra.updateMany({}, { writeLock: false }, { session });
 
       app.use(express.static('./public'));            
       
-      app.use('/api/weeks', verifyToken, weeks);      
-            
-      app.use('/api/users', verifyToken, users);
-            
-      app.use('/api/seasons', verifyToken, seasons);      
-      
-      app.use('/api/productions', verifyToken, productions);      
-      
-      app.use('/api/dienste', verifyToken, dienste);      
-      
+      app.use('/api/weeks', verifyToken, weeks);                  
+      app.use('/api/users', verifyToken, users);            
+      app.use('/api/seasons', verifyToken, seasons);            
+      app.use('/api/productions', verifyToken, productions);            
+      app.use('/api/dienste', verifyToken, dienste);            
       app.use('/api/login', login);
 
       /* final catch-all route to index.html defined last */
@@ -63,7 +65,6 @@ async function run() {
          res.sendFile(__dirname + '/public/index.html');
       });
  
-
       app.listen(3000);
       console.log("Application is running...");
    }
@@ -71,8 +72,10 @@ async function run() {
       console.log(err);
    }
    finally {      
-      //await mongoose.connection.close();                  
+      //session.endSession();
+      //await mongoose.connection.close();                        
    }
 }
+
 
 run().catch(console.dir);

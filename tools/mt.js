@@ -178,7 +178,8 @@ async function run(hc) {
             suffixes: [""],
             locations: [0],
             durations: [150]
-          } ]
+          } ],
+          writeLock: false
       };
 
       let collections = [

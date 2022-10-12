@@ -257,14 +257,14 @@ async function changeEditable( session, params ) {
         begin: params.begin
     }, {
         editable: params.editable
-    }, { session: session } );    
+    }, { session /*: session */ } );    
 
     await Dpl.updateMany( { 
         o: params.o,
         w: weekDoc._id
     }, {
         weekEditable: params.editable
-    }, { session: session } );   
+    }, { session /*: session */ } );   
 
     return params.editable; // TODO
 } // End of transaction function
@@ -315,17 +315,12 @@ router.patch('/:mts', async function(req, res) {
             return;
          }
       } else if ( req.body.path === '/editable' && req.body.op === 'replace' ) {
-         let result = await orchLock.writeOperation( {
-            o: authData.o,   
-            txnFunc: changeEditable,
-            txnFuncParams: {
-               o: authData.o,
+         let result = await orchLock.writeOperation( authData.o,
+            changeEditable, {
+               o: authData.o,               
                begin: new Date(req.params.mts * 1000),
                editable: req.body.value
-            },
-            txnName: 'changeEditable',
-            role: 'manager'
-         });                        
+            });                        
 
          res.json( { editable: result } ); //TODO push-notifications
          return;
