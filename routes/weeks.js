@@ -8,7 +8,7 @@ const Week = require('../models/week');
 const Dienst = require('../models/dienst');
 const Profile = require('../models/profile');
 
-const orchLock = require('../my_modules/orch-lock');
+const { writeOperation } = require('../my_modules/orch-lock');
 
 async function createWeekDataRaw(begin, authData, sec) {
    let beginDate = new Date(begin*1000); 
@@ -188,7 +188,7 @@ async function createWeekDataRaw(begin, authData, sec) {
    return weekRaw;          
 }
 
-async function renumberProduction(sId /* season */, pId /* prod id */ ) {
+async function renumberProduction(session, sId /* season */, pId /* prod id */ ) {
    /***************************************
    * Fill seqnr, total for all dienst (BO1, 2, 3/6...)
    *****************************************/       
@@ -200,7 +200,7 @@ async function renumberProduction(sId /* season */, pId /* prod id */ ) {
        'dienst.category': { '$ne': 2 }, // no special dienste
        'dienst.subtype': { '$ne': 6}, // no extra rehearsal type (with special suffix)
        'dienst.total': { '$ne': -1 } ,  // no excluded dienste
-       'dienst.prod': pId} // specified production
+       'dienst.prod':  pId } // specified production
      },     
      { "$project": {  
             _id: 0, // no week doc id
@@ -211,9 +211,9 @@ async function renumberProduction(sId /* season */, pId /* prod id */ ) {
           'dienst.total': 1,
           'dienst._id': 1       
     } },                  
-    { newRoot: '$dienst' },
+    { "$replaceRoot": { newRoot: '$dienst'} },
     { "$sort": { begin: 1 } }        
-   ] );
+   ] ).session(session);
    
      let max = {
        r: [0, 0, 0, 0, 0, 0], // rehearsals
@@ -239,15 +239,33 @@ async function renumberProduction(sId /* season */, pId /* prod id */ ) {
          {'dienst._id': d._id},
          { 'dienst.$.seq': d.seq, 
            'dienst.$.total': d.category == 0 ? max.r[rehearsalType] : max.p //d.total
-         }
-       );                        
-       await DienstExtRef.updateOne(
+         }).session( session);                        
+       await Dienst.updateOne(
          { _id: d._id },
          { 'seq': d.seq, 
          'total': d.category == 0 ? max.r[rehearsalType] : max.p //d.total
-         }
-       );
+         }).session(session);
      }    
+}
+
+// Subtracts dienst-weight after deleting 
+// or corrects numbers after change in dienst weight
+// for all dpls and members who had this dienst
+async function recalcNumbersAfterWeightChange(session, o /* orchestra id*/, w /* week doc id */, 
+did /* dienst id */, correction) {
+   let dplDocs = await Dpl.find({o: o, w: w}).session(session);
+    for (let dpl of dplDocs) {
+      let seating = dpl.seatings.find(s => s.d == did);
+      let diff = correction ? correction : seating.dienstWeight;      
+      let corr = seating.sp.map( (num, idx) => num >= 16 ? diff : 0);            
+      dpl.delta.forEach( (num, idx, arr) => arr[idx] = num - corr[idx]);      
+      await dpl.save();
+      let succedingDpls = await Dpl.find({o: o, d: dpl.s, p: dpl.p, weekBegin: {$gt: dpl.weekBegin} }).session(session);
+      for (let succ of succedingDpls) {         
+         succ.start.forEach( (num, idx, arr) => arr[idx] = num - corr[idx]);      
+         await  succ.save()    
+      }    
+    }     
 }
 
 // Change editable flag for week in a transaction
@@ -315,7 +333,7 @@ router.patch('/:mts', async function(req, res) {
             return;
          }
       } else if ( req.body.path === '/editable' && req.body.op === 'replace' ) {
-         let result = await orchLock.writeOperation( authData.o,
+         let result = await writeOperation( authData.o,
             changeEditable, {
                o: authData.o,               
                begin: new Date(req.params.mts * 1000),
@@ -328,6 +346,33 @@ router.patch('/:mts', async function(req, res) {
    });
 });
 
+async function editInstrumentation( session, params ) {
+   let weekDoc = await Week.findOneAndUpdate({
+      'dienst._id': params.did
+   }, {
+      '$set': { 'dienst.$.instrumentation': params.instr }               
+   }, { session: session } );
+
+   await Dienst.findByIdAndUpdate(params.did, {
+      '$set': { 'instrumentation': params.instr }               
+   }, { session: session } );    
+   
+   for (const key in params.instr) {
+      if (params.instr.hasOwnProperty(key)) {
+         await Dpl.findOneAndUpdate({
+            o: params.o,
+            s: key,
+            w: weekDoc._id,
+            'seatings.d': params.did
+         }, {
+            'seatings.$.dienstInstr': params.instr[key]
+         }, { session: session } );          
+      }
+   }
+
+   return params.instr;
+}
+
 router.patch('/:mts/:did', async function(req, res) {
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }
@@ -335,81 +380,70 @@ router.patch('/:mts/:did', async function(req, res) {
       // TODO req.body is an array of {op:..., path: ..., value: ...}
       if ( req.body.path === '/instr' ) {
          if ( req.body.op === 'replace' ) { 
-            const session = await mongoose.connection.startSession();
-            try {
-               session.startTransaction();                       
-               let weekDoc = await Week.findOneAndUpdate({
-                  'dienst._id': req.params.did
-               }, {
-                  '$set': { 'dienst.$.instrumentation': req.body.value }               
-               }, { session } );
-               await Dienst.findByIdAndUpdate(req.params.did, {
-                  '$set': { 'instrumentation': req.body.value }               
-               }, { session } );
-               /*Object.entries(req.body.value).forEach( async ([key, value]) => {
-                  await Dpl.findOneAndUpdate({
-                     o: authData.o,
-                     s: key,
-                     w: weekDoc._id,
-                     'seatings.d': req.params.did
-                  }, {
-                     'seatings.$.dienstInstr': value
-                  }, { session } );
-                  //does not work because anonym function promise (async) in try-catch block
-               });*/               
 
-               for (const key in req.body.value) {
-                  if (req.body.value.hasOwnProperty(key)) {
-                     await Dpl.findOneAndUpdate({
-                        o: authData.o,
-                        s: key,
-                        w: weekDoc._id,
-                        'seatings.d': req.params.did
-                     }, {
-                        'seatings.$.dienstInstr': req.body.value[key]
-                     }, { session } );
-                      
-                  }
-               }
-               await session.commitTransaction();
-            } catch(error) {
-               console.log('error, aborting transaction');
-               console.log(error);
-               await session.abortTransaction();
-            }
-            session.endSession();
-
-            res.json( { instrumentation: req.body.value } );            
+            let result = await writeOperation( authData.o,
+            editInstrumentation, {
+               o: authData.o,
+               did: req.params.did,               
+               instr: req.body.value               
+            });                        
+            res.json( { instrumentation: result } );            
             return;
          } 
       }
    });
 });
 
+// deletes 1 dienst from DB in a transaction
+/********
+ * @params
+ * session 
+ * params Object: did, mts, o
+ * @return true if success
+ */
+async function deleteDienst(session, params ) {
+    // read dienst to get season id and prod id for renumber function
+    let dienstDoc = await Dienst.findOne( { _id: params.did } ).session(session);    
+
+    // delete dienst from weeks coll
+    await Week.updateOne( { o: params.o, 'dienst._id': params.did }, 
+    //{ '$pull': { dienst: { '$elemMatch': {_id: params.did} } } } ).session(session);
+    { '$pull': { dienst: { _id: params.did} } }).session(session);
+    
+    //delete dienst from dienstextref coll
+    await Dienst.deleteOne( { '_id': params.did } ).session(session);
+    
+    // recalc OA1, etc. for season and production (if not sonst. dienst):     
+    await renumberProduction(session, dienstDoc.season, dienstDoc.prod);
+    
+    // recalc dienstzahlen for all dpls for this week    
+    await recalcNumbersAfterWeightChange(session, params.o, dienstDoc.w, params.did);        
+    
+    // delete seatings subdocs from all dpls
+    await Dpl.updateMany({
+      o: params.o,
+      w: dienstDoc.w
+    }, {
+      '$pull': {
+         seatings: {
+            d: params.did
+         }
+      }
+    } ).session(session);
+    
+    return true;
+}
 
 router.delete('/:mts/:did', async function(req, res) {
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }
       console.log(`Deleting Dienst req ${req.params.mts}, ${req.params.did}`);
-      // read dienst to get season id and prod id for renumber function
-      dienstDoc = await DienstExtRef.findOne( { _id: req.params.did } );
-
-      // delete dienst from weeks coll
-      await Week.updateOne( { _id: req.params.mts }, // todo not correct, need id
-      { $pull: { dienste: { $elemMatch: {_id: req.params.did} } } } );
-
-      //delete dienst from dienstextref coll
-      await DienstExtRef.deleteOne( { _id: req.params.id } );
+      let result = await writeOperation( authData.o, deleteDienst, {
+         o: authData.o, did: req.params.did, mts: req.params.mts });      
+      console.log(`Dienst successfully deleted: ${result}`);
       
-      // recalc OA1, etc. for season and production (if not sonst. dienst): 
-      await renumberProduction(dienstDoc.s._id, dienstDoc.prod._id);
-      
-      //TODO
-      // recalc dienstzahlen for all dpls
-      // delete seatings subdocs from all dpls
-      
-      // return new week plan
-      let resp = await createWeekDataRaw(req.params.mts, authData);          
+      // return new week plan            
+      let resp = await createWeekDataRaw(req.params.mts, authData);
       res.json( resp );            
    });
 });
