@@ -6,6 +6,8 @@ const Production = require('../models/production');
 const DienstExtRef = require('../models/dienst');
 const Week = require('../models/week');
 
+const { writeOperation } = require('../my_modules/orch-lock');
+
 router.get('/', async function(req, res) {
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err) 
@@ -83,6 +85,26 @@ router.post('/', function(req, res){
    res.send('POST route on weeks.');
 });
 
+async function editProdName(session, params ) {
+   await Production.findByIdAndUpdate( params.id, { name: params.name }).session(session);
+
+   if (params.all) {
+      // Update name field for all dienst in DienstExtRef collection
+      await DienstExtRef.updateMany(
+         { o: params.o, prod: params.id },
+         { name: params.name }
+      ).session(session);   
+
+      // Update name field for all dienst embedded in Week collection
+      await Week.updateMany(
+         { o: params.o },
+         { "$set": { "dienst.$[elem].name": params.name } },
+         { multi: true, arrayFilters: [ { "elem.prod": params.id } ] }
+      ).session(session);
+   }
+   return true;
+}
+
 router.patch('/:id', async function(req, res) { 
    jwt.verify(req.token, process.env.JWT_PASS, async function (err, authData) {
       if (err || ! authData.m ) 
@@ -91,36 +113,14 @@ router.patch('/:id', async function(req, res) {
          const changes = req.body;
          //console.log(`PATCH request for prod id:  ${req.params.id}`);
       
-         if ( changes.name ) {         
-            //console.log(`New name: ${changes.name}`);
-            // Update document in productions collection
-            await Production.findOneAndUpdate( { 
+         if ( changes.name ) {
+            let success = await writeOperation(authData.o, editProdName, {
                o: authData.o,
-               _id: req.params.id
-            }, {
-               name: changes.name
-            });
+               id: req.params.id,
+               name: changes.name,
+               all: changes.all
+            });             
             
-            if ( changes.all ) {
-               // Update name field for all dienst in DienstExtRef collection
-               await DienstExtRef.updateMany(
-                  { o: authData.o,
-                  prod: req.params.id
-                  },
-                  {
-                     name: changes.name
-                  }
-               );
-               
-
-               // Update name field for all dienst embedded in Week collection
-               await Week.updateMany(
-                  { o: authData.o },
-                  { "$set": { "dienst.$[elem].name": changes.name } },
-                  { multi: true,
-                  arrayFilters: [ { "elem.prod": req.params.id } ] }
-               );
-            }
             res.json( {name: changes.name} );
          } else {
             //console.log( changes );
@@ -138,10 +138,7 @@ router.patch('/:id', async function(req, res) {
             console.log(update);*/
             
             // Update document in productions collection
-            await Production.findOneAndUpdate( { 
-               o: authData.o,
-               _id: req.params.id
-            }, changes);
+            await Production.findByIdAndUpdate( req.params.id, changes);
             
             res.json( changes );
 

@@ -6,6 +6,7 @@ const Dpl = require('../models/dpl');
 const Period = require('../models/period');
 const Week = require('../models/week');
 const Dienst = require('../models/dienst');
+const Production = require('../models/production');
 const Profile = require('../models/profile');
 
 const { writeOperation } = require('../my_modules/orch-lock');
@@ -248,9 +249,8 @@ async function renumberProduction(session, sId /* season */, pId /* prod id */ )
      }    
 }
 
-// Subtracts dienst-weight after deleting 
-// or corrects numbers after change in dienst weight
-// for all dpls and members who had this dienst
+// Subtracts dienst-weight after deleting or change in dienst weight
+// corrects numbers for current and all succeding dpls for each group and members who had this dienst
 async function recalcNumbersAfterWeightChange(session, o /* orchestra id*/, w /* week doc id */, 
 did /* dienst id */, correction) {
    let dplDocs = await Dpl.find({o: o, w: w}).session(session);
@@ -266,6 +266,45 @@ did /* dienst id */, correction) {
          await  succ.save()    
       }    
     }     
+}
+
+async function updateProductionsFirstAndLastDienst(session, o, p) {
+   let firstLast = await Dienst.aggregate([
+      {
+        '$match': {
+          'o': o, 
+          'prod': p
+        }
+      }, {
+        '$sort': {
+          'begin': 1
+        }
+      }, {
+        '$group': {
+          '_id': null, 
+          'firstDienst': {
+            '$first': '$_id'
+          }, 
+          'lastDienst': {
+            '$last': '$_id'
+          }
+        }
+      }
+    ]).session(session);
+    console.log(firstLast);
+    if ( firstLast) {
+      await Production.updateOne( {
+        o: o,
+         _id: p
+      }, {
+         firstDienst: firstLast.firstDienst,
+         lastDienst: firstLast.lastDienst
+      }).session(session);
+   } else {
+      await Production.deleteOne({
+         o: o, _id: p
+      }).session(session);
+   }
 }
 
 // Change editable flag for week in a transaction
@@ -412,9 +451,15 @@ async function deleteDienst(session, params ) {
     
     //delete dienst from dienstextref coll
     await Dienst.deleteOne( { '_id': params.did } ).session(session);
+       
     
-    // recalc OA1, etc. for season and production (if not sonst. dienst):     
-    await renumberProduction(session, dienstDoc.season, dienstDoc.prod);
+    if ( dienstDoc.prod ) {
+      //update first and last dienst for this prod
+      await updateProductionsFirstAndLastDienst(session, params.o, dienstDoc.prod);      
+      
+      // recalc OA1, etc. for season and production (if not sonst. dienst):     
+      await renumberProduction(session, dienstDoc.season, dienstDoc.prod);            
+    }
     
     // recalc dienstzahlen for all dpls for this week    
     await recalcNumbersAfterWeightChange(session, params.o, dienstDoc.w, params.did);        
@@ -448,18 +493,55 @@ router.delete('/:mts/:did', async function(req, res) {
    });
 });
 
+async function createDienst(session, params) {
+   console.log(params);
+   // TODO
+   // insert new dienst for week id :mts
+   // with or without dienst instrumentation (paste / new)
+   // insert new week for dienst ext ref collection
+   
+   /*if ( dienstDoc.prod category !== 2 ) {
+      //update first and last dienst for this prod
+      await updateProductionsFirstAndLastDienst(session, params.o, dienstDoc.prod);      
+      
+      // recalc OA1, etc. for season and production (if not sonst. dienst):     
+      await renumberProduction(session, dienstDoc.season, dienstDoc.prod);            
+    }*/
+   
+   // add seatings subdocs for all dpls
+  //return new did;
+}
 
 router.post('/:mts', async function(req, res) {
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }
       // TODO create new dienst 
+      let result = await writeOperation( authData.o, createDienst, {
+         o: authData.o, mts: req.params.mts, dienstParams: req.body.value });      
+      console.log(`Dienst successfully created: ${result}`);      
+      
+      // return new week plan            
+      let resp = await createWeekDataRaw(req.params.mts, authData);
+      res.json( resp );            
+   });
+});
 
-      // insert new dienst for week id :mts
-      // with or without dienst instrumentation (paste / new)
-      // insert new week for dienst ext ref collection
-      // recalc OA1, etc. for season and production (if not sonst. dienst)      
-      // add seatings subdocs for all dpls
-      // return new week plan
+async function editDienst(session, params) {
+   console.log(params);
+   // TODO
+}
+
+router.post('/:mts/:did', async function(req, res) {
+   jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
+      if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }
+      // TODO edit dienst 
+      let result = await writeOperation( authData.o, editDienst, {
+         o: authData.o, mts: req.params.mts, dienstParams: req.body.value });      
+      console.log(`Dienst successfully updated: ${result}`);      
+      
+      // return new week plan            
+      let resp = await createWeekDataRaw(req.params.mts, authData);
+      res.json( resp );            
    });
 });
 
