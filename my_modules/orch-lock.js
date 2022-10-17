@@ -25,7 +25,7 @@ exports.writeOperation = async function ( orch, txnFunc, params ) {
         orchDoc = await Orchestra.findOneAndUpdate( {
             o: orch,
             writeLock: false
-        }, { writeLock: true }, { session: session } );     
+        }, { writeLock: true }, { returnDocument: 'after', session: session } );     
         if ( !orchDoc ) {
             await setTimeout(retryDelay + Math.random() * 100);
             retryCount++;            
@@ -43,6 +43,7 @@ exports.writeOperation = async function ( orch, txnFunc, params ) {
     finally {
         orchDoc.writeLock = false;
         await orchDoc.save();
+        console.log('Write lock for orchestra released');
     }   
 
     return result;    

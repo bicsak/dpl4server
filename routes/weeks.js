@@ -514,10 +514,9 @@ async function createDienst(session, params) {
 
 router.post('/:mts', async function(req, res) {
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
-      if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }
-      // TODO create new dienst 
+      if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }      
       let result = await writeOperation( authData.o, createDienst, {
-         o: authData.o, mts: req.params.mts, dienstParams: req.body.value });      
+         o: authData.o, mts: req.params.mts, dienstParams: req.body });      
       console.log(`Dienst successfully created: ${result}`);      
       
       // return new week plan            
@@ -528,15 +527,59 @@ router.post('/:mts', async function(req, res) {
 
 async function editDienst(session, params) {
    console.log(params);
-   // TODO
+
+   // read dienst to get season id and prod id for renumber function
+   let dienstDoc = await Dienst.findOne( { _id: params.did } ).session(session);    
+   let oldWeight = dienstDoc.weight;
+
+   await Week.findOneAndUpdate( { 
+      o: params.o,
+      /*begin: new Date(params.mts * 1000),*/
+      'dienst._id': params.did
+   }, {
+      '$set': {          
+         'dienst.$.subtype': params.dienstParams.subtype,
+         'dienst.$.suffix': params.dienstParams.suffix,
+         'dienst.$.begin': new Date(params.dienstParams.begin),
+         'dienst.$.name': params.dienstParams.name,
+         'dienst.$.weight': params.dienstParams.weight,
+         'dienst.$.comment': params.dienstParams.comment,
+         'dienst.$.duration': params.dienstParams.duration,
+         'dienst.$.location': params.dienstParams.location ? { 
+            full: params.dienstParams.location.full, 
+            abbr: params.dienstParams.location.abbr} : undefined
+       }      
+   }, {session: session});
+
+   dienstDoc.subtype= params.dienstParams.subtype;
+   dienstDoc.suffix= params.dienstParams.suffix;
+   dienstDoc.begin= new Date(params.dienstParams.begin);
+   dienstDoc.name= params.dienstParams.name;
+   dienstDoc.weight= params.dienstParams.weight;
+   dienstDoc.comment= params.dienstParams.comment;
+   dienstDoc.duration= params.dienstParams.duration;
+   dienstDoc.location= params.dienstParams.location ? { 
+      full: params.dienstParams.location.full, 
+      abbr: params.dienstParams.location.abbr} : undefined;
+
+   await dienstDoc.save();
+
+   // recalc OA1, etc. for season and production (if not sonst. dienst):     
+   await renumberProduction(session, dienstDoc.season, dienstDoc.prod);            
+
+   // recalc dienstzahlen for all dpls for this week    
+   await recalcNumbersAfterWeightChange(session, params.o, dienstDoc.w, params.did,
+      oldWeight - dienstDoc.weight); 
 }
 
 router.post('/:mts/:did', async function(req, res) {
+   console.log(req.body);
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }
       // TODO edit dienst 
       let result = await writeOperation( authData.o, editDienst, {
-         o: authData.o, mts: req.params.mts, dienstParams: req.body.value });      
+         o: authData.o, mts: req.params.mts, did: req.params.did, 
+         dienstParams: req.body });      
       console.log(`Dienst successfully updated: ${result}`);      
       
       // return new week plan            
