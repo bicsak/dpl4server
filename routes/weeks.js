@@ -10,6 +10,7 @@ const Production = require('../models/production');
 const Profile = require('../models/profile');
 
 const { writeOperation } = require('../my_modules/orch-lock');
+const Orchestra = require('../models/orchestra');
 
 async function createWeekDataRaw(begin, authData, sec) {
    let beginDate = new Date(begin*1000); 
@@ -241,11 +242,12 @@ async function renumberProduction(session, sId /* season */, pId /* prod id */ )
          { 'dienst.$.seq': d.seq, 
            'dienst.$.total': d.category == 0 ? max.r[rehearsalType] : max.p //d.total
          }).session( session);                        
-       await Dienst.updateOne(
-         { _id: d._id },
+       //await Dienst.updateOne(
+       await Dienst.findByIdAndUpdate(         
+         d._id,
          { 'seq': d.seq, 
          'total': d.category == 0 ? max.r[rehearsalType] : max.p //d.total
-         }).session(session);
+         }, {session: session});
      }    
 }
 
@@ -293,17 +295,22 @@ async function updateProductionsFirstAndLastDienst(session, o, p) {
     ]).session(session);
     console.log(firstLast);
     if ( firstLast) {
-      await Production.updateOne( {
+      /*await Production.updateOne( {
         o: o,
          _id: p
       }, {
          firstDienst: firstLast.firstDienst,
          lastDienst: firstLast.lastDienst
-      }).session(session);
+      }).session(session);*/
+      await Production.findByIdAndUpdate( p, {
+          firstDienst: firstLast.firstDienst,
+          lastDienst: firstLast.lastDienst
+       }, {session: session});
    } else {
-      await Production.deleteOne({
+      /*await Production.deleteOne({
          o: o, _id: p
-      }).session(session);
+      }).session(session);*/
+      await Production.findByIdAndRemove(p, {session: session});
    }
 }
 
@@ -442,7 +449,7 @@ router.patch('/:mts/:did', async function(req, res) {
  */
 async function deleteDienst(session, params ) {
     // read dienst to get season id and prod id for renumber function
-    let dienstDoc = await Dienst.findOne( { _id: params.did } ).session(session);    
+    let dienstDoc = await Dienst.findById( params.did ).session(session);    
 
     // delete dienst from weeks coll
     await Week.updateOne( { o: params.o, 'dienst._id': params.did }, 
@@ -450,8 +457,8 @@ async function deleteDienst(session, params ) {
     { '$pull': { dienst: { _id: params.did} } }).session(session);
     
     //delete dienst from dienstextref coll
-    await Dienst.deleteOne( { '_id': params.did } ).session(session);
-       
+    //await Dienst.deleteOne( { '_id': params.did } ).session(session);
+    await Dienst.findByIdAndRemove(params.did, {session: session});           
     
     if ( dienstDoc.prod ) {
       //update first and last dienst for this prod
@@ -494,29 +501,143 @@ router.delete('/:mts/:did', async function(req, res) {
 });
 
 async function createDienst(session, params) {
+   console.log('createDienst transaction fn');
    console.log(params);
-   // TODO
-   // insert new dienst for week id :mts
-   // with or without dienst instrumentation (paste / new)
-   // insert new week for dienst ext ref collection
+
+   let prodDoc; 
+   let createProd = true;
+   let newDienstId = new mongoose.Types.ObjectId();   
+   let orchestraDoc = await Orchestra.findById(params.o).session(session);                  
+   let dienstInstrumentation = new Map(
+      Array.from(orchestraDoc.sections, ([key, value]) => [key, 0] )            
+   );
+
+   let weekDoc = await Week.findOne( {o: params.o, begin: new Date(params.mts * 1000)} ).session(session);
+
+   if ( params.category !== 2 ) {
+      
+      if ( ! (params.prod instanceof Object) ) {         
+         createProd = false;
+         prodDoc = await Production.findById(params.prod).session(session);         
+         
+         dienstInstrumentation = new Map(
+            Array.from(prodDoc.instrumentation, ([key, value]) => [key, value.count] ) 
+         );  
+         //console.log(prodDoc.instrumentation);
+         //console.log(dienstInstrumentation);
+      } else {                  
+         let prodInstrumentation = new Map(
+            Array.from(orchestraDoc.sections, ([key, value]) => [key, {count: 0, extra: ''}] )            
+         );
+         // set instrumentation values of the map from params.prod.instrumentation for active sections
+         Object.entries(params.prod.instrumentation).forEach(([key, value]) => {
+            prodInstrumentation.set(key, value);   
+         });         
+
+         prodDoc = new Production( {
+            o: params.o, 
+            name: params.prod.name, 
+            comment: params.prod.comment, // Musikalische Leitung, Regisseur, Konzertprogramm etc. 
+            extra: params.prod.extra, // optional, extra instruments (Celesta, Harp, Alt-Saxofon etc.)               
+            instrumentation: prodInstrumentation, // template instrumentation. Dienst-Besetzung kann abweichen!
+            firstDienst: newDienstId,
+            lastDienst: newDienstId,    
+            duration: params.prod.duration // optional, only if duration is specified for this prod            
+         } );
+         prodDoc.$session(session);
+         await prodDoc.save();                  
+         
+         dienstInstrumentation = new Map(
+            Array.from(prodInstrumentation, ([key, value]) => [key, value.count] )            
+         );                    
+      }
+   }
    
-   /*if ( dienstDoc.prod category !== 2 ) {
+   if ( params.instrumentation ) {
+      // if it was a copy-paste create-dienst
+      // we have explicitly instrumentation for dienst
+      // overwrite key, values from from params.instrumentations      
+      Object.entries(params.instrumentation).forEach(([key, value]) => {
+         dienstInstrumentation.set(key, value);   
+      });               
+   }
+
+   // insert new week for dienst ext ref collection
+   const dienstDoc = new Dienst( {
+      _id: newDienstId,
+      o: params.o,
+      season: weekDoc.season,
+      w: weekDoc._id,
+      begin: new Date(params.begin), 
+      name: params.name,
+      prod: prodDoc?._id,
+      category: params.category,
+      subtype: params.subtype,
+      weight: params.weight,
+      comment: params.comment,
+      instrumentation: dienstInstrumentation,
+      location: params.location,
+      duration: params.duration
+   } );
+   dienstDoc.$session(session);
+   await dienstDoc.save();
+   
+   // insert new dienst for week
+   weekDoc.dienst.push( {
+      _id: dienstDoc._id,
+      name: dienstDoc.name,
+      begin: dienstDoc.begin,
+      prod: dienstDoc.prod,
+      category: dienstDoc.category,
+      subtype: dienstDoc.subtype,
+      suffix: dienstDoc.suffix,
+      weight: dienstDoc.weight,
+      duration: dienstDoc.duration, // or undefined for auto duration calculation    
+      location: dienstDoc.location,
+      instrumentation: dienstDoc.instrumentation,
+      comment: dienstDoc.comment, // by manager (for example: Kleiderordnung, Anspielprobe etc.)
+      seq: 0, // -1 for exluded, 0: not calculated, 1..n
+      total: 0 // total of performances/rehearsals this kind in the season
+   } );
+   await weekDoc.save();   
+   
+   if ( params.category !== 2 && !createProd ) {
       //update first and last dienst for this prod
-      await updateProductionsFirstAndLastDienst(session, params.o, dienstDoc.prod);      
+      await updateProductionsFirstAndLastDienst(session, params.o, prodDoc._id);      
       
       // recalc OA1, etc. for season and production (if not sonst. dienst):     
-      await renumberProduction(session, dienstDoc.season, dienstDoc.prod);            
-    }*/
+      await renumberProduction(session, dienstDoc.season, prodDoc._id);            
+   }
    
    // add seatings subdocs for all dpls
-  //return new did;
+   let dplDocs = await Dpl.find({o: params.o, w: weekDoc._id}).session(session);   
+    for (let dpl of dplDocs) {
+      //console.log(dpl);
+      let seatingDoc = dpl.seatings.create({
+         d: dienstDoc._id,
+         ext: 0,
+         sp: Array(dpl.start.length).fill(0),
+         comment: '',
+         dienstBegin: dienstDoc.begin,
+         dienstWeight: dienstDoc.weight,
+         dienstInstr: dienstDoc.instrumentation.get(dpl.s)
+      });
+      dpl.seatings.push( seatingDoc );      
+      //console.log(seatingDoc);
+      await dpl.save();      
+    }     
+   
+   return true;
 }
 
 router.post('/:mts', async function(req, res) {
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }      
       let result = await writeOperation( authData.o, createDienst, {
-         o: authData.o, mts: req.params.mts, dienstParams: req.body });      
+         ...req.body, 
+         o: authData.o, 
+         mts: req.params.mts
+      });      
       console.log(`Dienst successfully created: ${result}`);      
       
       // return new week plan            
@@ -529,7 +650,7 @@ async function editDienst(session, params) {
    console.log(params);
 
    // read dienst to get season id and prod id for renumber function
-   let dienstDoc = await Dienst.findOne( { _id: params.did } ).session(session);    
+   let dienstDoc = await Dienst.findById( params.did ).session(session);    
    let oldWeight = dienstDoc.weight;
 
    await Week.findOneAndUpdate( { 
@@ -538,29 +659,29 @@ async function editDienst(session, params) {
       'dienst._id': params.did
    }, {
       '$set': {          
-         'dienst.$.subtype': params.dienstParams.subtype,
-         'dienst.$.suffix': params.dienstParams.suffix,
-         'dienst.$.begin': new Date(params.dienstParams.begin),
-         'dienst.$.name': params.dienstParams.name,
-         'dienst.$.weight': params.dienstParams.weight,
-         'dienst.$.comment': params.dienstParams.comment,
-         'dienst.$.duration': params.dienstParams.duration,
-         'dienst.$.location': params.dienstParams.location ? { 
-            full: params.dienstParams.location.full, 
-            abbr: params.dienstParams.location.abbr} : undefined
+         'dienst.$.subtype': params.subtype,
+         'dienst.$.suffix': params.suffix,
+         'dienst.$.begin': new Date(params.begin),
+         'dienst.$.name': params.name,
+         'dienst.$.weight': params.weight,
+         'dienst.$.comment': params.comment,
+         'dienst.$.duration': params.duration,
+         'dienst.$.location': params.location ? { 
+            full: params.location.full, 
+            abbr: params.location.abbr} : undefined
        }      
    }, {session: session});
 
-   dienstDoc.subtype= params.dienstParams.subtype;
-   dienstDoc.suffix= params.dienstParams.suffix;
-   dienstDoc.begin= new Date(params.dienstParams.begin);
-   dienstDoc.name= params.dienstParams.name;
-   dienstDoc.weight= params.dienstParams.weight;
-   dienstDoc.comment= params.dienstParams.comment;
-   dienstDoc.duration= params.dienstParams.duration;
-   dienstDoc.location= params.dienstParams.location ? { 
-      full: params.dienstParams.location.full, 
-      abbr: params.dienstParams.location.abbr} : undefined;
+   dienstDoc.subtype= params.subtype;
+   dienstDoc.suffix= params.suffix;
+   dienstDoc.begin= new Date(params.begin);
+   dienstDoc.name= params.name;
+   dienstDoc.weight= params.weight;
+   dienstDoc.comment= params.comment;
+   dienstDoc.duration= params.duration;
+   dienstDoc.location= params.location ? { 
+      full: params.location.full, 
+      abbr: params.location.abbr} : undefined;
 
    await dienstDoc.save();
 
@@ -570,16 +691,47 @@ async function editDienst(session, params) {
    // recalc dienstzahlen for all dpls for this week    
    await recalcNumbersAfterWeightChange(session, params.o, dienstDoc.w, params.did,
       oldWeight - dienstDoc.weight); 
+
+   //update all seating docs in all 
+   let dplDocs = await Dpl.find({o: params.o, w: dienstDoc.w}).session(session);
+    for (let dpl of dplDocs) {
+      let seating = {
+         d: dienstDoc._id,
+         ext: 0,
+         sp: Array(dpl.start.legth).fill(0),
+         comment: '',
+         dienstBegin: dienstDoc.begin,
+         dienstWeight: dienstDoc.weight,
+         dienstInstr: dienstDoc.instrumentation.get(dpl.s)
+      };                  
+
+      await Dpl.findOneAndUpdate({
+         'seatings.d': dienstDoc._id
+      }, {
+         '$set': { 'seatings.$':  seating}               
+      }, { session: session } );
+
+      //dpl.seatings.forEach(... remove())
+      //await dpl.save();
+      
+      // does not work
+      // dpl.seatings.id(dienstDoc._id) not the id but d      
+    }     
+   
+
+   return true;
 }
 
 router.post('/:mts/:did', async function(req, res) {
    console.log(req.body);
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
-      if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }
-      // TODO edit dienst 
+      if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }      
       let result = await writeOperation( authData.o, editDienst, {
-         o: authData.o, mts: req.params.mts, did: req.params.did, 
-         dienstParams: req.body });      
+         ...req.body, 
+         o: authData.o, 
+         mts: req.params.mts, 
+         did: req.params.did, 
+      });      
       console.log(`Dienst successfully updated: ${result}`);      
       
       // return new week plan            
@@ -587,11 +739,6 @@ router.post('/:mts/:did', async function(req, res) {
       res.json( resp );            
    });
 });
-
-/*
-router.post('/', function(req, res){
-   res.send('POST route on weeks.');
-});*/
 
 //export this router to use in our index.js
 module.exports = router;

@@ -30,13 +30,7 @@ const orchestraSchema = new Schema({
             durations: [Number] // [150, 150, 180, 220, 180, 180, 150], [180, 180, 180, 180], [150]
         }
     ],
-    writeLock: Boolean /*new Schema( {
-            txn: String, // the operation
-            ts: { type: Date, default: Date.now },
-            role: String, // 'manager'/'scheduler'/etc.
-            action: String, // 'release'/'lock'
-            uniqueId: Schema.Types.ObjectId,
-        }, { required: false })            */
-}/*, { optimisticConcurrency: true }*/);
+    writeLock: Boolean 
+} );
 
 module.exports = mongoose.model('Orchestra', orchestraSchema);
