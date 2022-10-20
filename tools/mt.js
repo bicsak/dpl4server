@@ -534,7 +534,7 @@ async function run(hc) {
             week.fl_newid = dpl._id;         
             await Week.findByIdAndUpdate(week.id, {
               $set: {
-                "dpls.sec0": {closed:true, dplRef: dpl._id}} 
+                "dpls.sec0": {closed:dpl.closed, dplRef: dpl._id}} 
               });                                 
 
             let meta = new DplMeta( {
@@ -556,8 +556,8 @@ async function run(hc) {
             await meta.save();
           }
 
-          result = await mysqlDb.query(
-            `SELECT remark,id_week,period FROM fg3_week WHERE monday='${monday}'`);
+          result = await mysqlDb.query(            
+            `SELECT remark,status,id_week,period FROM fg3_week WHERE monday='${monday}'`);
           if ( result.length ) {
             week.fg_id = result[0].id_week;  
             week.fg_p = result[0].period.toISOString();             
@@ -575,7 +575,7 @@ async function run(hc) {
               remark: result[0].remark,
               weekBegin: weekBegin,
               weekEditable: true,
-              closed: true,
+              closed: result[0].status==1,
               correction: newCorr,
               delta: Array(newFgPeriods[week.fg_p].members.length).fill(0),
               start: Array(newFgPeriods[week.fg_p].members.length).fill(0),            
@@ -586,7 +586,7 @@ async function run(hc) {
             week.fg_newid = dpl._id;         
             await Week.findByIdAndUpdate(week.id, {
               $set: {
-                "dpls.sec3": {closed:true, dplRef: dpl._id}
+                "dpls.sec3": {closed:dpl.closed, dplRef: dpl._id}
                 } 
               });
             
