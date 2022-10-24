@@ -355,6 +355,40 @@ router.get('/:section/:mts', async function(req, res) {
    });
 });
 
+router.patch('/:mts/:sec', async function(req, res) {
+   jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
+      if (err || authData.r !== 'scheduler' || authData.s !== req.params.sec  ) { 
+         res.sendStatus(401); 
+         return; 
+      }      
+      if ( req.body.path === '/remark' ) {
+         if ( req.body.op === 'replace' ) {            
+            await Dpl.findOneAndUpdate( { 
+               o: authData.o,
+               weekBegin: new Date(req.params.mts * 1000),
+               s: req.params.sec
+            }, {
+               remark: req.body.value
+            });
+            res.json( { remark: req.body.value } ); 
+            return;
+         } else if (req.body.op === 'remove' ) {            
+            await Dpl.findOneAndUpdate( { 
+               o: authData.o,
+               weekBegin: new Date(req.params.mts * 1000),
+               s: req.params.sec
+            }, {
+               remark: null
+            });
+            res.sendStatus( 204 ); 
+            return;
+         }
+      } 
+   });
+});
+
+
+
 router.patch('/:mts', async function(req, res) {
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }
