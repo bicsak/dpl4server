@@ -8,13 +8,14 @@ const seatingSchema = new Schema({
     /**
      * 0: free
      * 1: X
-     * 8: * (stand-by)
+     * 4: * (stand-by)
      * 16: P/V/S
      * 32: A (externe Aushilfe, gezählt)
      * 64, 65, ...: P1/V1/... 64+x
      */
     comment: String, // scheduler's comment
     //suggestions: [ Number ], // -1 for empty field, x in [0..n-1] for + sign by member in row nr. x
+    available: [ Boolean ],
 
     dienstBegin: Date,
     dienstWeight: { type: Number, min: 0, max: 3 },

@@ -771,7 +771,7 @@ async function run(hc) {
             if ( dienstOldIds[index].fl_did != -1 ) {            
               if ( d.begin.getHours() < 12 ) absentArrayField = flAbsent[dienstOldIds[index].day].am; 
               else absentArrayField = flAbsent[dienstOldIds[index].day].pm;
-              let seating = []; 
+              let seating = []; let available = [];
               let sps = await mysqlDb.query(
                 `SELECT dplrow,code FROM fl3_seatingplan 
                 WHERE id_dienst='${dienstOldIds[index].fl_did}'
@@ -782,7 +782,7 @@ async function run(hc) {
                   case 64: 
                   case 65: 
                   case 66: 
-                  case 67: seating.push(2); break;
+                  case 67: seating.push( /* 2 */ 0 ); available.push(true); break;
                   case 1: seating.push(16); break;
                   case 2: seating.push(1); break;
                   case 3: let tmp = sps.findIndex( v => v.code == 2 );  seating.push(64+tmp); break;
@@ -796,7 +796,8 @@ async function run(hc) {
               flSeatings.push( {
                 d: d._id, 
                 ext: dienstOldIds[index].fl_extern, 
-                sp: seating,              
+                sp: seating,
+                available: available,              
                 comment: dienstOldIds[index].fl_comm,
                 dienstBegin: d.begin,
                 dienstWeight: d.weight,
@@ -815,7 +816,7 @@ async function run(hc) {
             if ( dienstOldIds[index].fg_did != -1) {            
               if ( d.begin.getHours() < 12 ) absentArrayField = fgAbsent[dienstOldIds[index].day].am; 
               else absentArrayField = fgAbsent[dienstOldIds[index].day].pm;                        
-              let seating = [];                     
+              let seating = []; let available = [];
               let sps = await mysqlDb.query(
                 `SELECT dplrow,code FROM fg3_seatingplan 
                 WHERE id_dienst='${dienstOldIds[index].fg_did}'
@@ -826,7 +827,7 @@ async function run(hc) {
                   case 64: 
                   case 65: 
                   case 66: 
-                  case 67: seating.push(2); break;
+                  case 67: seating.push( /* 2 */ 0); available.push(true); break;
                   case 1: seating.push(16); break;
                   case 2: seating.push(1); break;
                   case 3: let tmp = sps.indexOf(2); seating.push(64+tmp); break;
@@ -841,6 +842,7 @@ async function run(hc) {
                 d: d._id, 
                 ext: dienstOldIds[index].fg_extern, 
                 sp: seating,
+                available: available,
                 comment: dienstOldIds[index].fg_comm,
                 dienstBegin: d.begin,
                 dienstWeight: d.weight,

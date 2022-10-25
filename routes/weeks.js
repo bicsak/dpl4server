@@ -94,6 +94,7 @@ async function createWeekDataRaw(begin, authData, sec) {
                   (seatingObj) => { 
                      return {
                         sp: seatingObj.sp.fill(0),
+                        available: seatingObj.available.fill(false),
                         d: seatingObj.d,
                         ext: 0                        
                      };
@@ -115,7 +116,8 @@ async function createWeekDataRaw(begin, authData, sec) {
                         d: v.d,
                         ext: v.ext,
                         comment: v.comment,
-                        sp: v.sp.map( c => c == 2 ? 0 : c)                        
+                        sp: /*v.sp.map( c => c == 2 ? 0 : c)*/ v.sp,
+                        available: v.available.map( av => false)
                      }                     
                   } );
                   //...and erase dw-s (+ signs)
