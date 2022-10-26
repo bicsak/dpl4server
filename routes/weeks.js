@@ -713,11 +713,11 @@ async function editDienst(session, params) {
    dienstDoc.begin= new Date(params.begin);
    dienstDoc.name= params.name;
    dienstDoc.weight= params.weight;
-   dienstDoc.comment= params.comment;
-   dienstDoc.duration= params.duration;
-   dienstDoc.location= params.location ? { 
+   //dienstDoc.comment= params.comment;
+   //dienstDoc.duration= params.duration;
+   /*dienstDoc.location= params.location ? { 
       full: params.location.full, 
-      abbr: params.location.abbr} : undefined;
+      abbr: params.location.abbr} : undefined;*/
 
    await dienstDoc.save();
 
