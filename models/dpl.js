@@ -46,10 +46,11 @@ const dplSchema = new Schema({
     weekEditable: Boolean,
     closed: Boolean,
     remark: String, // scheduler's remark
-    absent: [ {
+    absent: [ [ {type: Number, min: 0, max: 4} ] ], // represents 1: K (gezählt), 2: ~, 3: U and 4: - (FW) 14 x n
+      /*  {
         am: [ {type: Number, min: 0, max: 4} ],
         pm: [ {type: Number, min: 0, max: 4} ]
-    } ], // represents 1: K (gezählt), 2: ~, 3: U and 4: - (FW) 7 x n
+    } , */ // represents 1: K (gezählt), 2: ~, 3: U and 4: - (FW) 7 x n
     correction: [ Number ],
     delta: [ Number ],
     start: [ Number ],

@@ -637,9 +637,11 @@ async function run(hc) {
           let flSeatings = []; let fgSeatings = [];
           let flAbsent = [];
           let fgAbsent = [];
-          for ( let i = 0; i < 7; i++) {
-            flAbsent[i] = {am: [0,0,0,0], pm: [0,0,0,0]};
-            fgAbsent[i] = {am: [0,0,0,0], pm: [0,0,0,0]};
+          for ( let i = 0; i < /* 7 */ 14; i++) {
+            /* flAbsent[i] = {am: [0,0,0,0], pm: [0,0,0,0]};
+            fgAbsent[i] = {am: [0,0,0,0], pm: [0,0,0,0]};*/
+            flAbsent[i] = [0,0,0,0];
+            fgAbsent[i] = [0,0,0,0];
           }
           let absentArrayField;
 
@@ -769,8 +771,13 @@ async function run(hc) {
             let index = dienstOldIds.length - 1;
 
             if ( dienstOldIds[index].fl_did != -1 ) {            
-              if ( d.begin.getHours() < 12 ) absentArrayField = flAbsent[dienstOldIds[index].day].am; 
-              else absentArrayField = flAbsent[dienstOldIds[index].day].pm;
+              if ( d.begin.getHours() < 12 ) {
+                absentArrayField = //flAbsent[dienstOldIds[index].day].am; 
+                flAbsent[dienstOldIds[index].day * 2];
+              } else {
+                absentArrayField = //flAbsent[dienstOldIds[index].day].pm;
+                flAbsent[dienstOldIds[index].day * 2 + 1];
+              }
               let seating = []; let available = [];
               let sps = await mysqlDb.query(
                 `SELECT dplrow,code FROM fl3_seatingplan 
@@ -814,8 +821,13 @@ async function run(hc) {
               } );
             }     
             if ( dienstOldIds[index].fg_did != -1) {            
-              if ( d.begin.getHours() < 12 ) absentArrayField = fgAbsent[dienstOldIds[index].day].am; 
-              else absentArrayField = fgAbsent[dienstOldIds[index].day].pm;                        
+              if ( d.begin.getHours() < 12 ) {
+                absentArrayField = // fgAbsent[dienstOldIds[index].day].am; 
+                fgAbsent[dienstOldIds[index].day * 2]; 
+              } else {
+                absentArrayField = // fgAbsent[dienstOldIds[index].day].pm;                        
+                fgAbsent[dienstOldIds[index].day * 2 + 1];                        
+              }
               let seating = []; let available = [];
               let sps = await mysqlDb.query(
                 `SELECT dplrow,code FROM fg3_seatingplan 

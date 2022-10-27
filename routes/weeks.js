@@ -83,12 +83,12 @@ async function createWeekDataRaw(begin, authData, sec) {
             if ( !dplAccess ) {
                // remove all seating data if no access should be granted
                finalAbsent = dplDocs[i].absent.map(
-                  (abs) => {
+                  (abs) => abs.fill(0) /*{
                      return {
                         am: abs.am.fill(0),
                         pm: abs.pm.fill(0)
                      }
-                  }
+                  }*/
                );
                finalSeatings = dplDocs[i].seatings.map(
                   (seatingObj) => { 
@@ -104,12 +104,12 @@ async function createWeekDataRaw(begin, authData, sec) {
                finalRemark = dplDocs[i].remark;
                if ( authData.r == 'office' ) {
                   finalAbsent = dplDocs[i].absent.map(
-                     (abs) => {
+                     (abs) => abs.map(v => v == 4 ? 0 : v) /*{
                         return {
                            am: abs.am.map(v => v == 4 ? 0 : v),
                            pm: abs.pm.map(v => v == 4 ? 0 : v)
                         }
-                     }
+                     }*/
                   ); // erase fw-s (- signs)...   
                   finalSeatings = dplDocs[i].seatings.map( v => {                      
                      return {
