@@ -9,7 +9,7 @@ const Dienst = require('../models/dienst');
 const Production = require('../models/production');
 const Profile = require('../models/profile');
 
-const { writeOperation } = require('../my_modules/orch-lock');
+//const { writeOperation } = require('../my_modules/orch-lock');
 const Orchestra = require('../models/orchestra');
 
 async function createWeekDataRaw(begin, authData, sec) {
