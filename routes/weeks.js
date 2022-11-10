@@ -351,7 +351,7 @@ router.get('/:section/:mts', async function(req, res) {
       if (err) 
          res.sendStatus(401);
       else {
-         let resp = await createWeekDataRaw(req.params.mts, authData, req.params.section);          
+         let resp = await createWeekDataRaw(req.params.mts, authData, req.params.section);                   
          res.json( resp );
       }
    });
