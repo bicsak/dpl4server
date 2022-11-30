@@ -54,7 +54,7 @@ async function createWeekDataRaw(begin, authData, sec) {
          select: 'begin members.row members.initial members.start members.factor', // -_id
          populate: {
             path: 'members.prof',
-            select: 'userFn userSn userBirthday'
+            select: 'userFn userSn userBirthday user'
          }
       }).select('-absent._id -seatings.dienstBegin -seatings.dienstInstr -seatings.dienstWeight -seatings._id');                                
       else dplDocs = await Dpl.find({ o: authData.o, w: wplDoc.id }).populate({
