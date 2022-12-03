@@ -359,11 +359,16 @@ router.get('/:section/:mts', async function(req, res) {
 
 router.patch('/:mts/:sec', async function(req, res) {
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
-      if (err || authData.r !== 'scheduler' || authData.s !== req.params.sec  ) { 
+      if (err ) { 
          res.sendStatus(401); 
          return; 
       }      
       if ( req.body.path === '/remark' ) {
+         if (authData.r !== 'scheduler' || authData.s !== req.params.sec  ) { 
+            res.sendStatus(401); 
+            return; 
+         }
+
          if ( req.body.op === 'replace' ) {            
             await Dpl.findOneAndUpdate( { 
                o: authData.o,
@@ -385,11 +390,33 @@ router.patch('/:mts/:sec', async function(req, res) {
             res.sendStatus( 204 ); 
             return;
          }
-      } 
+      } else if (req.body.op == 'delwish' || req.body.op == 'newwish') {
+         if ( err || authData.r !== 'musician' || authData.s !== req.params.sec 
+            /* TODO check if active member*/ ) { 
+            res.sendStatus(401); 
+            return; 
+         }
+         if ( req.body.op == 'delwish') {
+            if (req.body.did) {
+               console.log(`Deleting + sign for member ${req.body.mi} column ${req.body.col}, did: ${req.body.did}`);
+               //TODO
+            } else {
+               //TODO
+               console.log(`Deleting fw member ${req.body.mi} for column ${req.body.col}`);
+            }
+         } else {
+            if ( req.body.did ) {
+               //TODO
+               console.log(`Adding + sign member ${req.body.mi} for column ${req.body.col}, did: ${req.body.did}`);
+            } else {
+               //TODO
+               // check count fw for this period and season
+               console.log(`Adding fw member ${req.body.mi} for column ${req.body.col}`);
+            }
+         }         
+      }
    });
 });
-
-
 
 router.patch('/:mts', async function(req, res) {
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
@@ -455,7 +482,7 @@ async function editInstrumentation( session, params ) {
    return params.instr;
 }
 
-router.patch('/:mts/:did', async function(req, res) {
+router.patch('/:mts/all/:did', async function(req, res) {
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }
 
