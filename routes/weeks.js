@@ -357,6 +357,36 @@ router.get('/:section/:mts', async function(req, res) {
    });
 });
 
+// Freiwunsch, Dienstwunsch eintragen/löschen
+async function editFwDw( session, params ) {                 
+   if ( params.dw ) {  
+      let updateObj = {};
+      updateObj[`available.${params.mi}`] = !params.erase;
+      await Dpl.updateOne( { 
+         o: params.o,
+         s: params.sec,
+         weekBegin: params.begin,         
+         closed: false,
+         "seatings.d": params.did
+      }, updateObj, { session: session  } );   
+   } else {
+      if ( !erase ) {
+         //TODO check sum of fw's   
+      }
+      /*let updateObj = {};
+      updateObj[`available.${params.mi}`] = !params.erase; // TODO
+      await Dpl.updateOne( { 
+         o: params.o,
+         s: params.sec,
+         weekBegin: params.begin,         
+         closed: false         
+      }, updateObj, { session: session  } );   */
+      //TODO return fw count
+   }
+   return true; // TODO
+} // End of transaction function
+
+
 router.patch('/:mts/:sec', async function(req, res) {
    jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err ) { 
@@ -399,19 +429,57 @@ router.patch('/:mts/:sec', async function(req, res) {
          if ( req.body.op == 'delwish') {
             if (req.body.did) {
                console.log(`Deleting + sign for member ${req.body.mi} column ${req.body.col}, did: ${req.body.did}`);
-               //TODO
+               let result = await writeOperation( authData.o,
+                  editFwDw, {
+                     o: authData.o, sec: req.params.sec,
+                     begin: new Date(req.params.mts * 1000),
+                     erase: true, dw: true,
+                     did: req.body.did, mi: req.body.mi                     
+                  });                        
+      
+               res.json( { success: result } ); //TODO push-notifications
+               return;               
             } else {
                //TODO
                console.log(`Deleting fw member ${req.body.mi} for column ${req.body.col}`);
+               let result = await writeOperation( authData.o,
+                  editFwDw, {
+                     o: authData.o, sec: req.params.sec,
+                     begin: new Date(req.params.mts * 1000),
+                     erase: true, dw: false,
+                     col: req.body.col, mi: req.body.mi                                          
+                  });                        
+      
+               res.json( { success: result } ); //TODO push-notifications
+               return;
             }
          } else {
-            if ( req.body.did ) {
-               //TODO
+            if ( req.body.did ) {               
                console.log(`Adding + sign member ${req.body.mi} for column ${req.body.col}, did: ${req.body.did}`);
+               let result = await writeOperation( authData.o,
+                  editFwDw, {
+                     o: authData.o, sec: req.params.sec,
+                     begin: new Date(req.params.mts * 1000),
+                     erase: false, dw: true,
+                     did: req.body.did, mi: req.body.mi                                          
+                  });                        
+      
+               res.json( { success: result } ); //TODO push-notifications
+               return;
             } else {
                //TODO
                // check count fw for this period and season
                console.log(`Adding fw member ${req.body.mi} for column ${req.body.col}`);
+               let result = await writeOperation( authData.o,
+                  editFwDw, {
+                     o: authData.o, sec: req.params.sec,
+                     begin: new Date(req.params.mts * 1000),
+                     erase: false, dw: false,
+                     col: req.body.col, mi: req.body.mi                                          
+                  });                        
+      
+               res.json( { success: result } ); //TODO push-notifications
+               return;
             }
          }         
       }
