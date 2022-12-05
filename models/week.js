@@ -42,6 +42,7 @@ const weekSchema = new Schema({
         of: new Schema( // undefined, if dpl for the section does not exist yet
             {
                 closed: Boolean, 
+                published: Boolean,
                 dplRef: {
                     type: Schema.Types.ObjectId,
                     ref: 'Dpl'

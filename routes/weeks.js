@@ -131,6 +131,7 @@ async function createWeekDataRaw(begin, authData, sec) {
                period: dplDocs[i].p,
                accessAllowed: dplAccess,
                closed: dplDocs[i].closed,
+               published: dplDocs[i].published,
                remark: finalRemark, //scheduler's remark for the whole week
                absent: finalAbsent, // Krankmeldunden, Freiwünsche etc.
                sps: finalSeatings // seating plans for each dienst                                  
@@ -360,28 +361,31 @@ router.get('/:section/:mts', async function(req, res) {
 // Freiwunsch, Dienstwunsch eintragen/löschen
 async function editFwDw( session, params ) {                 
    if ( params.dw ) {  
-      let updateObj = {};
-      updateObj[`available.${params.mi}`] = !params.erase;
+      let updateOpt = {};
+      updateOpt[`seatings.$.available.${params.mi}`] = !params.erase;
       await Dpl.updateOne( { 
          o: params.o,
          s: params.sec,
          weekBegin: params.begin,         
          closed: false,
          "seatings.d": params.did
-      }, updateObj, { session: session  } );   
-   } else {
-      if ( !erase ) {
-         //TODO check sum of fw's   
+      }, { $set: updateOpt } , { session: session  } );   
+   } else {      
+      let fwCount;
+      if ( !params.erase ) {      
+         //TODO check sum of fw's  fwCount =...
+         //TODO check if all dienste for this col are free
+         // otherwise return success: false
       }
-      /*let updateObj = {};
-      updateObj[`available.${params.mi}`] = !params.erase; // TODO
+      let updateOpt = {};
+      updateOpt[`absent.${params.col}.${params.mi}`] = params.erase ? 0 : 4;
       await Dpl.updateOne( { 
          o: params.o,
          s: params.sec,
          weekBegin: params.begin,         
          closed: false         
-      }, updateObj, { session: session  } );   */
-      //TODO return fw count
+      }, updateOpt, { session: session  } ); 
+      //TODO return success: true, fw count: fwCount - 1
    }
    return true; // TODO
 } // End of transaction function

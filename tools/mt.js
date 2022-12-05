@@ -524,6 +524,7 @@ async function run(hc) {
               weekBegin: weekBegin,
               weekEditable: true,
               closed: result[0].status==1,
+              published: result[0].status==1,
               correction: newCorr,
               delta: Array(newFlPeriods[week.fl_p].members.length).fill(0),
               start: Array(newFlPeriods[week.fl_p].members.length).fill(0),
@@ -534,7 +535,7 @@ async function run(hc) {
             week.fl_newid = dpl._id;         
             await Week.findByIdAndUpdate(week.id, {
               $set: {
-                "dpls.sec0": {closed:dpl.closed, dplRef: dpl._id}} 
+                "dpls.sec0": {closed:dpl.closed, published: dpl.published, dplRef: dpl._id}} 
               });                                 
 
             let meta = new DplMeta( {
@@ -576,6 +577,7 @@ async function run(hc) {
               weekBegin: weekBegin,
               weekEditable: true,
               closed: result[0].status==1,
+              published: result[0].status==1,
               correction: newCorr,
               delta: Array(newFgPeriods[week.fg_p].members.length).fill(0),
               start: Array(newFgPeriods[week.fg_p].members.length).fill(0),            
@@ -586,7 +588,7 @@ async function run(hc) {
             week.fg_newid = dpl._id;         
             await Week.findByIdAndUpdate(week.id, {
               $set: {
-                "dpls.sec3": {closed:dpl.closed, dplRef: dpl._id}
+                "dpls.sec3": {closed:dpl.closed, published: dpl.published, dplRef: dpl._id}
                 } 
               });
             
