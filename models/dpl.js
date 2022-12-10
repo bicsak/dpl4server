@@ -44,6 +44,7 @@ const dplSchema = new Schema({
     s: String, // section
     weekBegin: Date,
     weekEditable: Boolean,
+    weekSeason: { type: Schema.Types.ObjectId, ref: 'Season' },
     closed: Boolean,
     published: Boolean,
     remark: String, // scheduler's remark

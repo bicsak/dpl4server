@@ -11,6 +11,7 @@ const Profile = require('../models/profile');
 
 const { writeOperation } = require('../my_modules/orch-lock');
 const Orchestra = require('../models/orchestra');
+const { param } = require('./seasons');
 
 async function createWeekDataRaw(begin, authData, sec) {
    let beginDate = new Date(begin*1000); 
@@ -370,10 +371,68 @@ async function editFwDw( session, params ) {
          closed: false,
          "seatings.d": params.did
       }, { $set: updateOpt } , { session: session  } );   
-   } else {      
-      let fwCount;
-      if ( !params.erase ) {      
-         //TODO check sum of fw's  fwCount =...
+   } else {            
+      if ( !params.erase ) { 
+         //get orchestra and sec specific maxFW value (for a week)
+         let orch = await Orchestra.findById(params.o);
+         let maxFW = orch[params.sec].maxFW;
+         
+         let dpl = await Dpl.findOne({
+            o: params.o,
+            s: params.sec,
+            weekBegin: params.begin
+         }).populate('p').populate('weekSeason');
+         
+         // calculate max fw for this season (section)
+         let extraCriteria = {}; let hasExtraCrit = false;
+         if ( !dpl.p.isOpenEnd && dpl.p.nextPBegin.getTime() < dpl.weekSeason.end.getTime() ) {           
+            extracriteria['$lte'] = dpl.p.nextPBegin.getTime() ;
+            hasExtraCrit = true;
+         }
+         if ( dpl.p.begin.getTime() > dpl.weekSeason.begin.getTime() ) {
+            extraCriteria['$gte'] = dpl.p.begin.getTime();
+            hasExtraCrit = true;
+         }
+         
+         let numberOfWeeks = 0;
+         if ( hasExtraCrit) numberOfWeeks = await Week.countDocuments( {
+            o: params.o,
+            season: dpl.weekSeason._id,
+            begin: extraCriteria
+         }); else numberOfWeeks = await Week.countDocuments( {
+            o: params.o,
+            season: dpl.weekSeason._id
+         });
+        
+         // sum of fw's for this member in season and (piece of) period                 
+         let fwCount = await Dpl.aggregate( [
+            {
+              '$match': {
+                'o': params.o, 
+                's': params.sec, 
+                'p': dpl.p._id, 
+                'weekSeason': dpl.weekSeason._id
+              }
+            }, {
+              '$unwind': {
+                'path': '$absent'
+              }
+            }, {
+              '$unwind': {
+                'path': '$absent', 
+                'includeArrayIndex': 'member'
+              }
+            }, {
+              '$match': {
+                'member': params.mi, 
+                'absent': 4
+              }
+            }, {
+               '$count': 'countFw'
+             }
+          ] ).countFW;
+         
+         console.log(fwCount);
          //TODO check if all dienste for this col are free
          // otherwise return success: false
       }

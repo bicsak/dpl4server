@@ -418,7 +418,7 @@ async function run(hc) {
         /************ PERIODS *********** */      
         let newFlPeriods = {};      
         let result = await mysqlDb.query(
-          `SELECT P.first_day AS begin,dplrow,dplcode AS initial,dzstart AS offset,id_user 
+          `SELECT P.first_day AS begin,P.next_period AS next,dplrow,dplcode AS initial,dzstart AS offset,id_user 
           FROM fl3_period P INNER JOIN fl3_member M 
           ON P.first_day=M.first_day`);
         for ( p of result ) {        
@@ -426,6 +426,7 @@ async function run(hc) {
               o: hsw._id,
               s: "sec0",
               begin: p.begin,   
+              nextPBegin: p.next ? p.next : undefined,
               members: []                         
           };        
           
@@ -436,16 +437,23 @@ async function run(hc) {
             start: p.offset,
             factor: 1
           } );        
-        }
-        Object.entries(newFlPeriods).forEach(async ([key, value]) => {
+        }        
+        Object.entries(newFlPeriods).forEach(([key, value]) => {          
           let newPeriod = new Period( value );
           newFlPeriods[key].newId = newPeriod._id;
-          await newPeriod.save();        
-        });
-
+          newFlPeriods[key].doc = newPeriod;                    
+        });  
+        for ( [key, val] of Object.entries(newFlPeriods)) {
+          if ( val.nextPBegin ) {             
+            newFlPeriods[key].doc.next = newFlPeriods[val.nextPBegin.toISOString()].newId;
+            newFlPeriods[key].doc.isOpenEnd = false;                        
+          } else newFlPeriods[key].doc.isOpenEnd = true;                
+          await val.doc.save();
+        }
+        
         let newFgPeriods = {};      
         result = await mysqlDb.query(
-          `SELECT P.first_day AS begin,dplrow,dplcode AS initial,dzstart AS offset,id_user 
+          `SELECT P.first_day AS begin,P.next_period AS next,dplrow,dplcode AS initial,dzstart AS offset,id_user 
           FROM fg3_period P INNER JOIN fg3_member M 
           ON P.first_day=M.first_day`);
           
@@ -453,7 +461,8 @@ async function run(hc) {
           if ( !newFgPeriods[p.begin.toISOString()] ) newFgPeriods[p.begin.toISOString()] = {          
               o: hsw._id,
               s: "sec3",
-              begin: p.begin,   
+              begin: p.begin,  
+              nextPBegin: p.next ? p.next: undefined, 
               members: []                         
           };
 
@@ -465,12 +474,19 @@ async function run(hc) {
             factor: 1
           } );        
         }
-        Object.entries(newFgPeriods).forEach(async ([key, value]) => {
+        Object.entries(newFgPeriods).forEach( ([key, value]) => {
           let newPeriod = new Period( value );
-          newFgPeriods[key].newId = newPeriod._id;
-          await newPeriod.save();        
+          newFgPeriods[key].newId = newPeriod._id;          
+          newFgPeriods[key].doc = newPeriod;                              
         });
-
+        for ( [key, val] of Object.entries(newFgPeriods)) {
+          if ( val.nextPBegin ) {             
+            newFgPeriods[key].doc.next = newFgPeriods[val.nextPBegin.toISOString()].newId;
+            newFgPeriods[key].doc.isOpenEnd = false;                        
+          } else newFgPeriods[key].doc.isOpenEnd = true;                
+          await val.doc.save();
+        }
+        
         /************** WEEKS ********* */         
         let weeks = [];   
         for ( let season of seasons ) {            
@@ -523,6 +539,7 @@ async function run(hc) {
               remark: result[0].remark,
               weekBegin: weekBegin,
               weekEditable: true,
+              weekSeason: week.season,
               closed: result[0].status==1,
               published: result[0].status==1,
               correction: newCorr,
@@ -576,6 +593,7 @@ async function run(hc) {
               remark: result[0].remark,
               weekBegin: weekBegin,
               weekEditable: true,
+              weekSeason: week.season,
               closed: result[0].status==1,
               published: result[0].status==1,
               correction: newCorr,
