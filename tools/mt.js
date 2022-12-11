@@ -435,6 +435,8 @@ async function run(hc) {
             initial: p.initial,
             row: p.dplrow,
             start: p.offset,
+            canComment: true,
+            canWish: true,
             factor: 1
           } );        
         }        
@@ -471,6 +473,8 @@ async function run(hc) {
             initial: p.initial,
             row: p.dplrow,
             start: p.offset,
+            canComment: true,
+            canWish: true,
             factor: 1
           } );        
         }

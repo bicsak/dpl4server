@@ -16,6 +16,8 @@ const periodSchema = new Schema({
             row: Number,
             start: Number,
             factor: Number,
+            canComment: Boolean, // this member can write comments in this period
+            canWish: Boolean, // this member can save dw/fw in this period
             comment: String // 'Zeitvertrag von ... bis...'
         } 
     ], 

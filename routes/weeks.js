@@ -11,7 +11,6 @@ const Profile = require('../models/profile');
 
 const { writeOperation } = require('../my_modules/orch-lock');
 const Orchestra = require('../models/orchestra');
-const { param } = require('./seasons');
 
 async function createWeekDataRaw(begin, authData, sec) {
    let beginDate = new Date(begin*1000); 
@@ -360,48 +359,61 @@ router.get('/:section/:mts', async function(req, res) {
 });
 
 // Freiwunsch, Dienstwunsch eintragen/löschen
-async function editFwDw( session, params ) {                 
-   if ( params.dw ) {  
+async function editFwDw( session, params ) {
+   let returnVal; 
+   
+   // check if dpl's monday is in the future)
+   if ( params.begin <= Date.now() ) return { success: false, reason: 'Keine Bearbeitung mehr möglich'};
+   
+   let affectedDpl = await Dpl.findOne( {
+      o: params.o,
+      s: params.sec,
+      weekBegin: params.begin,
+      closed: false
+   } ).session(session).populate('p').populate('weekSeason');   
+     
+   if ( !affectedDpl ) return { success: false, reason: 'Keine Bearbeitung mehr möglich'};
+      
+   let row = affectedDpl.p.members.findIndex( mem => mem.prof == params.prof );
+   if ( row == -1 || !affectedDpl.p.members[row].canWish ) return { success: false, reason: 'Keine Bearbeitung möglich'};
+
+   if ( params.dw ) { 
+      // ********* Dienstwunsch *************
       let updateOpt = {};
       updateOpt[`seatings.$.available.${params.mi}`] = !params.erase;
       await Dpl.updateOne( { 
          o: params.o,
          s: params.sec,
-         weekBegin: params.begin,         
-         closed: false,
+         weekBegin: params.begin,                  
          "seatings.d": params.did
-      }, { $set: updateOpt } , { session: session  } );   
-   } else {            
+      }, { $set: updateOpt } , { session: session  } );        
+      returnVal = { success: true };
+   } else {  
+      // *********** Freiwunsch **************           
       if ( !params.erase ) { 
-         //get orchestra and sec specific maxFW value (for a week)
-         let orch = await Orchestra.findById(params.o);
+         // ****** Add FW *********         
+         let orch = await Orchestra.findById(params.o).session(session);
          let maxFW = orch[params.sec].maxFW;
-         
-         let dpl = await Dpl.findOne({
-            o: params.o,
-            s: params.sec,
-            weekBegin: params.begin
-         }).populate('p').populate('weekSeason');
-         
+                  
          // calculate max fw for this season (section)
          let extraCriteria = {}; let hasExtraCrit = false;
-         if ( !dpl.p.isOpenEnd && dpl.p.nextPBegin.getTime() < dpl.weekSeason.end.getTime() ) {           
-            extracriteria['$lte'] = dpl.p.nextPBegin.getTime() ;
+         if ( !affectedDpl.p.isOpenEnd && affectedDpl.p.nextPBegin.getTime() < affectedDpl.weekSeason.end.getTime() ) {           
+            extraCriteria['$lte'] = affectedDpl.p.nextPBegin.getTime() ;
             hasExtraCrit = true;
          }
-         if ( dpl.p.begin.getTime() > dpl.weekSeason.begin.getTime() ) {
-            extraCriteria['$gte'] = dpl.p.begin.getTime();
+         if ( affectedDpl.p.begin.getTime() > affectedDpl.weekSeason.begin.getTime() ) {
+            extraCriteria['$gte'] = affectedDpl.p.begin.getTime();
             hasExtraCrit = true;
          }
          
          let numberOfWeeks = 0;
          if ( hasExtraCrit) numberOfWeeks = await Week.countDocuments( {
             o: params.o,
-            season: dpl.weekSeason._id,
+            season: affectedDpl.weekSeason._id,
             begin: extraCriteria
          }); else numberOfWeeks = await Week.countDocuments( {
             o: params.o,
-            season: dpl.weekSeason._id
+            season: affectedDpl.weekSeason._id
          });
         
          // sum of fw's for this member in season and (piece of) period                 
@@ -410,8 +422,8 @@ async function editFwDw( session, params ) {
               '$match': {
                 'o': params.o, 
                 's': params.sec, 
-                'p': dpl.p._id, 
-                'weekSeason': dpl.weekSeason._id
+                'p': affectedDpl.p._id, 
+                'weekSeason': affectedDpl.weekSeason._id
               }
             }, {
               '$unwind': {
@@ -431,22 +443,25 @@ async function editFwDw( session, params ) {
                '$count': 'countFw'
              }
           ] ).countFW;
+
+          if ( numberOfWeeks * maxFW < fwCount + 1 ) return { success: false, reason: 'FW-Kontingent erschöpft'};
          
          console.log(fwCount);
-         //TODO check if all dienste for this col are free
-         // otherwise return success: false
+
+         //TODO check if all seatings in affectedDpl.seatings for params.col (seating.dienstBegin !! ) are free of signs for params.mi (and has enough collegues... seating.dienstInstr, groupSize: members.length)
+         //if not return {success: false, reason: 'Eintragen nicht möglich'};
+
       }
       let updateOpt = {};
       updateOpt[`absent.${params.col}.${params.mi}`] = params.erase ? 0 : 4;
       await Dpl.updateOne( { 
          o: params.o,
          s: params.sec,
-         weekBegin: params.begin,         
-         closed: false         
-      }, updateOpt, { session: session  } ); 
-      //TODO return success: true, fw count: fwCount - 1
+         weekBegin: params.begin         
+      }, updateOpt, { session: session  } );       
+      returnVal = { success: true, fwCount: params.erase ? undefined : fwCount - 1 };
    }
-   return true; // TODO
+   return returnVal; 
 } // End of transaction function
 
 
@@ -484,8 +499,7 @@ router.patch('/:mts/:sec', async function(req, res) {
             return;
          }
       } else if (req.body.op == 'delwish' || req.body.op == 'newwish') {
-         if ( err || authData.r !== 'musician' || authData.s !== req.params.sec 
-            /* TODO check if active member*/ ) { 
+         if ( err || authData.r !== 'musician' || authData.s !== req.params.sec ) { 
             res.sendStatus(401); 
             return; 
          }
@@ -494,7 +508,7 @@ router.patch('/:mts/:sec', async function(req, res) {
                console.log(`Deleting + sign for member ${req.body.mi} column ${req.body.col}, did: ${req.body.did}`);
                let result = await writeOperation( authData.o,
                   editFwDw, {
-                     o: authData.o, sec: req.params.sec,
+                     o: authData.o, sec: req.params.sec, prof: authData.pid,
                      begin: new Date(req.params.mts * 1000),
                      erase: true, dw: true,
                      did: req.body.did, mi: req.body.mi                     
@@ -507,7 +521,7 @@ router.patch('/:mts/:sec', async function(req, res) {
                console.log(`Deleting fw member ${req.body.mi} for column ${req.body.col}`);
                let result = await writeOperation( authData.o,
                   editFwDw, {
-                     o: authData.o, sec: req.params.sec,
+                     o: authData.o, sec: req.params.sec, prof: authData.pid,
                      begin: new Date(req.params.mts * 1000),
                      erase: true, dw: false,
                      col: req.body.col, mi: req.body.mi                                          
@@ -521,7 +535,7 @@ router.patch('/:mts/:sec', async function(req, res) {
                console.log(`Adding + sign member ${req.body.mi} for column ${req.body.col}, did: ${req.body.did}`);
                let result = await writeOperation( authData.o,
                   editFwDw, {
-                     o: authData.o, sec: req.params.sec,
+                     o: authData.o, sec: req.params.sec, prof: authData.pid,
                      begin: new Date(req.params.mts * 1000),
                      erase: false, dw: true,
                      did: req.body.did, mi: req.body.mi                                          
@@ -535,13 +549,13 @@ router.patch('/:mts/:sec', async function(req, res) {
                console.log(`Adding fw member ${req.body.mi} for column ${req.body.col}`);
                let result = await writeOperation( authData.o,
                   editFwDw, {
-                     o: authData.o, sec: req.params.sec,
+                     o: authData.o, sec: req.params.sec, prof: authData.pid,
                      begin: new Date(req.params.mts * 1000),
                      erase: false, dw: false,
                      col: req.body.col, mi: req.body.mi                                          
                   });                        
       
-               res.json( { success: result } ); //TODO push-notifications
+               res.json( result ); //TODO push-notifications
                return;
             }
          }         
