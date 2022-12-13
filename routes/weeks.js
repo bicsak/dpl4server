@@ -363,7 +363,10 @@ async function editFwDw( session, params ) {
    let returnVal; 
    
    // check if dpl's monday is in the future)
-   if ( params.begin <= Date.now() ) return { success: false, reason: 'Keine Bearbeitung mehr möglich'};
+   if ( params.begin <= Date.now() ) return { 
+      success: false, 
+      reason: 'Keine Bearbeitung mehr möglich'
+   };
    
    let affectedDpl = await Dpl.findOne( {
       o: params.o,
@@ -372,10 +375,16 @@ async function editFwDw( session, params ) {
       closed: false
    } ).session(session).populate('p').populate('weekSeason');   
      
-   if ( !affectedDpl ) return { success: false, reason: 'Keine Bearbeitung mehr möglich'};
+   if ( !affectedDpl ) return { 
+      success: false, 
+      reason: 'Keine Bearbeitung mehr möglich'
+   };
       
    let row = affectedDpl.p.members.findIndex( mem => mem.prof == params.prof );
-   if ( row == -1 || !affectedDpl.p.members[row].canWish ) return { success: false, reason: 'Keine Bearbeitung möglich'};
+   if ( row == -1 || !affectedDpl.p.members[row].canWish ) return { 
+      success: false, 
+      reason: 'Keine Bearbeitung möglich'
+   };
 
    if ( params.dw ) { 
       // ********* Dienstwunsch *************
@@ -386,7 +395,10 @@ async function editFwDw( session, params ) {
          s: params.sec,
          weekBegin: params.begin,                  
          "seatings.d": params.did
-      }, { $set: updateOpt } , { session: session  } );        
+      }, { $set: updateOpt } , { session: session  } );
+      //TODO check if no absent and other sign already and change affectedDpl's seatings
+      // affectedDpl.seatings.forEach()
+      // affectedDpl.save();
       returnVal = { success: true };
    } else {  
       // *********** Freiwunsch **************           
@@ -448,7 +460,8 @@ async function editFwDw( session, params ) {
          
          console.log(fwCount);
 
-         //TODO check if all seatings in affectedDpl.seatings for params.col (seating.dienstBegin !! ) are free of signs for params.mi (and has enough collegues... seating.dienstInstr, groupSize: members.length)
+         //TODO check if all seatings in affectedDpl.seatings 
+         // for params.col (seating.dienstBegin !! ) are free of signs for params.mi (and has enough collegues... seating.dienstInstr, groupSize: members.length)
          //if not return {success: false, reason: 'Eintragen nicht möglich'};
 
       }
@@ -459,7 +472,9 @@ async function editFwDw( session, params ) {
          s: params.sec,
          weekBegin: params.begin         
       }, updateOpt, { session: session  } );       
+      // TODO do it with mongoose
       returnVal = { success: true, fwCount: params.erase ? undefined : fwCount - 1 };
+      //TODO return also maxFw for this season section
    }
    return returnVal; 
 } // End of transaction function
