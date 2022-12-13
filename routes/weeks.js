@@ -361,6 +361,7 @@ router.get('/:section/:mts', async function(req, res) {
 // Freiwunsch, Dienstwunsch eintragen/löschen
 async function editFwDw( session, params ) {
    let returnVal; 
+   //Proba megjegyzes
    
    // check if dpl's monday is in the future)
    if ( params.begin <= Date.now() ) return { 
