@@ -360,8 +360,10 @@ router.get('/:section/:mts', async function(req, res) {
 
 // Freiwunsch, Dienstwunsch eintragen/löschen
 async function editFwDw( session, params ) {
-   let returnVal; 
-   //Proba megjegyzes
+   let returnVal;    
+
+   
+   let tz = await Orchestra.findById(params.o).timezone;
    
    // check if dpl's monday is in the future)
    if ( params.begin <= Date.now() ) return { 
@@ -378,29 +380,41 @@ async function editFwDw( session, params ) {
      
    if ( !affectedDpl ) return { 
       success: false, 
-      reason: 'Keine Bearbeitung mehr möglich'
+      reason: 'Dienstplan abgeschlossen'
    };
       
    let row = affectedDpl.p.members.findIndex( mem => mem.prof == params.prof );
    if ( row == -1 || !affectedDpl.p.members[row].canWish ) return { 
       success: false, 
-      reason: 'Keine Bearbeitung möglich'
+      reason: 'Nicht berechtigt'
    };
 
-   if ( params.dw ) { 
+   if ( params.dw ) {       
       // ********* Dienstwunsch *************
-      let updateOpt = {};
+      /*let updateOpt = {};
       updateOpt[`seatings.$.available.${params.mi}`] = !params.erase;
       await Dpl.updateOne( { 
          o: params.o,
          s: params.sec,
          weekBegin: params.begin,                  
          "seatings.d": params.did
-      }, { $set: updateOpt } , { session: session  } );
-      //TODO check if no absent and other sign already and change affectedDpl's seatings
-      // affectedDpl.seatings.forEach()
-      // affectedDpl.save();
-      returnVal = { success: true };
+      }, { $set: updateOpt } , { session: session  } );*/      
+      let seatingIndex = affectedDpl.seatings.findIndex( s => s.d == params.did );
+      let dt = DateTime.fromMillis(
+         affectedDpl.seatings[seatingIndex].dienstBegin.getTime(), 
+         { zone: tz } );            
+      let ind = dt.weekday - 1;
+      let pmOffset = dt.hour >= 12 ? 1 : 0;             
+         
+      if ( seatingIndex < 0 || 
+         affectedDpl.seatings[seatingIndex].sp[params.mi] != 0 || 
+         affectedDpl.absent[ind * 2 + pmOffset] != 0 ) returnVal = { 
+         success: false, reason: 'Eintragen nicht möglich'
+      }; else {
+         affectedDpl.seatings[seatingIndex].available[params.mi] = !params.erase;
+         await affectedDpl.save();
+         returnVal = { success: true };
+      }      
    } else {  
       // *********** Freiwunsch **************           
       if ( !params.erase ) { 
@@ -457,25 +471,53 @@ async function editFwDw( session, params ) {
              }
           ] ).countFW;
 
-          if ( numberOfWeeks * maxFW < fwCount + 1 ) return { success: false, reason: 'FW-Kontingent erschöpft'};
+          if ( numberOfWeeks * maxFW < fwCount + 1 ) return { 
+            success: false, 
+            reason: 'FW-Kontingent erschöpft'
+         };
          
          console.log(fwCount);
 
-         //TODO check if all seatings in affectedDpl.seatings 
-         // for params.col (seating.dienstBegin !! ) are free of signs for params.mi (and has enough collegues... seating.dienstInstr, groupSize: members.length)
-         //if not return {success: false, reason: 'Eintragen nicht möglich'};
-
+         // check if all seatings in affectedDpl.seatings for params.col satisfies criteria
+         // for all dienste that lies in this column: 
+         // no available, no seatings[...].sp[...] and has enough collegues
+         let unavailableCount = affectedDpl.absent[params.col].reduce(
+            (prev, curr,i) => prev + curr[params.mi] == 0 ? 0 : 1, 0            
+         );
+         let groupSize = affectedDpl.period.members.legth;
+         let colBegin = DateTime.fromMillis(affectedDpl.weekBegin.getTime(), {zone: tz})
+         .plus( {days: Math.floor(params.col / 2), hours: params.col % 2 * 12} );
+         let colEnd = colBegin.plus( {hours: 12} );
+         let isEditable = affectedDpl.seatings.filter( 
+            s => s.dienstBegin.getTime() >= colBegin.toMillis() && s.dienstBegin.getTime() < colEnd.toMillis()
+         ).every( s => {
+            if ( !params.erase && 
+               groupSize + s.ext - unavailableCount - s.dienstInstr - s.sp.filter( v => v >= 64 ).length > 0 ) return false;
+            return s.available[params.mi] == 0 && s.sp[params.mi] == 0;               
+            }
+         );         
+         // and no fw/fw is marked
+         if ( params.erase && affectedDpl.absent[params.col][params.mi] != 4 ||
+            !params.erase && affectedDpl.absent[params.col][params.mi] != 0 ||
+            !isEditable ) return {
+               success: false, 
+               reason: 'Eintragen nicht möglich'
+         };
       }
-      let updateOpt = {};
+      /*let updateOpt = {};
       updateOpt[`absent.${params.col}.${params.mi}`] = params.erase ? 0 : 4;
       await Dpl.updateOne( { 
          o: params.o,
          s: params.sec,
          weekBegin: params.begin         
-      }, updateOpt, { session: session  } );       
-      // TODO do it with mongoose
-      returnVal = { success: true, fwCount: params.erase ? undefined : fwCount - 1 };
-      //TODO return also maxFw for this season section
+      }, updateOpt, { session: session  } );       */      
+      affectedDpl.absent[params.col][params.mi] = params.erase ? 0 : 4;
+      await affectedDpl.save();
+      returnVal = { 
+         success: true, 
+         fwCount: params.erase ? undefined : fwCount + 1,
+         maxFw: params.erase ? undefined : numberOfWeeks * maxFW
+      };      
    }
    return returnVal; 
 } // End of transaction function
@@ -532,8 +574,7 @@ router.patch('/:mts/:sec', async function(req, res) {
       
                res.json( { success: result } ); //TODO push-notifications
                return;               
-            } else {
-               //TODO
+            } else {               
                console.log(`Deleting fw member ${req.body.mi} for column ${req.body.col}`);
                let result = await writeOperation( authData.o,
                   editFwDw, {
@@ -559,9 +600,7 @@ router.patch('/:mts/:sec', async function(req, res) {
       
                res.json( { success: result } ); //TODO push-notifications
                return;
-            } else {
-               //TODO
-               // check count fw for this period and season
+            } else {               
                console.log(`Adding fw member ${req.body.mi} for column ${req.body.col}`);
                let result = await writeOperation( authData.o,
                   editFwDw, {
