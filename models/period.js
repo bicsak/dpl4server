@@ -27,7 +27,7 @@ const periodSchema = new Schema({
     toJSON: {
         transform: function(doc, ret, opt) {
             ret.begin = ret.begin.getTime();
-            ret.nextPBegin = ret.nextPBegin.getTime();
+            if (ret.nextPBegin) ret.nextPBegin = ret.nextPBegin.getTime();
 
             return ret;
         }

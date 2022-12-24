@@ -9,6 +9,8 @@ const Dienst = require('../models/dienst');
 const Production = require('../models/production');
 const Profile = require('../models/profile');
 
+const { DateTime } = require("luxon");
+
 const { writeOperation } = require('../my_modules/orch-lock');
 const Orchestra = require('../models/orchestra');
 
@@ -358,12 +360,28 @@ router.get('/:section/:mts', async function(req, res) {
    });
 });
 
+async function countFw(orchId, section, periodId, seasonId, memberIndex) {
+   // sum of fw's for this member in season and (piece of) period                 
+   let result = await Dpl.aggregate( [
+      { '$match': {
+         'o': mongoose.Types.ObjectId(orchId), 
+         's': section,
+         'p': mongoose.Types.ObjectId(periodId), 
+      'weekSeason': mongoose.Types.ObjectId(seasonId) } }, 
+      { '$unwind': { 'path': '$absent' } }, 
+      { '$unwind': { 'path': '$absent', 'includeArrayIndex': 'member' } }, 
+      { '$match': { 'member': memberIndex, 'absent': 4 } }, 
+      { '$count': 'countFw' }
+   ] );   
+   return result[0].countFw;
+}
+
 // Freiwunsch, Dienstwunsch eintragen/löschen
 async function editFwDw( session, params ) {
    let returnVal;    
 
-   
-   let tz = await Orchestra.findById(params.o).timezone;
+   let orch = await Orchestra.findById(params.o).session(session);
+   let tz = orch.timezone;
    
    // check if dpl's monday is in the future)
    if ( params.begin <= Date.now() ) return { 
@@ -404,11 +422,10 @@ async function editFwDw( session, params ) {
          affectedDpl.seatings[seatingIndex].dienstBegin.getTime(), 
          { zone: tz } );            
       let ind = dt.weekday - 1;
-      let pmOffset = dt.hour >= 12 ? 1 : 0;             
-         
+      let pmOffset = dt.hour >= 12 ? 1 : 0;                      
       if ( seatingIndex < 0 || 
          affectedDpl.seatings[seatingIndex].sp[params.mi] != 0 || 
-         affectedDpl.absent[ind * 2 + pmOffset] != 0 ) returnVal = { 
+         affectedDpl.absent[ind * 2 + pmOffset][params.mi] != 0 ) returnVal = { 
          success: false, reason: 'Eintragen nicht möglich'
       }; else {
          affectedDpl.seatings[seatingIndex].available[params.mi] = !params.erase;
@@ -417,11 +434,10 @@ async function editFwDw( session, params ) {
       }      
    } else {  
       // *********** Freiwunsch **************           
+      let numberOfWeeks = 0;
+      let maxFW = orch.sections.get(params.sec).maxFW;
       if ( !params.erase ) { 
-         // ****** Add FW *********         
-         let orch = await Orchestra.findById(params.o).session(session);
-         let maxFW = orch[params.sec].maxFW;
-                  
+         // ****** Add FW *********                                       
          // calculate max fw for this season (section)
          let extraCriteria = {}; let hasExtraCrit = false;
          if ( !affectedDpl.p.isOpenEnd && affectedDpl.p.nextPBegin.getTime() < affectedDpl.weekSeason.end.getTime() ) {           
@@ -432,8 +448,7 @@ async function editFwDw( session, params ) {
             extraCriteria['$gte'] = affectedDpl.p.begin.getTime();
             hasExtraCrit = true;
          }
-         
-         let numberOfWeeks = 0;
+                  
          if ( hasExtraCrit) numberOfWeeks = await Week.countDocuments( {
             o: params.o,
             season: affectedDpl.weekSeason._id,
@@ -443,34 +458,8 @@ async function editFwDw( session, params ) {
             season: affectedDpl.weekSeason._id
          });
         
-         // sum of fw's for this member in season and (piece of) period                 
-         let fwCount = await Dpl.aggregate( [
-            {
-              '$match': {
-                'o': params.o, 
-                's': params.sec, 
-                'p': affectedDpl.p._id, 
-                'weekSeason': affectedDpl.weekSeason._id
-              }
-            }, {
-              '$unwind': {
-                'path': '$absent'
-              }
-            }, {
-              '$unwind': {
-                'path': '$absent', 
-                'includeArrayIndex': 'member'
-              }
-            }, {
-              '$match': {
-                'member': params.mi, 
-                'absent': 4
-              }
-            }, {
-               '$count': 'countFw'
-             }
-          ] ).countFW;
-
+         fwCount = await countFw(params.o, params.sec, affectedDpl.p._id, affectedDpl.weekSeason._id, params.mi);
+         
           if ( numberOfWeeks * maxFW < fwCount + 1 ) return { 
             success: false, 
             reason: 'FW-Kontingent erschöpft'
@@ -484,7 +473,7 @@ async function editFwDw( session, params ) {
          let unavailableCount = affectedDpl.absent[params.col].reduce(
             (prev, curr,i) => prev + curr[params.mi] == 0 ? 0 : 1, 0            
          );
-         let groupSize = affectedDpl.period.members.legth;
+         let groupSize = affectedDpl.p.members.legth;
          let colBegin = DateTime.fromMillis(affectedDpl.weekBegin.getTime(), {zone: tz})
          .plus( {days: Math.floor(params.col / 2), hours: params.col % 2 * 12} );
          let colEnd = colBegin.plus( {hours: 12} );
@@ -504,15 +493,16 @@ async function editFwDw( session, params ) {
                reason: 'Eintragen nicht möglich'
          };
       }
-      /*let updateOpt = {};
+      let updateOpt = {};
       updateOpt[`absent.${params.col}.${params.mi}`] = params.erase ? 0 : 4;
       await Dpl.updateOne( { 
          o: params.o,
          s: params.sec,
          weekBegin: params.begin         
-      }, updateOpt, { session: session  } );       */      
-      affectedDpl.absent[params.col][params.mi] = params.erase ? 0 : 4;
-      await affectedDpl.save();
+      }, updateOpt, { session: session  } );       
+      /*affectedDpl.absent[params.col][params.mi] = params.erase ? 0 : 4;
+      console.log(affectedDpl);  
+      await affectedDpl.save();*/
       returnVal = { 
          success: true, 
          fwCount: params.erase ? undefined : fwCount + 1,
@@ -572,7 +562,7 @@ router.patch('/:mts/:sec', async function(req, res) {
                      did: req.body.did, mi: req.body.mi                     
                   });                        
       
-               res.json( { success: result } ); //TODO push-notifications
+               res.json( result ); //TODO push-notifications
                return;               
             } else {               
                console.log(`Deleting fw member ${req.body.mi} for column ${req.body.col}`);
@@ -584,7 +574,7 @@ router.patch('/:mts/:sec', async function(req, res) {
                      col: req.body.col, mi: req.body.mi                                          
                   });                        
       
-               res.json( { success: result } ); //TODO push-notifications
+               res.json( result ); //TODO push-notifications
                return;
             }
          } else {
@@ -598,7 +588,7 @@ router.patch('/:mts/:sec', async function(req, res) {
                      did: req.body.did, mi: req.body.mi                                          
                   });                        
       
-               res.json( { success: result } ); //TODO push-notifications
+               res.json(  result ); //TODO push-notifications
                return;
             } else {               
                console.log(`Adding fw member ${req.body.mi} for column ${req.body.col}`);

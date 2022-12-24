@@ -48,7 +48,7 @@ const dplSchema = new Schema({
     closed: Boolean,
     published: Boolean,
     remark: String, // scheduler's remark
-    absent: [ [ {type: Number, min: 0, max: 4} ] ], // represents 1: K (gezählt), 2: ~, 3: U and 4: - (FW) 14 x n       
+    absent: [ [ /*{type: Number, min: 0, max: 4} */ Number] ], // represents 1: K (gezählt), 2: ~, 3: U and 4: - (FW) 14 x n       
     correction: [ Number ],
     delta: [ Number ],
     start: [ Number ],
