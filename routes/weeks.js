@@ -471,17 +471,18 @@ async function editFwDw( session, params ) {
          // for all dienste that lies in this column: 
          // no available, no seatings[...].sp[...] and has enough collegues
          let unavailableCount = affectedDpl.absent[params.col].reduce(
-            (prev, curr,i) => prev + curr[params.mi] == 0 ? 0 : 1, 0            
+            (prev, curr,i) => prev + (curr == 0 ? 0 : 1), 0            
          );
-         let groupSize = affectedDpl.p.members.legth;
+         let groupSize = affectedDpl.p.members.length;         
          let colBegin = DateTime.fromMillis(affectedDpl.weekBegin.getTime(), {zone: tz})
          .plus( {days: Math.floor(params.col / 2), hours: params.col % 2 * 12} );
          let colEnd = colBegin.plus( {hours: 12} );
-         let isEditable = affectedDpl.seatings.filter( 
+         let isEditable = params.erase || affectedDpl.seatings.filter( 
             s => s.dienstBegin.getTime() >= colBegin.toMillis() && s.dienstBegin.getTime() < colEnd.toMillis()
          ).every( s => {
-            if ( !params.erase && 
-               groupSize + s.ext - unavailableCount - s.dienstInstr - s.sp.filter( v => v >= 64 ).length > 0 ) return false;
+            //console.log(`Unavailable count: ${unavailableCount}, gr size: ${groupSize}`);
+            //console.log(`Observing ${s}`);
+            if ( groupSize + s.ext - unavailableCount - s.dienstInstr - s.sp.filter( v => v >= 64 ).length <= 0 ) return false;
             return s.available[params.mi] == 0 && s.sp[params.mi] == 0;               
             }
          );         
@@ -499,9 +500,10 @@ async function editFwDw( session, params ) {
          o: params.o,
          s: params.sec,
          weekBegin: params.begin         
-      }, updateOpt, { session: session  } );       
+      }, updateOpt, { session: session  } ); 
       /*affectedDpl.absent[params.col][params.mi] = params.erase ? 0 : 4;
       console.log(affectedDpl);  
+      mongoose.set('debug', true);
       await affectedDpl.save();*/
       returnVal = { 
          success: true, 

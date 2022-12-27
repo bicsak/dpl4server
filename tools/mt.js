@@ -807,7 +807,7 @@ async function run(hc) {
                 //flAbsent[dienstOldIds[index].day * 2 + 1];
                 flAbsent[tmp.day * 2 + 1];
               }
-              let seating = []; let available = [];
+              let seating = []; let available = Array(4).fill(false);
               let sps = await mysqlDb.query(
                 `SELECT dplrow,code FROM fl3_seatingplan 
                 WHERE id_dienst='${dienstOldIds[index].fl_did}'
@@ -822,7 +822,7 @@ async function run(hc) {
                   case 64: 
                   case 65: 
                   case 66: 
-                  case 67: seating.push( /* 2 */ 0 ); available.push(true); break;
+                  case 67: seating.push( /* 2 */ 0 ); available[ind] = true; break;
                   case 1: seating.push(16); break;
                   case 2: seating.push(1); break;
                   case 3: let tmp = sps.findIndex( v => v.code == 2 );  seating.push(64+tmp); break;
@@ -868,7 +868,7 @@ async function run(hc) {
                 //fgAbsent[dienstOldIds[index].day * 2 + 1];                        
                 fgAbsent[tmp.day * 2 + 1];                        
               }
-              let seating = []; let available = [];
+              let seating = []; let available = Array(4).fill(false);
               let sps = await mysqlDb.query(
                 `SELECT dplrow,code FROM fg3_seatingplan 
                 WHERE id_dienst='${dienstOldIds[index].fg_did}'
@@ -879,7 +879,7 @@ async function run(hc) {
                   case 64: 
                   case 65: 
                   case 66: 
-                  case 67: seating.push( /* 2 */ 0); available.push(true); break;
+                  case 67: seating.push( /* 2 */ 0); available[ind] = true; break;
                   case 1: seating.push(16); break;
                   case 2: seating.push(1); break;
                   case 3: let tmp = sps.indexOf(2); seating.push(64+tmp); break;
