@@ -9,7 +9,7 @@ const dplMetaSchema = new Schema({
         message: String,
         prof: { type: Schema.Types.ObjectId, ref: 'Profile' }, // _id of user
         // Deprecated, no more stored: email: [ Boolean ],
-        reactions: [ {type: Number, min: -1, max: 2} ], // reactions of the section to the comment 
+        feedback: [ {type: Number, min: -1, max: 2} ], // reactions of the section to the comment 
         // -1: not asked, 0: ?, 1: ok, 2: not agree
         timestamp: Date,
         deleted: Boolean

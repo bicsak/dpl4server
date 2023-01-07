@@ -12,188 +12,22 @@ const Profile = require('../models/profile');
 const { DateTime } = require("luxon");
 
 const { writeOperation } = require('../my_modules/orch-lock');
+const { createWeekDataRaw } = require('../my_modules/week-data-raw');
 const Orchestra = require('../models/orchestra');
 
-async function createWeekDataRaw(begin, authData, sec) {
-   let beginDate = new Date(begin*1000); 
-
-   let weekRaw = { begin: parseInt(begin) }; // for return value
-
-   let wplDoc = await Week.findOne({
-      o: authData.o,
-      begin: beginDate               
-   }).populate('season', 'label begin end -_id')
-   .populate('o', 'timezone')
-   //.populate('dienst.prod')
-   .populate({
-      path: 'dienst.prod',
-      populate: {
-         path: 'firstDienst',
-         select: 'begin -_id',
-         options: {
-            transform: doc => doc == null ? null : doc.begin.getTime()
-         }
-      },
-      select: 'duration name firstDienst instrumentation'
-   })
-   .select('-dpls -begin');
-
-   if ( wplDoc ) {
-      let dplDocs;
-      let wplRaw = {
-         season: wplDoc.season,
-         editable: wplDoc.editable,
-         remark: wplDoc.remark,
-         dienst: wplDoc.dienst
-      };      
-
-      if (sec) dplDocs = await Dpl.find({
-         o: authData.o,         
-         w: wplDoc.id,
-         s: sec
-      }).populate({
-         path: 'p',
-         select: 'begin members.row members.initial members.start members.factor', // -_id
-         populate: {
-            path: 'members.prof',
-            select: 'userFn userSn userBirthday user'
-         }
-      }).select('-absent._id -seatings.dienstBegin -seatings.dienstInstr -seatings.dienstWeight -seatings._id');                                
-      else dplDocs = await Dpl.find({ o: authData.o, w: wplDoc.id }).populate({
-         path: 'p',
-         select: 'begin members.row members.initial members.start members.factor', // -_id
-         populate: {
-            path: 'members.prof',
-            select: 'userFn userSn userBirthday'
-         }
-      }).select('-absent._id -seatings.dienstBegin -seatings.dienstInstr -seatings.dienstWeight -seatings._id');                                
-
-      let dplRaw = {};
-      if ( dplDocs.length ) // scheduler already created dpl for this week
-      {
-         
-         for ( let i = 0; i < dplDocs.length; i++ ) {
-            // dpl data accessible only for active members of the group and scheduler...
-            // office has access only to closed dpls
-            let dplAccess = true;         
-            if (  authData.r == 'musician'
-               && !dplDocs[i].p.members.find( m =>  m.prof._id == authData.pid ) ||
-               authData.r == 'office' && !dplDocs[i].closed ) dplAccess = false;                
-            
-            let finalRemark; let finalAbsent; let finalSeatings;
-
-            if ( !dplAccess ) {
-               // remove all seating data if no access should be granted
-               finalAbsent = dplDocs[i].absent.map(
-                  (abs) => abs.fill(0) /*{
-                     return {
-                        am: abs.am.fill(0),
-                        pm: abs.pm.fill(0)
-                     }
-                  }*/
-               );
-               finalSeatings = dplDocs[i].seatings.map(
-                  (seatingObj) => { 
-                     return {
-                        sp: seatingObj.sp.fill(0),
-                        available: seatingObj.available.fill(false),
-                        d: seatingObj.d,
-                        ext: 0                        
-                     };
-                  }
-               );
-            } else {
-               finalRemark = dplDocs[i].remark;
-               if ( authData.r == 'office' ) {
-                  finalAbsent = dplDocs[i].absent.map(
-                     (abs) => abs.map(v => v == 4 ? 0 : v) /*{
-                        return {
-                           am: abs.am.map(v => v == 4 ? 0 : v),
-                           pm: abs.pm.map(v => v == 4 ? 0 : v)
-                        }
-                     }*/
-                  ); // erase fw-s (- signs)...   
-                  finalSeatings = dplDocs[i].seatings.map( v => {                      
-                     return {
-                        d: v.d,
-                        ext: v.ext,
-                        comment: v.comment,
-                        sp: /*v.sp.map( c => c == 2 ? 0 : c)*/ v.sp,
-                        available: v.available.map( av => false)
-                     }                     
-                  } );
-                  //...and erase dw-s (+ signs)
-               } else {
-                  finalAbsent = dplDocs[i].absent;
-                  finalSeatings = dplDocs[i].seatings;
-               }               
-            }            
-   
-            dplRaw[dplDocs[i].s] = {
-               period: dplDocs[i].p,
-               accessAllowed: dplAccess,
-               closed: dplDocs[i].closed,
-               published: dplDocs[i].published,
-               remark: finalRemark, //scheduler's remark for the whole week
-               absent: finalAbsent, // Krankmeldunden, Freiwünsche etc.
-               sps: finalSeatings // seating plans for each dienst                                  
-            };                                             
-
-
-            /* Dienstzahlen --- only if authorized and single section request */
-            if ( (authData.r === 'musician' || authData.r === 'scheduler') && sec ) {   
-               dplRaw[dplDocs[i].s] = {
-                  ...dplRaw[dplDocs[i].s],
-                  start: dplDocs[i].start,
-                  correction: dplDocs[i].correction                
-               };
-               
-               let lastDplDoc = await Dpl
-               .find({
-                  o: authData.o,
-                  s: dplDocs[i].s,                                                 
-               })
-               .where('weekBegin').lt(wplDoc.season.begin).gte(dplDocs[i].p.begin) // before this week                                 
-               .sort('-weekBegin')
-               .limit(1)                              
-               .select('start delta correction weekBegin');               
-               let normVal = 0;
-               if ( lastDplDoc.length ) {
-                  //console.log(lastDpl);
-                  let endOfWeek = lastDplDoc[0].start.map( (val, j) => 
-                     val + lastDplDoc[0].correction[j] + lastDplDoc[0].delta[j]*dplDocs[i].p.members[j].factor + dplDocs[i].p.members[j].start );                  
-                  normVal = Math.min(...endOfWeek);                  
-                  dplRaw[dplDocs[i].s].start = dplDocs[i].start.map( (val) => val-normVal );
-               }               
-            }                                                                                                              
-         }
-                           
-      } 
-
-      weekRaw = {
-         ...weekRaw,
-         oTz: wplDoc.o.timezone,
-         wpl: wplRaw,
-         dpls: dplRaw         
-      };         
-      
-      /* Assigned Period --- only if single section request */ 
-      if ( sec && !dplDocs.length ) {
-         let p = await Period.find({
-            o: authData.o,
-            s: sec                  
-         }).where('begin').lte(beginDate)
-         .select('begin members')
-         .sort('-begin')
-         .limit(1)
-         .populate('members.prof', 'userFn userSn userBirthday'); 
-         
-         if (p.length) weekRaw.assignedPeriod = p[0];
-      }      
-   }
-   
-   return weekRaw;          
-}
+/***********
+ * Handles following use cases
+ * 
+ * read week data GET (inculding all seating and dpl data for office or only one for members/scheduler)
+ * only for manager:
+ * create season POST (creates all weeks) TODO
+ * edit (or remove) week's remark (by manager) PATCH
+ * change editable flag of the week PATCH
+ * edit dienst in a specific week POST
+ * edit instrumentation of a specific dienst PATCH 
+ * delete one dienst DEL
+ * create a dienst in a week POST
+ */
 
 async function renumberProduction(session, sId /* season */, pId /* prod id */ ) {
    /***************************************
@@ -339,284 +173,34 @@ async function changeEditable( session, params ) {
 } // End of transaction function
 
 router.get('/:mts', async function(req, res) {
-   jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
+   /*jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err) 
          res.sendStatus(401);
-      else {
-         let resp = await createWeekDataRaw(req.params.mts, authData);          
+      else {*/
+         let resp = await createWeekDataRaw(req.params.mts, req.authData);          
          res.json( resp );
-      }
-   });
+      /*}
+   });*/
 });
 
 router.get('/:section/:mts', async function(req, res) {
-   jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
+   /*jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err) 
          res.sendStatus(401);
-      else {
-         let resp = await createWeekDataRaw(req.params.mts, authData, req.params.section);                   
+      else {*/
+         let resp = await createWeekDataRaw(req.params.mts, req.authData, req.params.section);                   
          res.json( resp );
-      }
-   });
-});
-
-async function countFw(orchId, section, periodId, seasonId, memberIndex) {
-   // sum of fw's for this member in season and (piece of) period                 
-   let result = await Dpl.aggregate( [
-      { '$match': {
-         'o': mongoose.Types.ObjectId(orchId), 
-         's': section,
-         'p': mongoose.Types.ObjectId(periodId), 
-      'weekSeason': mongoose.Types.ObjectId(seasonId) } }, 
-      { '$unwind': { 'path': '$absent' } }, 
-      { '$unwind': { 'path': '$absent', 'includeArrayIndex': 'member' } }, 
-      { '$match': { 'member': memberIndex, 'absent': 4 } }, 
-      { '$count': 'countFw' }
-   ] );   
-   return result[0].countFw;
-}
-
-// Freiwunsch, Dienstwunsch eintragen/löschen
-async function editFwDw( session, params ) {
-   let returnVal;    
-
-   let orch = await Orchestra.findById(params.o).session(session);
-   let tz = orch.timezone;
-   
-   // check if dpl's monday is in the future)
-   if ( params.begin <= Date.now() ) return { 
-      success: false, 
-      reason: 'Keine Bearbeitung mehr möglich'
-   };
-   
-   let affectedDpl = await Dpl.findOne( {
-      o: params.o,
-      s: params.sec,
-      weekBegin: params.begin,
-      closed: false
-   } ).session(session).populate('p').populate('weekSeason');   
-     
-   if ( !affectedDpl ) return { 
-      success: false, 
-      reason: 'Dienstplan abgeschlossen'
-   };
-      
-   let row = affectedDpl.p.members.findIndex( mem => mem.prof == params.prof );
-   if ( row == -1 || !affectedDpl.p.members[row].canWish ) return { 
-      success: false, 
-      reason: 'Nicht berechtigt'
-   };
-
-   if ( params.dw ) {       
-      // ********* Dienstwunsch *************
-      /*let updateOpt = {};
-      updateOpt[`seatings.$.available.${params.mi}`] = !params.erase;
-      await Dpl.updateOne( { 
-         o: params.o,
-         s: params.sec,
-         weekBegin: params.begin,                  
-         "seatings.d": params.did
-      }, { $set: updateOpt } , { session: session  } );*/      
-      let seatingIndex = affectedDpl.seatings.findIndex( s => s.d == params.did );
-      let dt = DateTime.fromMillis(
-         affectedDpl.seatings[seatingIndex].dienstBegin.getTime(), 
-         { zone: tz } );            
-      let ind = dt.weekday - 1;
-      let pmOffset = dt.hour >= 12 ? 1 : 0;                      
-      if ( seatingIndex < 0 || 
-         affectedDpl.seatings[seatingIndex].sp[params.mi] != 0 || 
-         affectedDpl.absent[ind * 2 + pmOffset][params.mi] != 0 ) returnVal = { 
-         success: false, reason: 'Eintragen nicht möglich'
-      }; else {
-         affectedDpl.seatings[seatingIndex].available[params.mi] = !params.erase;
-         await affectedDpl.save();
-         returnVal = { success: true };
-      }      
-   } else {  
-      // *********** Freiwunsch **************           
-      let numberOfWeeks = 0;
-      let maxFW = orch.sections.get(params.sec).maxFW;
-      if ( !params.erase ) { 
-         // ****** Add FW *********                                       
-         // calculate max fw for this season (section)
-         let extraCriteria = {}; let hasExtraCrit = false;
-         if ( !affectedDpl.p.isOpenEnd && affectedDpl.p.nextPBegin.getTime() < affectedDpl.weekSeason.end.getTime() ) {           
-            extraCriteria['$lte'] = affectedDpl.p.nextPBegin.getTime() ;
-            hasExtraCrit = true;
-         }
-         if ( affectedDpl.p.begin.getTime() > affectedDpl.weekSeason.begin.getTime() ) {
-            extraCriteria['$gte'] = affectedDpl.p.begin.getTime();
-            hasExtraCrit = true;
-         }
-                  
-         if ( hasExtraCrit) numberOfWeeks = await Week.countDocuments( {
-            o: params.o,
-            season: affectedDpl.weekSeason._id,
-            begin: extraCriteria
-         }); else numberOfWeeks = await Week.countDocuments( {
-            o: params.o,
-            season: affectedDpl.weekSeason._id
-         });
-        
-         fwCount = await countFw(params.o, params.sec, affectedDpl.p._id, affectedDpl.weekSeason._id, params.mi);
-         
-          if ( numberOfWeeks * maxFW < fwCount + 1 ) return { 
-            success: false, 
-            reason: 'FW-Kontingent erschöpft'
-         };
-         
-         console.log(fwCount);
-
-         // check if all seatings in affectedDpl.seatings for params.col satisfies criteria
-         // for all dienste that lies in this column: 
-         // no available, no seatings[...].sp[...] and has enough collegues
-         let unavailableCount = affectedDpl.absent[params.col].reduce(
-            (prev, curr,i) => prev + (curr == 0 ? 0 : 1), 0            
-         );
-         let groupSize = affectedDpl.p.members.length;         
-         let colBegin = DateTime.fromMillis(affectedDpl.weekBegin.getTime(), {zone: tz})
-         .plus( {days: Math.floor(params.col / 2), hours: params.col % 2 * 12} );
-         let colEnd = colBegin.plus( {hours: 12} );
-         let isEditable = params.erase || affectedDpl.seatings.filter( 
-            s => s.dienstBegin.getTime() >= colBegin.toMillis() && s.dienstBegin.getTime() < colEnd.toMillis()
-         ).every( s => {
-            //console.log(`Unavailable count: ${unavailableCount}, gr size: ${groupSize}`);
-            //console.log(`Observing ${s}`);
-            if ( groupSize + s.ext - unavailableCount - s.dienstInstr - s.sp.filter( v => v >= 64 ).length <= 0 ) return false;
-            return s.available[params.mi] == 0 && s.sp[params.mi] == 0;               
-            }
-         );         
-         // and no fw/fw is marked
-         if ( params.erase && affectedDpl.absent[params.col][params.mi] != 4 ||
-            !params.erase && affectedDpl.absent[params.col][params.mi] != 0 ||
-            !isEditable ) return {
-               success: false, 
-               reason: 'Eintragen nicht möglich'
-         };
-      }
-      let updateOpt = {};
-      updateOpt[`absent.${params.col}.${params.mi}`] = params.erase ? 0 : 4;
-      await Dpl.updateOne( { 
-         o: params.o,
-         s: params.sec,
-         weekBegin: params.begin         
-      }, updateOpt, { session: session  } ); 
-      /*affectedDpl.absent[params.col][params.mi] = params.erase ? 0 : 4;
-      console.log(affectedDpl);  
-      mongoose.set('debug', true);
-      await affectedDpl.save();*/
-      returnVal = { 
-         success: true, 
-         fwCount: params.erase ? undefined : fwCount + 1,
-         maxFw: params.erase ? undefined : numberOfWeeks * maxFW
-      };      
-   }
-   return returnVal; 
-} // End of transaction function
-
-
-router.patch('/:mts/:sec', async function(req, res) {
-   jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
-      if (err ) { 
-         res.sendStatus(401); 
-         return; 
-      }      
-      if ( req.body.path === '/remark' ) {
-         if (authData.r !== 'scheduler' || authData.s !== req.params.sec  ) { 
-            res.sendStatus(401); 
-            return; 
-         }
-
-         if ( req.body.op === 'replace' ) {            
-            await Dpl.findOneAndUpdate( { 
-               o: authData.o,
-               weekBegin: new Date(req.params.mts * 1000),
-               s: req.params.sec
-            }, {
-               remark: req.body.value
-            });
-            res.json( { remark: req.body.value } ); 
-            return;
-         } else if (req.body.op === 'remove' ) {            
-            await Dpl.findOneAndUpdate( { 
-               o: authData.o,
-               weekBegin: new Date(req.params.mts * 1000),
-               s: req.params.sec
-            }, {
-               remark: null
-            });
-            res.sendStatus( 204 ); 
-            return;
-         }
-      } else if (req.body.op == 'delwish' || req.body.op == 'newwish') {
-         if ( err || authData.r !== 'musician' || authData.s !== req.params.sec ) { 
-            res.sendStatus(401); 
-            return; 
-         }
-         if ( req.body.op == 'delwish') {
-            if (req.body.did) {
-               console.log(`Deleting + sign for member ${req.body.mi} column ${req.body.col}, did: ${req.body.did}`);
-               let result = await writeOperation( authData.o,
-                  editFwDw, {
-                     o: authData.o, sec: req.params.sec, prof: authData.pid,
-                     begin: new Date(req.params.mts * 1000),
-                     erase: true, dw: true,
-                     did: req.body.did, mi: req.body.mi                     
-                  });                        
-      
-               res.json( result ); //TODO push-notifications
-               return;               
-            } else {               
-               console.log(`Deleting fw member ${req.body.mi} for column ${req.body.col}`);
-               let result = await writeOperation( authData.o,
-                  editFwDw, {
-                     o: authData.o, sec: req.params.sec, prof: authData.pid,
-                     begin: new Date(req.params.mts * 1000),
-                     erase: true, dw: false,
-                     col: req.body.col, mi: req.body.mi                                          
-                  });                        
-      
-               res.json( result ); //TODO push-notifications
-               return;
-            }
-         } else {
-            if ( req.body.did ) {               
-               console.log(`Adding + sign member ${req.body.mi} for column ${req.body.col}, did: ${req.body.did}`);
-               let result = await writeOperation( authData.o,
-                  editFwDw, {
-                     o: authData.o, sec: req.params.sec, prof: authData.pid,
-                     begin: new Date(req.params.mts * 1000),
-                     erase: false, dw: true,
-                     did: req.body.did, mi: req.body.mi                                          
-                  });                        
-      
-               res.json(  result ); //TODO push-notifications
-               return;
-            } else {               
-               console.log(`Adding fw member ${req.body.mi} for column ${req.body.col}`);
-               let result = await writeOperation( authData.o,
-                  editFwDw, {
-                     o: authData.o, sec: req.params.sec, prof: authData.pid,
-                     begin: new Date(req.params.mts * 1000),
-                     erase: false, dw: false,
-                     col: req.body.col, mi: req.body.mi                                          
-                  });                        
-      
-               res.json( result ); //TODO push-notifications
-               return;
-            }
-         }         
-      }
-   });
+      /*}
+   });*/
 });
 
 router.patch('/:mts', async function(req, res) {
-   jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
-      if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }
+   //jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
+      if (err || req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }
       if ( req.body.path === '/remark' ) {
          if ( req.body.op === 'replace' ) {            
             await Week.findOneAndUpdate( { 
-               o: authData.o,
+               o: req.authData.o,
                begin: new Date(req.params.mts * 1000)
             }, {
                remark: req.body.value
@@ -625,7 +209,7 @@ router.patch('/:mts', async function(req, res) {
             return;
          } else if (req.body.op === 'remove' ) {            
             await Week.findOneAndUpdate( { 
-               o: authData.o,
+               o: req.authData.o,
                begin: new Date(req.params.mts * 1000)
             }, {
                remark: null
@@ -634,9 +218,9 @@ router.patch('/:mts', async function(req, res) {
             return;
          }
       } else if ( req.body.path === '/editable' && req.body.op === 'replace' ) {
-         let result = await writeOperation( authData.o,
+         let result = await writeOperation( req.authData.o,
             changeEditable, {
-               o: authData.o,               
+               o: req.authData.o,               
                begin: new Date(req.params.mts * 1000),
                editable: req.body.value
             });                        
@@ -644,7 +228,7 @@ router.patch('/:mts', async function(req, res) {
          res.json( { editable: result } ); //TODO push-notifications
          return;
       }
-   });
+   //});
 });
 
 async function editInstrumentation( session, params ) {
@@ -674,17 +258,17 @@ async function editInstrumentation( session, params ) {
    return params.instr;
 }
 
-router.patch('/:mts/all/:did', async function(req, res) {
-   jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
-      if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }
+router.patch('/:mts/:did', async function(req, res) {
+//   jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
+      if (err || req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }
 
       // TODO req.body is an array of {op:..., path: ..., value: ...}
       if ( req.body.path === '/instr' ) {
          if ( req.body.op === 'replace' ) { 
 
-            let result = await writeOperation( authData.o,
+            let result = await writeOperation( req.authData.o,
             editInstrumentation, {
-               o: authData.o,
+               o: req.authData.o,
                did: req.params.did,               
                instr: req.body.value               
             });                        
@@ -692,7 +276,7 @@ router.patch('/:mts/all/:did', async function(req, res) {
             return;
          } 
       }
-   });
+  // });
 });
 
 // deletes 1 dienst from DB in a transaction
@@ -742,17 +326,17 @@ async function deleteDienst(session, params ) {
 }
 
 router.delete('/:mts/:did', async function(req, res) {
-   jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
-      if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }
+   //jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
+      if (err || req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }
       console.log(`Deleting Dienst req ${req.params.mts}, ${req.params.did}`);
-      let result = await writeOperation( authData.o, deleteDienst, {
-         o: authData.o, did: req.params.did, mts: req.params.mts });      
+      let result = await writeOperation( req.authData.o, deleteDienst, {
+         o: req.authData.o, did: req.params.did, mts: req.params.mts });      
       console.log(`Dienst successfully deleted: ${result}`);
       
       // return new week plan            
-      let resp = await createWeekDataRaw(req.params.mts, authData);
+      let resp = await createWeekDataRaw(req.params.mts, req.authData);
       res.json( resp );            
-   });
+   //});
 });
 
 async function createDienst(session, params) {
@@ -886,19 +470,19 @@ async function createDienst(session, params) {
 }
 
 router.post('/:mts', async function(req, res) {
-   jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
-      if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }      
-      let result = await writeOperation( authData.o, createDienst, {
+   //jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
+      if (err || req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }      
+      let result = await writeOperation( req.authData.o, createDienst, {
          ...req.body, 
-         o: authData.o, 
+         o: req.authData.o, 
          mts: req.params.mts
       });      
       console.log(`Dienst successfully created: ${result}`);      
       
       // return new week plan            
-      let resp = await createWeekDataRaw(req.params.mts, authData);
+      let resp = await createWeekDataRaw(req.params.mts, req.authData);
       res.json( resp );            
-   });
+  // });
 });
 
 async function editDienst(session, params) {
@@ -979,20 +563,20 @@ async function editDienst(session, params) {
 
 router.post('/:mts/:did', async function(req, res) {
    console.log(req.body);
-   jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
-      if (err || authData.r !== 'office' || !authData.m ) { res.sendStatus(401); return; }      
-      let result = await writeOperation( authData.o, editDienst, {
+   //jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
+      if (err || req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }      
+      let result = await writeOperation( req.authData.o, editDienst, {
          ...req.body, 
-         o: authData.o, 
+         o: req.authData.o, 
          mts: req.params.mts, 
          did: req.params.did, 
       });      
       console.log(`Dienst successfully updated: ${result}`);      
       
       // return new week plan            
-      let resp = await createWeekDataRaw(req.params.mts, authData);
+      let resp = await createWeekDataRaw(req.params.mts, req.authData);
       res.json( resp );            
-   });
+  // });
 });
 
 //export this router to use in our index.js

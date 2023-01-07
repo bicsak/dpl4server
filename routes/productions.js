@@ -1,7 +1,7 @@
 let express = require('express');
 const mongoose = require( 'mongoose' );
 let router = express.Router();
-const jwt = require('jsonwebtoken');
+//const jwt = require('jsonwebtoken');
 const Production = require('../models/production');
 const DienstExtRef = require('../models/dienst');
 const Week = require('../models/week');
@@ -9,14 +9,14 @@ const Week = require('../models/week');
 const { writeOperation } = require('../my_modules/orch-lock');
 
 router.get('/', async function(req, res) {
-   jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
+   /*jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err) 
          res.sendStatus(401);
-      else {
+      else {*/
         console.log(`loading Productions for ${req.query.q}...`);
 
           let resp = await Production.find( { 
-              o: authData.o,              
+              o: req.authData.o,              
               name: { $regex: req.query.q, $options: '^' }
             } ).limit(10).select('name duration firstDienst').populate({
                path: 'firstDienst',
@@ -28,22 +28,22 @@ router.get('/', async function(req, res) {
          console.log(resp);
         res.json( resp ); 
 
-      }
-   });
+      /*}
+   });*/
 });
 
 router.get('/:season', async function(req, res) {
-   jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
+   /*jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err) 
          res.sendStatus(401);
-      else {
+      else {*/
         console.log("loading Productions...");                 
         console.log(req.params.season)         ;
 
         aggregatedDienst = await DienstExtRef.aggregate( [        
             { "$match": {  
                 season: new mongoose.Types.ObjectId(req.params.season),
-                o: new mongoose.Types.ObjectId(authData.o),
+                o: new mongoose.Types.ObjectId(req.authData.o),
                 category: { $ne: 2 } 
             } },
             
@@ -55,7 +55,7 @@ router.get('/:season', async function(req, res) {
 
           let resp = await Production
           .find( { 
-              o: authData.o,
+              o: req.authData.o,
             _id: {
                 "$in": aggregatedDienst.map( x => x._id )
             } } )
@@ -77,8 +77,8 @@ router.get('/:season', async function(req, res) {
         console.log(resp);
          res.json( resp );
 
-      }
-   });
+      /*}
+   });*/
 });
 
 router.post('/', function(req, res){
@@ -106,15 +106,15 @@ async function editProdName(session, params ) {
 }
 
 router.patch('/:id', async function(req, res) { 
-   jwt.verify(req.token, process.env.JWT_PASS, async function (err, authData) {
-      if (err || ! authData.m ) 
+   //jwt.verify(req.token, process.env.JWT_PASS, async function (err, authData) {
+      if (/*err ||*/ ! req.authData.m ) 
          res.sendStatus(401);
       else {  
          const changes = req.body;
          //console.log(`PATCH request for prod id:  ${req.params.id}`);
       
          if ( changes.name ) {
-            let success = await writeOperation(authData.o, editProdName, {
+            let success = await writeOperation(req.authData.o, editProdName, {
                o: authData.o,
                id: req.params.id,
                name: changes.name,
@@ -144,7 +144,7 @@ router.patch('/:id', async function(req, res) {
 
          }
       }
-   } );   
+   //} );   
 } );
 
 //export this router to use in our index.js

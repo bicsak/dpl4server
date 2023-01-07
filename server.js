@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 const verifyToken = require('./middleware/verifytoken');
+const checkDplPermission = require('./middleware/check-dpl-permission');
 //var { MongoClient } = require( 'mongodb' );
 //const mongoUri = "mongodb://myUserAdmin:csakMalajDB@127.0.0.1:27017";
 //const mongoUri = `mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@127.0.0.1:27017`;
@@ -17,6 +18,7 @@ const mongoDBName = process.env.DB_NAME;
 var app = module.exports = express();
 
 const weeks = require('./routes/weeks.js');      
+const dpls = require('./routes/dpls.js');      
 const seasons = require('./routes/seasons.js');      
 const productions = require('./routes/productions.js');      
 const dienste = require('./routes/dienste.js');      
@@ -53,6 +55,7 @@ async function run() {
       app.use(express.static('./public'));            
       
       app.use('/api/weeks', verifyToken, weeks);                  
+      app.use('/api/dpls', verifyToken, checkDplPermission, dpls);                  
       app.use('/api/users', verifyToken, users);            
       app.use('/api/seasons', verifyToken, seasons);            
       app.use('/api/productions', verifyToken, productions);            
