@@ -13,4 +13,4 @@ function checkDplPermission(req,res,next) {
     // req.method containing 'get'/'post' etc
 }
 
-module.exports = checkPermission;
+module.exports = checkDplPermission;

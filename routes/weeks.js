@@ -196,7 +196,7 @@ router.get('/:section/:mts', async function(req, res) {
 
 router.patch('/:mts', async function(req, res) {
    //jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
-      if (err || req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }
+      if ( req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }
       if ( req.body.path === '/remark' ) {
          if ( req.body.op === 'replace' ) {            
             await Week.findOneAndUpdate( { 
@@ -260,7 +260,7 @@ async function editInstrumentation( session, params ) {
 
 router.patch('/:mts/:did', async function(req, res) {
 //   jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
-      if (err || req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }
+      if ( req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }
 
       // TODO req.body is an array of {op:..., path: ..., value: ...}
       if ( req.body.path === '/instr' ) {
@@ -327,7 +327,7 @@ async function deleteDienst(session, params ) {
 
 router.delete('/:mts/:did', async function(req, res) {
    //jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
-      if (err || req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }
+      if ( req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }
       console.log(`Deleting Dienst req ${req.params.mts}, ${req.params.did}`);
       let result = await writeOperation( req.authData.o, deleteDienst, {
          o: req.authData.o, did: req.params.did, mts: req.params.mts });      
@@ -471,7 +471,7 @@ async function createDienst(session, params) {
 
 router.post('/:mts', async function(req, res) {
    //jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
-      if (err || req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }      
+      if (req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }      
       let result = await writeOperation( req.authData.o, createDienst, {
          ...req.body, 
          o: req.authData.o, 
@@ -564,7 +564,7 @@ async function editDienst(session, params) {
 router.post('/:mts/:did', async function(req, res) {
    console.log(req.body);
    //jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
-      if (err || req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }      
+      if ( req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }      
       let result = await writeOperation( req.authData.o, editDienst, {
          ...req.body, 
          o: req.authData.o, 

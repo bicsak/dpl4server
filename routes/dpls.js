@@ -1,6 +1,12 @@
 let express = require('express');
 let router = express.Router();
 
+const { writeOperation } = require('../my_modules/orch-lock');
+const { createWeekDataRaw } = require('../my_modules/week-data-raw');
+
+const Orchestra = require('../models/orchestra');
+const Dpl = require('../models/dpl');
+
 /***********
  * Handles following cases
  * 
@@ -175,6 +181,7 @@ router.patch('/:mts', async function(req, res) {
          res.sendStatus(401); 
          return; 
       }      */
+      console.log(req.authData);
       if ( req.body.path === '/remark' ) {
          if (req.authData.r !== 'scheduler' ) { 
             res.sendStatus(401); 
@@ -268,7 +275,7 @@ router.patch('/:mts', async function(req, res) {
  * Edit seatings (incl. absent) for this dpl by scheduler
  */
 router.post('/:mts', async function(req, res) {
-   //TODO section: authData.s
+   //TODO section: req.authData.s
     console.log(req.body);
     //jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
        if (req.authData.r !== 'scheduler' ) { res.sendStatus(401); return; }      
@@ -286,3 +293,5 @@ router.post('/:mts', async function(req, res) {
     //});
  });
  
+ //export this router to use in our index.js
+module.exports = router;
