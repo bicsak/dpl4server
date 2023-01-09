@@ -54,12 +54,13 @@ async function editFwDw( session, params ) {
       o: params.o,
       s: params.sec,
       weekBegin: params.begin,
+      weekEditable: true,
       closed: false
    } ).session(session).populate('p').populate('weekSeason');   
      
    if ( !affectedDpl ) return { 
       success: false, 
-      reason: 'Dienstplan abgeschlossen'
+      reason: 'Dienstplan existiert nicht, abgeschlossen oder Woche nicht zum Einteilen freigegeben'
    };
       
    let row = affectedDpl.p.members.findIndex( mem => mem.prof == params.prof );
@@ -271,25 +272,73 @@ router.patch('/:mts', async function(req, res) {
    //});
 });
 
+async function editDpl( session, params ) {
+   let returnVal;   
+
+   let affectedDpl = await Dpl.findOne( {
+      o: params.o,
+      s: params.sec,
+      weekBegin: params.begin,
+      weekEditable: true
+   } ).session(session)/*.populate('p').populate('weekSeason')*/;   
+     
+   if ( !affectedDpl ) return { 
+      success: false, 
+      reason: 'Dienstplan existiert nicht / nicht editierbar'
+   };
+
+   for ( let i = 0; i < affectedDpl.seatings.length; i++ ) {
+      let newSeating = params.sps.find( dienst => dienst.d == affectedDpl.seatings[i].d );
+      affectedDpl.seatings[i].ext = newSeating.ext;
+      affectedDpl.seatings[i].comment = newSeating.comment;
+      affectedDpl.seatings[i].sp = newSeating.sp;
+      affectedDpl.seatings[i].available = newSeating.available;
+   }
+
+   await Dpl.updateOne( { 
+      o: params.o,
+      s: params.sec,
+      weekBegin: params.begin         
+   }, {
+      '$set': {
+         absent: params.absent,
+         seatings: affectedDpl.seatings
+      }
+   }, { session: session  } ); 
+      
+   /*let row = affectedDpl.p.members.findIndex( mem => mem.prof == params.prof );
+   if ( row == -1 || !affectedDpl.p.members[row].canWish ) return { 
+      success: false, 
+      reason: 'Nicht berechtigt'
+   };*/
+
+
+   console.log('In editDpl');
+   console.log(params);
+   console.log(affectedDpl);
+
+   returnVal = true;
+   
+   return returnVal;
+}
+
 /********
  * Edit seatings (incl. absent) for this dpl by scheduler
  */
-router.post('/:mts', async function(req, res) {
-   //TODO section: req.authData.s
-    console.log(req.body);
-    //jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
-       if (req.authData.r !== 'scheduler' ) { res.sendStatus(401); return; }      
-       /*let result = await writeOperation( authData.o, editDienst, {
-          ...req.body, 
-          o: authData.o, 
-          mts: req.params.mts, 
-          did: req.params.did, 
-       });      
-       console.log(`Dienst successfully updated: ${result}`);      
-       */
-       // return new week plan            
-       let resp = await createWeekDataRaw(req.params.mts, req.authData);
-       res.json( resp );            
+router.post('/:mts', async function(req, res) {   
+   console.log(req.body);    
+   let result = await writeOperation( req.authData.o, editDpl, {
+      ...req.body, 
+      o: req.authData.o, 
+      sec: req.authData.s,
+      begin: new Date(req.params.mts * 1000)          
+   });      
+   console.log(`Dpl successfully updated: ${result}`);      
+   
+   // return new week plan            
+   let resp = await createWeekDataRaw(req.params.mts, req.authData, req.authData.s);
+   //console.log(resp.dpls.sec0.absent);
+   res.json( resp );            
     //});
  });
  
