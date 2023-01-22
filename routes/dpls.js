@@ -210,6 +210,16 @@ router.patch('/:mts', async function(req, res) {
             res.sendStatus( 204 ); 
             return;
          }
+      } else if (req.body.path === '/correction') {         
+         await Dpl.findOneAndUpdate( { 
+            o: req.authData.o,
+            weekBegin: new Date(req.params.mts * 1000),
+            s: req.authData.s
+         }, {
+            correction: req.body.value
+         });
+         res.json( { correction: req.body.value } ); 
+         return;
       } else if (req.body.op == 'delwish' || req.body.op == 'newwish') {
          if ( err || req.authData.r !== 'musician' ) { 
             res.sendStatus(401); 
@@ -304,7 +314,9 @@ async function editDpl( session, params ) {
          absent: params.absent,
          seatings: affectedDpl.seatings
       }
-   }, { session: session  } ); 
+   }, { session: session  } );
+   /*affectedDpl.absent = params.absent;
+   affectedDpl.save();*/
       
    /*let row = affectedDpl.p.members.findIndex( mem => mem.prof == params.prof );
    if ( row == -1 || !affectedDpl.p.members[row].canWish ) return { 
@@ -338,7 +350,7 @@ router.post('/:mts', async function(req, res) {
    // return new week plan            
    let resp = await createWeekDataRaw(req.params.mts, req.authData, req.authData.s);
    //console.log(resp.dpls.sec0.absent);
-   res.json( resp );            
+   res.json( result === true ? { success: true, week: resp} : result );
     //});
  });
  
