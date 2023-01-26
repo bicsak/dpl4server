@@ -176,6 +176,40 @@ async function editFwDw( session, params ) {
    return returnVal; 
 } // End of transaction function
 
+// Updates dz begin in succeeding weeks' dpls
+// after scheduler's editing dpl seating 
+// deleting dpl
+// or editing correction
+async function recalcNumbersAfterEdit(session, o /* orchestra id*/, s /* section */, 
+   begin /* modified week's monday as Date obj - succeeding weeks have weekBegin > begin */, 
+   p /* period - modify only dpls for this period*/, correction) {
+  
+      let succedingDpls = await Dpl.find({
+         o: o, s: s, p: p, weekBegin: {$gt: begin} }).session(session);
+      for (let succ of succedingDpls) {         
+         succ.start.forEach( (num, idx, arr) => arr[idx] = num - correction[idx]);      
+         await  succ.save()    
+      }      
+}
+
+async function editCorrection( session, params) {
+   //params: o, sec, begin, correction 
+   
+   let dpl = await Dpl.findOne( { o: params.o, weekBegin: params.begin,
+      //weekEditable: true, // ???
+      s: params.sec 
+   }).session(session);
+   let oldCorrection = dpl.correction;
+   dpl.correction = params.correction;
+   if (dpl) await dpl.save(); else return false;
+   // update dz begin in all succeeding weeks
+   let difference = params.correction.map((val, index) => oldCorrection[index] - val);
+   await recalcNumbersAfterEdit(session, 
+      params.o, params.sec, params.begin, dpl.p, difference);
+
+   return true;
+}
+
 router.patch('/:mts', async function(req, res) {
    /*jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err ) { 
@@ -210,8 +244,21 @@ router.patch('/:mts', async function(req, res) {
             res.sendStatus( 204 ); 
             return;
          }
-      } else if (req.body.path === '/correction') {         
-         await Dpl.findOneAndUpdate( { 
+      } else if (req.body.path === '/correction') { 
+         console.log(`Editing dz correction`);
+         let result = await writeOperation( req.authData.o,
+            editCorrection, {
+               o: req.authData.o, sec: req.authData.s,
+               begin: new Date(req.params.mts * 1000),               
+               correction: req.body.value
+            });                        
+
+         res.json( result ? {success: true, correction: req.body.value} :
+            {success: false, reason: 'DB error'} ); 
+         //TODO push-notifications
+         return;                        
+
+         /*await Dpl.findOneAndUpdate( { 
             o: req.authData.o,
             weekBegin: new Date(req.params.mts * 1000),
             s: req.authData.s
@@ -219,7 +266,7 @@ router.patch('/:mts', async function(req, res) {
             correction: req.body.value
          });
          res.json( { correction: req.body.value } ); 
-         return;
+         return;*/
       } else if (req.body.op == 'delwish' || req.body.op == 'newwish') {
          if ( err || req.authData.r !== 'musician' ) { 
             res.sendStatus(401); 
@@ -297,6 +344,8 @@ async function editDpl( session, params ) {
       reason: 'Dienstplan existiert nicht / nicht editierbar'
    };
 
+   let oldDelta = affectedDpl.delta;
+
    for ( let i = 0; i < affectedDpl.seatings.length; i++ ) {
       let newSeating = params.sps.find( dienst => dienst.d == affectedDpl.seatings[i].d );
       affectedDpl.seatings[i].ext = newSeating.ext;
@@ -304,6 +353,8 @@ async function editDpl( session, params ) {
       affectedDpl.seatings[i].sp = newSeating.sp;
       affectedDpl.seatings[i].available = newSeating.available;
    }
+   await affectedDpl.calcDelta();
+   let diff = affectedDpl.delta.map( (val, ind) => oldDelta[ind] - val);
 
    await Dpl.updateOne( { 
       o: params.o,
@@ -312,7 +363,8 @@ async function editDpl( session, params ) {
    }, {
       '$set': {
          absent: params.absent,
-         seatings: affectedDpl.seatings
+         seatings: affectedDpl.seatings,
+         delta: affectedDpl.delta
       }
    }, { session: session  } );
    /*affectedDpl.absent = params.absent;
@@ -324,10 +376,13 @@ async function editDpl( session, params ) {
       reason: 'Nicht berechtigt'
    };*/
 
+   // update dz end and dz begin for all succeeding weeks         
+   await recalcNumbersAfterEdit(session, params.o, params.sec, params.begin, 
+      affectedDpl.p._id, diff);
 
-   console.log('In editDpl');
+   /*console.log('In editDpl');
    console.log(params);
-   console.log(affectedDpl);
+   console.log(affectedDpl);*/
 
    returnVal = true;
    

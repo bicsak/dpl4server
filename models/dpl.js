@@ -76,18 +76,20 @@ const dplSchema = new Schema({
     } 
 });
 
-dplSchema.method('calcDelta', async function () {
-    if ( !this.populated('p') ) await this.populate('p'); 
-    let size = this.p.members.length;
+dplSchema.method('calcDelta', /*async*/ function () {
+    //if ( !this.populated('p') ) await this.populate('p'); 
+    if (!this.delta) return;
+    let size = this.delta.length;
+    //this.p.members.length;
     let newDelta = Array(size).fill(0);
 
     for ( let i = 0; i < size; i++ ) {
         newDelta[i] = this.seatings.reduce( 
-            (total,spObj) => ( spObj.sp[i] >= 16 ? total + spObj.dienstWeight : total ), 0 ) 
-            * this.p.members[i].factor;
+            (total,spObj) => ( spObj.sp[i] >= 16 ? total + spObj.dienstWeight : total ), 0 )  /* *this.p.members[i].factor */;
     }
 
-    this.delta = newDelta;    
+    this.delta = newDelta; 
+    //await this.save();
 });
 
 dplSchema.virtual('end').get( function () {
