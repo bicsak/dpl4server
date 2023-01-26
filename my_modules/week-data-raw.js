@@ -118,6 +118,7 @@ exports.createWeekDataRaw = async function (begin, authData, sec) {
             }            
    
             dplRaw[dplDocs[i].s] = {
+               _id: dplDocs[i]._id,
                period: dplDocs[i].p,
                accessAllowed: dplAccess,
                closed: dplDocs[i].closed,

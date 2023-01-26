@@ -19,6 +19,7 @@ var app = module.exports = express();
 
 const weeks = require('./routes/weeks.js');      
 const dpls = require('./routes/dpls.js');      
+const comments = require('./routes/comments.js');      
 const seasons = require('./routes/seasons.js');      
 const productions = require('./routes/productions.js');      
 const dienste = require('./routes/dienste.js');      
@@ -56,6 +57,7 @@ async function run() {
       
       app.use('/api/weeks', verifyToken, weeks);                  
       app.use('/api/dpls', verifyToken, checkDplPermission, dpls);                  
+      app.use('/api/comments', verifyToken, dpls);                  
       app.use('/api/users', verifyToken, users);            
       app.use('/api/seasons', verifyToken, seasons);            
       app.use('/api/productions', verifyToken, productions);            

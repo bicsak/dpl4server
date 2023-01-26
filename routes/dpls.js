@@ -13,8 +13,9 @@ const Dpl = require('../models/dpl');
  * only for scheduler:
  * TODO delete dpl DEL
  * TODO create dpl POST
- * TODO edit dpl (seatings with extern, scheduler's comment, absent and seating array) POST
+ * edit dpl (seatings with extern, scheduler's comment, absent and seating array) POST
  * edit dpl's remark by scheduler PATCH
+ * edit dpl's dz corrections
  * TODO edit dpl status (close/publish etc.) PATCH
  * 
  * for members:

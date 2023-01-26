@@ -571,8 +571,9 @@ async function run(hc) {
                 message: comments[i].message,
                 u: flUsersDictionary[comments[i].id_user],   
                 feedback: [-1, -1, -1, -1],
-                deleted: false,
-                timestamp: comments[i].posted
+                //deleted: undefined,
+                timestamp: comments[i].posted,
+                row: comments[i].id_user - 1
               } );
             }
             await meta.save();
@@ -626,8 +627,9 @@ async function run(hc) {
                 message: comments[i].message,
                 prof: fgUsersDictionary[comments[i].id_user], 
                 feedback: [-1, -1, -1, -1],             
-                deleted: false,
-                timestamp: comments[i].posted
+                //deleted: undefined,
+                timestamp: comments[i].posted,
+                row: comments[i].id_user - 1
               } );
             }
             await meta.save();
