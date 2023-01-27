@@ -562,6 +562,15 @@ async function run(hc) {
             let meta = new DplMeta( {
               o: hsw._id,
               dpl: dpl._id,
+              dplPeriod: dpl.p,
+              periodMembers: newFlPeriods[week.fl_p].members.map(
+                mem => {
+                  return {                    
+                    prof: mem.prof,
+                    row: mem.row,
+                    canWish: mem.canWish
+                  };
+                } ), 
               comments: []
             } );
             let comments = await mysqlDb.query(
@@ -618,6 +627,15 @@ async function run(hc) {
             let meta = new DplMeta( {
               o: hsw._id,
               dpl: dpl._id,
+              dplPeriod: dpl.p,
+              periodMembers: newFgPeriods[week.fg_p].members.map(
+                mem => {
+                  return {                    
+                    prof: mem.prof,
+                    row: mem.row,
+                    canWish: mem.canWish
+                  };
+                } ), 
               comments: []
             } );
             let comments = await mysqlDb.query(

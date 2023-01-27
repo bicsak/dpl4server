@@ -21,9 +21,13 @@ const DplMeta = require('../models/dplmeta');
 router.get('/:dplId', async function(req, res) {
     //TODO check if scheduler's profile or 
     // member and req.authData.p profile is in members' array for this dpl's period
-    //TODO await DplMeta.find(...)
-    /*let resp = await createWeekDataRaw(req.params.mts, req.authData);          
-    res.json( resp );    */
+    let meta = await DplMeta.findOne({
+        o: req.authData.o,
+        dpl: req.params.dplId
+    });
+    //console.log(meta);
+    console.log(meta.comments);
+    res.json( meta.comments );
  });
 
 //export this router to use in our index.js

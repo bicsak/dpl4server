@@ -4,6 +4,12 @@ const { Schema } = mongoose;
 const dplMetaSchema = new Schema({
     o: { type: Schema.Types.ObjectId, ref: 'Orchestra' },       
     dpl: { type: Schema.Types.ObjectId, ref: 'Dpl' },            
+    dplPeriod: { type: Schema.Types.ObjectId, ref: 'Period' },            
+    periodMembers: [ {        
+        prof: { type: Schema.Types.ObjectId, ref: 'Profile' },            
+        row: Number,
+        canWish: Boolean
+    } ],
     comments: [ {
         message: String,
         prof: { type: Schema.Types.ObjectId, ref: 'Profile' }, // _id of user profile

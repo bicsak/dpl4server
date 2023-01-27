@@ -57,7 +57,7 @@ async function run() {
       
       app.use('/api/weeks', verifyToken, weeks);                  
       app.use('/api/dpls', verifyToken, checkDplPermission, dpls);                  
-      app.use('/api/comments', verifyToken, dpls);                  
+      app.use('/api/comments', verifyToken, comments);                  
       app.use('/api/users', verifyToken, users);            
       app.use('/api/seasons', verifyToken, seasons);            
       app.use('/api/productions', verifyToken, productions);            
