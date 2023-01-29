@@ -575,14 +575,17 @@ async function run(hc) {
             } );
             let comments = await mysqlDb.query(
               `SELECT message,id_user,email,posted FROM fl3_comment WHERE id_week='${week.fl_id}'`);
-            for ( let i = 0; i < comments.length; i++) {                        
+            for ( let i = 0; i < comments.length; i++) {                   
               meta.comments.push( {
                 message: comments[i].message,
-                u: flUsersDictionary[comments[i].id_user],   
+                prof: flUsersDictionary[comments[i].id_user],   
                 feedback: [-1, -1, -1, -1],
                 //deleted: undefined,
                 timestamp: comments[i].posted,
-                row: comments[i].id_user - 1
+                row: //comments[i].id_user > 4 ? 1 : comments[i].id_user - 1
+                newFlPeriods[week.fl_p].members.findIndex(
+                  m => m.prof == flUsersDictionary[comments[i].id_user]
+                )                 
               } );
             }
             await meta.save();
@@ -647,7 +650,9 @@ async function run(hc) {
                 feedback: [-1, -1, -1, -1],             
                 //deleted: undefined,
                 timestamp: comments[i].posted,
-                row: comments[i].id_user - 1
+                row: newFgPeriods[week.fg_p].members.findIndex(
+                  m => m.prof == fgUsersDictionary[comments[i].id_user]
+                )  
               } );
             }
             await meta.save();

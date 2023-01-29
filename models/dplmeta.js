@@ -21,6 +21,17 @@ const dplMetaSchema = new Schema({
         row: Number // row index of member in group if comment is written by scheduler, -1
         /* Schedulers that are part of the group can choose which profile they use for commenting */
     } ]
+}, {     
+    toJSON: {
+        transform: function(doc, ret, opt) {
+            for ( let i = 0; i < doc.comments.length; i++ ) {
+                ret.comments[i].timestamp = doc.comments[i].timestamp.getTime();
+                if (doc.comments[i].deleted) ret.comments[i].deleted = doc.comments[i].deleted.getTime();
+            }
+            
+            return ret;
+        }
+    } 
 });
 
 module.exports = mongoose.model('DplMeta', dplMetaSchema);

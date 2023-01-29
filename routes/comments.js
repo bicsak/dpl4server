@@ -26,8 +26,8 @@ router.get('/:dplId', async function(req, res) {
         dpl: req.params.dplId
     });
     //console.log(meta);
-    console.log(meta.comments);
-    res.json( meta.comments );
+    console.log( meta.toJSON().comments );
+    res.json( meta.toJSON().comments );
  });
 
 //export this router to use in our index.js
