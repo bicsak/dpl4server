@@ -580,7 +580,7 @@ async function run(hc) {
                 message: comments[i].message,
                 prof: flUsersDictionary[comments[i].id_user],   
                 feedback: [-1, -1, -1, -1],
-                //deleted: undefined,
+                deleted: false,
                 timestamp: comments[i].posted,
                 row: //comments[i].id_user > 4 ? 1 : comments[i].id_user - 1
                 newFlPeriods[week.fl_p].members.findIndex(
@@ -648,7 +648,7 @@ async function run(hc) {
                 message: comments[i].message,
                 prof: fgUsersDictionary[comments[i].id_user], 
                 feedback: [-1, -1, -1, -1],             
-                //deleted: undefined,
+                deleted: false,
                 timestamp: comments[i].posted,
                 row: newFgPeriods[week.fg_p].members.findIndex(
                   m => m.prof == fgUsersDictionary[comments[i].id_user]

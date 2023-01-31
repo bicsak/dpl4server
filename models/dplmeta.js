@@ -17,7 +17,7 @@ const dplMetaSchema = new Schema({
         feedback: [ {type: Number, min: -1, max: 2} ], // reactions of the section to the comment 
         // -1: not asked, 0: ?, 1: ok, 2: not agree
         timestamp: Date,
-        deleted: Date, // not required if undefined, message is not deleted, otherwise ts of deleting
+        deleted: Boolean, 
         row: Number // row index of member in group if comment is written by scheduler, -1
         /* Schedulers that are part of the group can choose which profile they use for commenting */
     } ]
@@ -25,8 +25,7 @@ const dplMetaSchema = new Schema({
     toJSON: {
         transform: function(doc, ret, opt) {
             for ( let i = 0; i < doc.comments.length; i++ ) {
-                ret.comments[i].timestamp = doc.comments[i].timestamp.getTime();
-                if (doc.comments[i].deleted) ret.comments[i].deleted = doc.comments[i].deleted.getTime();
+                ret.comments[i].timestamp = doc.comments[i].timestamp.getTime();                
             }
             
             return ret;
