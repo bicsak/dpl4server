@@ -41,7 +41,7 @@ exports.createWeekDataRaw = async function (begin, authData, sec) {
          s: sec
       }).populate({
          path: 'p',
-         select: 'begin members.row members.initial members.start members.factor', // -_id
+         select: 'begin members.row members.initial members.start members.factor members.canComment members.canWish', // -_id
          populate: {
             path: 'members.prof',
             select: 'userFn userSn userBirthday user'

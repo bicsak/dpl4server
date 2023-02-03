@@ -568,7 +568,7 @@ async function run(hc) {
                   return {                    
                     prof: mem.prof,
                     row: mem.row,
-                    canWish: mem.canWish
+                    canComment: mem.canComment
                   };
                 } ), 
               comments: []
@@ -579,7 +579,7 @@ async function run(hc) {
               meta.comments.push( {
                 message: comments[i].message,
                 prof: flUsersDictionary[comments[i].id_user],   
-                feedback: [-1, -1, -1, -1],
+                feedback: [0, 0, 0, 0],
                 deleted: false,
                 timestamp: comments[i].posted,
                 row: //comments[i].id_user > 4 ? 1 : comments[i].id_user - 1
@@ -636,7 +636,7 @@ async function run(hc) {
                   return {                    
                     prof: mem.prof,
                     row: mem.row,
-                    canWish: mem.canWish
+                    canComment: mem.canComment
                   };
                 } ), 
               comments: []
@@ -647,7 +647,7 @@ async function run(hc) {
               meta.comments.push( {
                 message: comments[i].message,
                 prof: fgUsersDictionary[comments[i].id_user], 
-                feedback: [-1, -1, -1, -1],             
+                feedback: [0, 0, 0, 0],             
                 deleted: false,
                 timestamp: comments[i].posted,
                 row: newFgPeriods[week.fg_p].members.findIndex(

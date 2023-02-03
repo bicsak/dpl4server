@@ -8,14 +8,14 @@ const dplMetaSchema = new Schema({
     periodMembers: [ {        
         prof: { type: Schema.Types.ObjectId, ref: 'Profile' },            
         row: Number,
-        canWish: Boolean
+        canComment: Boolean
     } ],
     comments: [ {
         message: String,
         prof: { type: Schema.Types.ObjectId, ref: 'Profile' }, // _id of user profile
         // Deprecated, no more stored: email: [ Boolean ],
-        feedback: [ {type: Number, min: -1, max: 2} ], // reactions of the section to the comment 
-        // -1: not asked, 0: ?, 1: ok, 2: not agree
+        feedback: [ {type: Number, min: 0, max: 10} ], // reactions of the section to the comment 
+        // 0: not yet answered, 1: smile, 2: ok, 3: not agree etc.
         timestamp: Date,
         deleted: Boolean, 
         row: Number // row index of member in group if comment is written by scheduler, -1
