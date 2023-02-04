@@ -11,15 +11,14 @@ const DplMeta = require('../models/dplmeta');
  * Handles following cases
  * 
  * for members of the group or scheduler
- * TODO delete comment DEL (only by author or scheduler)
- * TODO create comment POST
- * TODO edit dpl (seatings with extern, scheduler's comment, absent and seating array) POST
- * TODO react to a comment (only members)
+ * delete comment DEL (only by author or scheduler)
+ * create comment POST 
+ * react to a comment (only members)
  */
 
 // orchestra and section data comes from req.authData.o, req.authData.s
 router.get('/:dplId', async function(req, res) {
-    //TODO check if scheduler's profile or 
+    // check if scheduler's profile or 
     // member and req.authData.p profile is in members' array for this dpl's period
     let meta = await DplMeta.findOne({
         o: req.authData.o,
@@ -31,7 +30,7 @@ router.get('/:dplId', async function(req, res) {
  });
 
  async function deleteComment(session, params) {    
-    //TODO check if scheduler's profile or 
+    // check if scheduler's profile or 
     // member and req.authData.p profile is in members' array for this dpl's period
     let meta = await DplMeta.findOne({
         o: params.o,
@@ -140,8 +139,64 @@ router.get('/:dplId', async function(req, res) {
      });      
      console.log(`Comment successfully created: ${result}`);      
          
-     res.json( result ); 
+     res.json( result );     
+ });
+
+ async function reactToComment(session, params) {  
+    let meta = await DplMeta.findOne({
+        o: params.o,
+        dpl: params.dpl,
+        sec: params.sec
+    }).populate('dpl').session(session);
+    if ( !meta ) return {
+        success: false,
+        reason: 'No such dpl'
+    };
     
+    let row = -1;
+    if ( params.role == 'musician' ) {
+        let member = meta.periodMembers.find( pm => pm.prof == params.prof);
+        if ( meta.closed || !member || !meta.periodMembers[member.row].canComment) return {
+            success: false,
+            reason: 'Editing not allowed'
+        };
+        else row = member.row;
+    } else return {
+        success: false,
+        reason: 'Reaction only for group members'
+    }     
+
+    let cIndex = meta.comments.findIndex( c => c._id == params.cId);
+    if ( row != params.row || cIndex == -1 ) return {
+        success: false,
+        reason: 'Bad request'
+    }
+    meta.comments[cIndex].feedback[row] = params.value;
+    await meta.save();
+    return {
+        success: true,
+        content: params.value
+    };
+ }
+
+ router.patch('/:dplId/:cId', async function(req, res) {       
+    if (req.body.path == 'feedback' && req.body.op == 'replace') {
+        console.log( `Modifying reaction to comment ${req.params.dplId}/${req.params.cId}`);
+        let result = await writeOperation( req.authData.o, reactToComment, {
+            row: req.body.row, 
+            value: req.body.value,
+            o: req.authData.o, 
+            prof: req.authData.pid,
+            role: req.authData.r,
+            dpl: req.params.dplId,
+            cId: req.params.cId,
+            sec: req.authData.s
+         });      
+         console.log(`Comment successfully created: ${result}`);  
+         res.json( result );  
+    } else {
+        res.status(404); // Bad request
+    }        
  });
 
 
