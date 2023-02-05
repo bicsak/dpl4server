@@ -112,7 +112,7 @@ router.get('/:dplId', async function(req, res) {
         _id: new mongoose.Types.ObjectId(),
         message: params.message,
         prof: params.prof,
-        feedback: Array(meta.periodMembers.length).fill(-1),
+        feedback: Array(meta.periodMembers.length).fill(0),
         timestamp: new Date(),
         deleted: false,
         row: row
