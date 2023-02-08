@@ -409,6 +409,32 @@ router.post('/:mts', async function(req, res) {
    res.json( result === true ? { success: true, week: resp} : result );
     //});
  });
+
+ async function editDpl( session, params ) {
+   //TODO
+   /********
+    * check if dpl is empty (no schedules data)
+    * delete dplmeta
+    * call edit correction with this week's progress
+    * check periods first, last week
+    */
+   
+ }
+
+ router.delete('/:dplId', async function(req, res) {    
+   console.log( `Deleting DPL ${req.params.dplId}...` );
+   // TODO and return week data raw
+   let result = await writeOperation( req.authData.o, deleteDpl, {        
+       o: req.authData.o, 
+       prof: req.authData.pid,
+       role: req.authData.r,
+       dpl: req.params.dplId,       
+       sec: req.authData.s,        
+    });             
+
+   res.json( result );
+});
+
  
  //export this router to use in our index.js
 module.exports = router;
