@@ -32,9 +32,10 @@ router.get('/:dplId', async function(req, res) {
  async function deleteComment(session, params) {    
     // check if scheduler's profile or 
     // member and req.authData.p profile is in members' array for this dpl's period
+    console.log(`deleting comment dpl: ${params.dpl}, sec: ${params.sec}, o: ${params.o}`);
     let meta = await DplMeta.findOne({
         o: params.o,
-        dpl: params.dplId,
+        dpl: params.dpl,
         sec: params.sec
     }).populate('dpl').session(session);
 

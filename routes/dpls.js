@@ -5,13 +5,14 @@ const { writeOperation } = require('../my_modules/orch-lock');
 const { createWeekDataRaw } = require('../my_modules/week-data-raw');
 
 const Orchestra = require('../models/orchestra');
+const Week = require('../models/week');
 const Dpl = require('../models/dpl');
+const Dplmeta = require('../models/dplmeta');
 
 /***********
  * Handles following cases
  * 
- * only for scheduler:
- * TODO delete dpl DEL
+ * only for scheduler: 
  * TODO create dpl POST
  * edit dpl (seatings with extern, scheduler's comment, absent and seating array) POST
  * edit dpl's remark by scheduler PATCH
@@ -410,20 +411,22 @@ router.post('/:mts', async function(req, res) {
     //});
  });
 
- async function editDpl( session, params ) {
+ async function deleteDpl( session, params ) {
    //TODO
    /********
-    * check if dpl is empty (no schedules data)
-    * delete dplmeta
-    * call edit correction with this week's progress
-    * check periods first, last week
+    * check if dpl is empty (no scheduler's data)        
     */
-   
+   let dpl = await Dpl.findOne( { o: params.o, _id: params.dpl }).session(session);
+   await recalcNumbersAfterEdit( session, params.o, params.sec, dpl.weekBegin, dpl.p, dpl.delta);   
+   await Dplmeta.deleteOne( { o: params.o, dpl: params.dpl } ).session(session);
+   await Dpl.deleteOne( { _id: params.dpl, o: params.o } ).session(session);
+   let weekDoc = await Week.findOne({ o: params.o, begin: dpl.weekBegin }).session(session);
+   weekDoc.dpls[params.sec] = undefined;
+   await weekDoc.save();   
  }
 
  router.delete('/:dplId', async function(req, res) {    
-   console.log( `Deleting DPL ${req.params.dplId}...` );
-   // TODO and return week data raw
+   console.log( `Deleting DPL ${req.params.dplId}...` );   
    let result = await writeOperation( req.authData.o, deleteDpl, {        
        o: req.authData.o, 
        prof: req.authData.pid,
@@ -431,8 +434,6 @@ router.post('/:mts', async function(req, res) {
        dpl: req.params.dplId,       
        sec: req.authData.s,        
     });             
-
-   res.json( result );
 });
 
  
