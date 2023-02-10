@@ -411,13 +411,16 @@ router.post('/:mts', async function(req, res) {
     //});
  });
 
- async function deleteDpl( session, params ) {
-   //TODO
+ async function deleteDpl( session, params ) {      
+   let dpl = await Dpl.findOne( { o: params.o, _id: params.dpl }).session(session);
    /********
     * check if dpl is empty (no scheduler's data)        
     */
-   let dpl = await Dpl.findOne( { o: params.o, _id: params.dpl }).session(session);
-   await recalcNumbersAfterEdit( session, params.o, params.sec, dpl.weekBegin, dpl.p, dpl.delta);   
+   let isEmpty = dpl.seatings.reduce(
+      (empty, seating) => empty && seating.sp.reduce((empty, code) => empty && !code, true ), true
+   );
+   if ( !isEmpty ) return;
+   await recalcNumbersAfterEdit( session, params.o, params.sec, dpl.weekBegin, dpl.p, dpl.correction);   
    await Dplmeta.deleteOne( { o: params.o, dpl: params.dpl } ).session(session);
    await Dpl.deleteOne( { _id: params.dpl, o: params.o } ).session(session);
    let weekDoc = await Week.findOne({ o: params.o, begin: dpl.weekBegin }).session(session);
