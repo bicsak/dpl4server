@@ -395,7 +395,8 @@ async function editDpl( session, params ) {
  * Edit seatings (incl. absent) for this dpl by scheduler
  */
 router.post('/:mts', async function(req, res) {   
-   console.log(req.body);    
+   console.log(req.body); 
+   
    let result = await writeOperation( req.authData.o, editDpl, {
       ...req.body, 
       o: req.authData.o, 
@@ -405,10 +406,8 @@ router.post('/:mts', async function(req, res) {
    console.log(`Dpl successfully updated: ${result}`);      
    
    // return new week plan            
-   let resp = await createWeekDataRaw(req.params.mts, req.authData, req.authData.s);
-   //console.log(resp.dpls.sec0.absent);
-   res.json( result === true ? { success: true, week: resp} : result );
-    //});
+   let resp = await createWeekDataRaw(req.params.mts, req.authData, req.authData.s);   
+   res.json( result === true ? { success: true, week: resp} : result );            
  });
 
  async function deleteDpl( session, params ) {      
@@ -430,7 +429,7 @@ router.post('/:mts', async function(req, res) {
 
  router.delete('/:dplId', async function(req, res) {    
    console.log( `Deleting DPL ${req.params.dplId}...` );   
-   let result = await writeOperation( req.authData.o, deleteDpl, {        
+   await writeOperation( req.authData.o, deleteDpl, {        
        o: req.authData.o, 
        prof: req.authData.pid,
        role: req.authData.r,
@@ -438,6 +437,28 @@ router.post('/:mts', async function(req, res) {
        sec: req.authData.s,        
     });             
 });
+
+async function createDpl( session, params ) {
+   // Create new Dpl TODO
+   return true;   
+}
+
+router.post('/', async function(req, res) {   
+   console.log(req.body);
+   console.log('Creating DPL TODO');
+   let result = await writeOperation( req.authData.o, createDpl, {      
+      o: req.authData.o, 
+      sec: req.authData.s,
+      begin: new Date(req.body.mts * 1000),
+      remark: req.body.remark
+   });      
+   console.log(`Dpl successfully updated: ${result}`);      
+   
+   // return new week plan            
+   let resp = await createWeekDataRaw(req.body.mts, req.authData, req.authData.s);   
+   res.json( result === true ? { success: true, week: resp} : result );            
+});
+
 
  
  //export this router to use in our index.js
