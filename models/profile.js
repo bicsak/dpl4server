@@ -6,6 +6,7 @@ const profileSchema = new Schema({
     role: { type: String, enum: ['office', 'musician', 'friend', 'scheduler'] },    
     section: String, // section, not required
     manager: Boolean,
+    confirmed: Boolean, // if pending request, false
 
     user: { type: Schema.Types.ObjectId, ref: 'User' },                    
 

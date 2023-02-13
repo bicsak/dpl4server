@@ -238,6 +238,8 @@ async function run(hc) {
           role: 'office',        
           manager: true,        
           section: 'all',
+
+          confirmed: true,
           
           user: userManager._id,        
 
@@ -291,6 +293,8 @@ async function run(hc) {
             section: s,
             manager: false,
 
+            confirmed: true,
+
             user: newUser._id,
 
             userFn: currentUser.first_name,
@@ -316,6 +320,8 @@ async function run(hc) {
               role: 'scheduler',
               section: sec,
               manager: false,
+
+              confirmed: true,
     
               user: newUser._id,
     
@@ -364,6 +370,8 @@ async function run(hc) {
             section: sec,
             manager: false,
 
+            confirmed: true,
+
             user: newUser._id,
 
             userFn: currentUser.first_name,
@@ -389,6 +397,8 @@ async function run(hc) {
               role: 'scheduler',
               section: sec,
               manager: false,
+
+              confirmed: true,
     
               user: newUser._id,
     
@@ -963,7 +973,8 @@ async function run(hc) {
           for ( let dpl of dpls ) {
             dpl.start = end;
             await dpl.save();
-            end = end.map ( (num, idx) => num + dpl.end[idx]  );          
+            //end = end.map ( (num, idx) => num + dpl.end[idx]  );          
+            end = [...dpl.end];
           }        
         }
 
@@ -974,7 +985,8 @@ async function run(hc) {
           for ( let dpl of dpls ) {
             dpl.start = end;
             await dpl.save();
-            end = end.map ( (num, idx) => num + dpl.end[idx]  );          
+            //end = end.map ( (num, idx) => num + dpl.end[idx]  );          
+            end = [...dpl.end];
           }        
         }
                     

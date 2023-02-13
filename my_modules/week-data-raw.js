@@ -10,7 +10,7 @@ exports.createWeekDataRaw = async function (begin, authData, sec) {
    let wplDoc = await Week.findOne({
       o: authData.o,
       begin: beginDate               
-   }).populate('season', 'label begin end -_id')
+   }).populate('season', 'label begin end')
    .populate('o', 'timezone')
    //.populate('dienst.prod')
    .populate({
@@ -32,7 +32,8 @@ exports.createWeekDataRaw = async function (begin, authData, sec) {
          season: wplDoc.season,
          editable: wplDoc.editable,
          remark: wplDoc.remark,
-         dienst: wplDoc.dienst
+         dienst: wplDoc.dienst,
+         _id: wplDoc._id
       };      
 
       if (sec) dplDocs = await Dpl.find({

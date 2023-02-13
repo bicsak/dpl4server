@@ -1,5 +1,6 @@
 let express = require('express');
 let router = express.Router();
+const mongoose = require( 'mongoose' );
 
 const { writeOperation } = require('../my_modules/orch-lock');
 const { createWeekDataRaw } = require('../my_modules/week-data-raw');
@@ -439,7 +440,90 @@ router.post('/:mts', async function(req, res) {
 });
 
 async function createDpl( session, params ) {
-   // Create new Dpl TODO
+   // Create new Dpl
+   console.log('In transaction fcn');
+   let week = await createWeekDataRaw(params.begin, params.authData, params.authData.s);
+   console.log(week);
+   if ( !week.wpl.editable || !week.assignedPeriod ) return false;
+   let groupSize = week.assignedPeriod.members.length;
+   let dtBegin = new Date(params.begin*1000);
+   let absent = [];
+   for ( let i = 0; i < 14; i++ ) {
+      absent[i] = Array(groupSize).fill(0);
+   }
+   let seatings = [];
+   for ( let dienst of week.wpl.dienst ) {
+      seatings.push( {
+         d: dienst._id,
+         ext: 0,
+         sp: Array(groupSize).fill(0), // seating plan; n x    
+         comment: '', // scheduler's comment    
+         available: Array(groupSize).fill(false),
+
+         dienstBegin: new Date(dienst.begin * 1000),
+         dienstWeight: dienst.weight,
+         dienstInstr: dienst.instrumentation.get(params.authData.s) // for this section only
+      });
+   }
+   console.log(`o: ${params.authData.o}, s: ${params.authData.s}, p: ${week.assignedPeriod._id}`);
+   let lastDplDoc = await Dpl
+   .find({
+      o: params.authData.o,
+      s: params.authData.s,
+      p: week.assignedPeriod._id,                                
+   }).session(session).where('weekBegin').lt(dtBegin) // before this week                                 
+   .sort('-weekBegin').limit(1);
+
+   console.log(`lastDpl`);
+   console.log(lastDplDoc[0]);
+   console.log('End: ');
+   console.log(lastDplDoc[0].end);
+
+   let dplId = new mongoose.Types.ObjectId();
+   await Dpl.create( [{
+      _id: dplId,
+      o: params.authData.o,
+      w: week.wpl._id,
+      p: week.assignedPeriod._id,
+      s: params.authData.s, // section
+      weekBegin: dtBegin,
+      weekEditable: true,
+      weekSeason: week.wpl.season._id,
+      closed: false,
+      published: false,
+      remark: params.remark,
+      absent: absent, 
+      correction: Array(groupSize).fill(0),
+      delta: Array(groupSize).fill(0),
+      start: lastDplDoc[0] ? lastDplDoc[0].end : Array(groupSize).fill(0), // TODO ha van előző hét, annak a vége, egyébként 0,0,0...
+      seatings: seatings
+   }], { session } );
+
+   // create dplmeta doc
+   await Dplmeta.create( {
+      o: params.authData.o,
+      dpl: dplId,
+      dplPeriod: week.assignedPeriod._id,
+      periodMembers: week.assignedPeriod.members.map(
+         mem => {
+            return {
+               prof: mem.prof._id,
+               row: mem.row,
+               canComment: mem.canComment
+            };
+         }
+      ),
+      comments: []      
+   } );
+   
+   let weekDoc = await Week.findById(week.wpl._id).session(session);
+   weekDoc.dpls.set(params.authData.s, {
+      closed: false,
+      published: false,
+      dplRef: dplId
+   } );
+   await weekDoc.save();
+
    return true;   
 }
 
@@ -447,16 +531,17 @@ router.post('/', async function(req, res) {
    console.log(req.body);
    console.log('Creating DPL TODO');
    let result = await writeOperation( req.authData.o, createDpl, {      
-      o: req.authData.o, 
-      sec: req.authData.s,
-      begin: new Date(req.body.mts * 1000),
+      authData: req.authData,
+      begin: req.body.mts,
       remark: req.body.remark
    });      
    console.log(`Dpl successfully updated: ${result}`);      
    
    // return new week plan            
    let resp = await createWeekDataRaw(req.body.mts, req.authData, req.authData.s);   
-   res.json( result === true ? { success: true, week: resp} : result );            
+   console.log(resp);
+   res.json( result === true ? { success: true, content: resp} : 
+      {success: false, reason: 'Nicht erfolgreich'} );            
 });
 
 

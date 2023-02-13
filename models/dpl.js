@@ -93,7 +93,7 @@ dplSchema.method('calcDelta', /*async*/ function () {
 });
 
 dplSchema.virtual('end').get( function () {
-   return this.delta.map( (num, idx) => num + this.correction[idx] );
+   return this.delta.map( (num, idx) => this.start[idx] + num + this.correction[idx] );
 });
 
 module.exports = mongoose.model('Dpl', dplSchema);
