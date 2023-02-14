@@ -412,7 +412,8 @@ router.post('/:mts', async function(req, res) {
  });
 
  async function deleteDpl( session, params ) {      
-   let dpl = await Dpl.findOne( { o: params.o, _id: params.dpl }).session(session);
+   let dpl = await Dpl.findOne( { 
+      o: params.o, _id: params.dpl, weekEditable: true }).session(session);
    /********
     * check if dpl is empty (no scheduler's data)        
     */
