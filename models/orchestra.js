@@ -6,6 +6,7 @@ const orchestraSchema = new Schema({
     fullName: String,   // "Hessisches Staatstheater Wiesbaden"
     location: String,   // "Wiesbaden"
     timezone: String,   // "Europe/Berlin"
+    maxDienst: [Number], // [10, 9, 10, 8]; 1st value max, afterwards smaller numbers, max length: 4
     venues: [ {
         full: { type: String },
         abbr: { type: String }

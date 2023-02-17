@@ -2,6 +2,8 @@ const Dpl = require('../models/dpl');
 const Period = require('../models/period');
 const Week = require('../models/week');
 
+const { DateTime } = require("luxon");
+
 exports.createWeekDataRaw = async function (begin, authData, sec) {
    let beginDate = new Date(begin*1000); 
 
@@ -155,7 +157,28 @@ exports.createWeekDataRaw = async function (begin, authData, sec) {
                   normVal = Math.min(...endOfWeek);                  
                   dplRaw[dplDocs[i].s].start = dplDocs[i].start.map( (val) => val-normVal );
                }               
-            }                                                                                                              
+            }       
+            
+            /* last 3 weeks' delta
+            * if single section request (for scheduler and office) */
+            if ( sec ) {
+               let prevDelta = [0, 0, 0];               
+               let dtBegin = DateTime.fromJSDate(beginDate, {
+                  zone: wplDoc.o.timezone
+               });               
+
+               for ( let i = 0; i < 3; i++ ) {
+                  dtBegin = dtBegin.minus({days: 7});                  
+                  let prevDplDoc = await Dpl.findOne({
+                     o: authData.o,
+                     s: sec, 
+                     p:  dplRaw[sec].period._id,
+                     weekBegin: new Date(dtBegin.toISO())
+                  }).select('delta');     
+                  if ( prevDplDoc ) prevDelta[2-i] = prevDplDoc.delta;
+               }
+               dplRaw[sec].prevDelta = prevDelta;
+            }
          }
                            
       } 

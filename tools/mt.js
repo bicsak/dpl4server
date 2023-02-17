@@ -94,6 +94,7 @@ async function run(hc) {
         fullName: "Hessisches Staatsorchester Wiesbaden",
         location: "Wiesbaden",
         timezone: "Europe/Berlin",
+        maxDienst: [10, 9, 10, 8],
         venues: [ 
           { full: "OPR", abbr: "OPR" }, 
           { full: "Großes Haus", abbr: "GH" },
@@ -140,6 +141,7 @@ async function run(hc) {
         fullName: "Test Orchester Wiesbaden",
         location: "Wiesbaden",
         timezone: "Europe/Berlin",
+        maxDienst: [10, 9, 10, 8],
         venues: [ 
           { full: "OPR", abbr: "OPR" }, 
           { full: "Großes Haus", abbr: "GH" },
