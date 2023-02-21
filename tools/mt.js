@@ -203,7 +203,8 @@ async function run(hc) {
         let seasons = [];
         let seasonRows = await mysqlDb.query(
           `SELECT first_day AS begin, DATE_ADD(last_day, INTERVAL 1 DAY) AS end, comment, label        
-          FROM fl3_season`);       
+          FROM fl3_season`);  
+     
         for ( let currentSeason of seasonRows ) {
           let season = new Season( {
             ...currentSeason,          
@@ -211,7 +212,7 @@ async function run(hc) {
           });
           seasons.push({id: season._id, begin: season.begin, end: season.end});
           await season.save();
-        }
+        }        
         
         //*********** USERS && PROFILES ******************           
         let n = {
