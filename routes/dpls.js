@@ -14,7 +14,7 @@ const Dplmeta = require('../models/dplmeta');
  * Handles following cases
  * 
  * only for scheduler: 
- * TODO create dpl POST
+ * create dpl POST
  * edit dpl (seatings with extern, scheduler's comment, absent and seating array) POST
  * edit dpl's remark by scheduler PATCH
  * edit dpl's dz corrections
@@ -530,13 +530,13 @@ async function createDpl( session, params ) {
 
 router.post('/', async function(req, res) {   
    console.log(req.body);
-   console.log('Creating DPL TODO');
+   console.log('Creating DPL');
    let result = await writeOperation( req.authData.o, createDpl, {      
       authData: req.authData,
       begin: req.body.mts,
       remark: req.body.remark
    });      
-   console.log(`Dpl successfully updated: ${result}`);      
+   console.log(`Dpl successfully created: ${result}`);      
    
    // return new week plan            
    let resp = await createWeekDataRaw(req.body.mts, req.authData, req.authData.s);   

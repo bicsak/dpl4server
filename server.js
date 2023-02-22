@@ -8,6 +8,7 @@ const cors = require('cors');
 
 const verifyToken = require('./middleware/verifytoken');
 const checkDplPermission = require('./middleware/check-dpl-permission');
+const checkPeriodPermission = require('./middleware/check-period-permission');
 //var { MongoClient } = require( 'mongodb' );
 //const mongoUri = "mongodb://myUserAdmin:csakMalajDB@127.0.0.1:27017";
 //const mongoUri = `mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@127.0.0.1:27017`;
@@ -21,6 +22,8 @@ const weeks = require('./routes/weeks.js');
 const dpls = require('./routes/dpls.js');      
 const comments = require('./routes/comments.js');      
 const seasons = require('./routes/seasons.js');      
+const profiles = require('./routes/profiles.js');      
+const periods = require('./routes/periods.js');      
 const productions = require('./routes/productions.js');      
 const dienste = require('./routes/dienste.js');      
 const users = require('./routes/users.js');      
@@ -60,6 +63,8 @@ async function run() {
       app.use('/api/comments', verifyToken, comments);                  
       app.use('/api/users', verifyToken, users);            
       app.use('/api/seasons', verifyToken, seasons);            
+      app.use('/api/profiles', verifyToken, profiles);            
+      app.use('/api/periods', verifyToken, checkPeriodPermission, periods);            
       app.use('/api/productions', verifyToken, productions);            
       app.use('/api/dienste', verifyToken, dienste);            
       app.use('/api/login', login);
