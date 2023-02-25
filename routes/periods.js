@@ -31,6 +31,14 @@ router.get('/', async function(req, res) {
          ...periodDocs[i].toJSON(),
          countDpl: c
       } );
+      if ( periodDocs[i].isOpenEnd ) {
+         let lastDpl = await Dpl.find( {
+            o: req.authData.o,
+            s: req.authData.s,
+            p: periodDocs[i]._id
+         } ).sort('-weekBegin').limit(1).select('weekBegin');         
+         resp[resp.length - 1].lastDplBegin = lastDpl[0].weekBegin.getTime();
+      }
     }
     console.log(resp);
     res.send(resp);
