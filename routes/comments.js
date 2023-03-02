@@ -193,7 +193,7 @@ router.get('/:dplId', async function(req, res) {
             cId: req.params.cId,
             sec: req.authData.s
          });      
-         console.log(`Comment successfully created: ${result}`);  
+         console.log(`Feedback changed: ${result}`);  
          res.json( result );  
     } else {
         res.status(404); // Bad request

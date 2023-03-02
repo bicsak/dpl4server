@@ -44,10 +44,87 @@ router.get('/', async function(req, res) {
     res.send(resp);
  });
 
- /*
- router.post('/', function(req, res){
+ async function deletePeriod(session, params) {    
+   // params.o, params. sec, params.pId
+   // TODO check if period contains any dpls - if yes, abort
+   // TODO delete period from collection
+   // TODO set other periods' isOpenEnd and nextPBegin fields
+   return true;
+ }
+
+ router.delete('/:pId', async function(req, res) {    
+   console.log( `Deleting period ${req.params.pId}...` );   
+   let result = await writeOperation( req.authData.o, deletePeriod, {        
+       o: req.authData.o,  
+       sec: req.authData.s,              
+       pId: req.params.pId       
+    });             
+
+   res.json( result );
+});
+
+async function replacePeriodComment(session, params) {     
+   await Period.findByIdAndUpdate( params.pId, {
+      comment: params.newComment
+   }).session(session);
+   return params.newComment;
+}
+
+router.patch('/:pId', async function(req, res) {       
+   // edit period's general comment
+   // set to req.body.value (if req.body.path: 'comment', req.body.op: 'replace')
+   if (req.body.path == 'comment' && req.body.op == 'replace') {
+      let result = await writeOperation( req.authData.o, replacePeriodComment, {      
+         //o: req.authData.o,       
+         pId: req.params.pId,      
+         //sec: req.authData.s,
+         newComment: req.body.value
+      });      
+      console.log(`Comment changed: ${result}`);  
+      res.json( result );  
+   } else {
+     res.status(404); // Bad request
+   }      
+});
+
+
+async function createPeriod(session, params) {     
+   // TODO create period with date, comment and group; 
+   // check if operation is allowed; 
+   // update other periods' nextPBegin and isOpenEnd
+   // return new Period
+}
+ 
+ router.post('/', async function(req, res) {
+   //TODO
     res.send('POST route on periods');
- });*/
+    let result = await writeOperation( req.authData.o, createPeriod, {      
+      o: req.authData.o,       
+      sec: req.authData.s/*, TODO other params from req.body*/
+   });      
+   console.log(`Comment successfully created: ${result}`);      
+       
+   res.json( result );     
+
+ });
+
+ async function editPeriodMember(session, params) {     
+   //TODO
+ }
+
+ router.put('/:pId/:row', async function(req, res) {       
+   //TODO edit row-th member in pId period
+   let result = await writeOperation( req.authData.o, editPeriodMember, {      
+      o: req.authData.o, 
+      pId: req.params.pId,      
+      row: req.params.row,
+      sec: req.authData.s/*, TODO other 5 params from req.body*/
+   });      
+   console.log(`Comment successfully created: ${result}`);         
+       
+   res.json( result );     
+
+ });
  
  //export this router to use in our index.js
  module.exports = router;

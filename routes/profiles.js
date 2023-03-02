@@ -3,15 +3,16 @@ let router = express.Router();
 const Profile = require('../models/profile');
 
 router.get('/', async function(req, res) {    
-    // if manager: all profiles for this o; if scheduler, only for his section and only musicians
+    // if manager: all profiles for this o; if scheduler, only for his section and only (confirmed) musicians
     let filter = { o: req.authData.o };
     if ( req.authData.r == 'scheduler' ) {      
       filter = {
          ...filter,
          section: req.authData.s,
+         confirmed: true,
          role: 'musician'
       };
-    }
+    } else filter = { ...filter, manager: false };
     let resp = await Profile.find( filter ).populate('user');
     console.log(resp);
     res.json( resp.map(

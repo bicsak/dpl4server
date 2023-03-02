@@ -270,7 +270,7 @@ async function run(hc) {
 
         let userRows = await mysqlDb.query(
           `SELECT id_user,login_name,pw,first_name,surname,usergroup,email,birthday 
-          FROM fl3_user`);       
+          FROM fl3_user WHERE usergroup<>'20'`);       
         for ( let currentUser of userRows ) {        
           const newUser = await User.findOneAndUpdate(
             { email: currentUser.email },
@@ -350,7 +350,7 @@ async function run(hc) {
         sec = "sec3"; 
         userRows = await mysqlDb.query(
           `SELECT id_user,login_name,pw,first_name,surname,usergroup,email,birthday 
-          FROM fg3_user WHERE usergroup>20`); // for fg only friends, members and scheduler
+          FROM fg3_user WHERE usergroup>20`); // for fg only members and scheduler
         for ( let currentUser of userRows ) {
                   
           const newUser = await User.findOneAndUpdate(
