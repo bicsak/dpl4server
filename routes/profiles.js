@@ -13,7 +13,11 @@ router.get('/', async function(req, res) {
          role: 'musician'
       };
     } else filter = { ...filter, manager: false };
-    let resp = await Profile.find( filter ).populate('user');
+    let resp = await Profile.find( filter ).populate('user').sort( {
+      role: -1,
+      userSn: 1,
+      userFn: 1
+    } );
     console.log(resp);
     res.json( resp.map(
       doc => {
