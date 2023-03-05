@@ -9,11 +9,12 @@ router.get('/', async function(req, res) {
       else {*/
          if ( req.query.q ) {
             console.log(`loading Dienste for ${req.query.q}...`);
+            let sanitized = req.query.q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
             let resp = await DienstExtRef.find( { 
               o: req.authData.o,
               category: 2,
-              name: { $regex: req.query.q, $options: '^' }
+              name: { $regex: sanitized, $options: '^' }
             } ).limit(10).select('name -_id');                
             res.json( resp ); 
          } else {

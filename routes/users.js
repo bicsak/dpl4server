@@ -3,14 +3,16 @@ let router = express.Router();
 const User = require('../models/user');
 
 router.get('/', async function(req, res){
-   let oneUser = await User.findOne({});
-   res.send('GET route on users ' + ` Login: ${oneUser.login},
-   Role: ${oneUser.role}`);
-   //await app.get('conn').db.   
-});
-
-router.post('/', function(req, res){
-   res.send('POST route on weeks.');
+   if ( req.query.q ) {
+      console.log(`loading users for ${req.query.q}...`);
+      let sanitized = req.query.q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      let resp = await User.find( {         
+        email: { $regex: sanitized, $options: '^' }
+      } ).select('email');                
+      res.json( resp.map( val => {
+         return { name: val.email };
+      }) ); 
+   }
 });
 
 //export this router to use in our index.js

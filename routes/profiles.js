@@ -14,7 +14,7 @@ router.get('/', async function(req, res) {
       };
     } else filter = { ...filter, manager: false };
     let resp = await Profile.find( filter ).populate('user').sort( {
-      role: -1,
+      /*role: -1,*/
       userSn: 1,
       userFn: 1
     } );
