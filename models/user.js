@@ -32,7 +32,8 @@ const userSchema = new Schema({
             o: { type: Schema.Types.ObjectId, ref: 'Orchestra'  },
             role: { type: String },
             manager: { type: Boolean },
-            section: { type: String }
+            section: { type: String },
+            confirmed: Boolean
         }
     ]
 

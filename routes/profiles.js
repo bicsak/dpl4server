@@ -39,11 +39,17 @@ router.get('/', async function(req, res) {
     ) );    
  });
 
- /*
+ router.delete('/:id', async function(req, res) {
+   //TODO delete profile request
+   // check if not yet confirmed
+ });
+
+ 
  router.post('/', function(req, res){
     res.send('POST route on profiles');
     // Create new profile for a specific user; confirmed = false
- });*/
+    // body contains username (email) and section; if all, create office role, otherwise musician role
+ });
  
  //export this router to use in our index.js
  module.exports = router;

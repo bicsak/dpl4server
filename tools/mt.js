@@ -259,7 +259,8 @@ async function run(hc) {
           o: hsw._id,
           role: 'office',
           manager: true,
-          section: 'all'
+          section: 'all',
+          confirmed: true
         });
         await userManager.save();
 
@@ -311,7 +312,8 @@ async function run(hc) {
             o: hsw._id,
             role: r,
             manager: false,
-            section: s
+            section: s,
+            confirmed: true
           });
           await newUser.save();
 
@@ -339,7 +341,8 @@ async function run(hc) {
               o: hsw._id,
               role: 'scheduler',
               manager: false,
-              section: sec
+              section: sec,
+              confirmed: true
             });
             await newUser.save();
           }
@@ -388,7 +391,8 @@ async function run(hc) {
             o: hsw._id,
             role: r,
             manager: false,
-            section: sec
+            section: sec,
+            confirmed: true
           });
           await newUser.save();
 
@@ -416,7 +420,8 @@ async function run(hc) {
               o: hsw._id,
               role: 'scheduler',
               manager: false,
-              section: sec
+              section: sec,
+              confirmed: true
             });
             await newUser.save();
           }
