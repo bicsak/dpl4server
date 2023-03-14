@@ -231,7 +231,8 @@ async function run(hc) {
             pw: hc,
             fn: 'Ilya',
             sn: 'Yossifov',
-            birthday: new Date('1970-01-01T00:00:00.000Z')
+            birthday: new Date('1970-01-01T00:00:00.000Z'),
+            activeMember: true
           } },
           { upsert: true, new: true } 
         );
@@ -279,17 +280,16 @@ async function run(hc) {
               pw: hc,
               fn: currentUser.first_name,
               sn: currentUser.surname,
-              birthday: currentUser.birthday 
+              birthday: currentUser.birthday,
+              activeMember: currentUser.email != 'Richter' && currentUser.email != 'Bela'
             } },
             { upsert: true, new: true } 
           );
           
-          let r = ''; let s = sec;
-          switch (currentUser.usergroup) {
-            case 10: r = 'office'; s = 'all'; break;
-            case 20: r = 'friend'; break;
-            default: r = 'musician';
-          }
+          let r = 'musician'; let s = sec;
+          if ( currentUser.usergroup == 10 ) {
+            r = 'office'; s = 'all';
+          }          
 
           let newProfile = new Profile( {
             o: hsw._id,
@@ -312,8 +312,7 @@ async function run(hc) {
             o: hsw._id,
             role: r,
             manager: false,
-            section: s,
-            confirmed: true
+            section: s            
           });
           await newUser.save();
 
@@ -341,8 +340,7 @@ async function run(hc) {
               o: hsw._id,
               role: 'scheduler',
               manager: false,
-              section: sec,
-              confirmed: true
+              section: sec              
             });
             await newUser.save();
           }
@@ -362,13 +360,13 @@ async function run(hc) {
               pw: hc,
               fn: currentUser.first_name,
               sn: currentUser.surname,
-              birthday: currentUser.birthday 
+              birthday: currentUser.birthday,
+              activeMember: currentUser.email != 'Richter' && currentUser.email != 'Bela'
             } },
             { upsert: true, new: true } 
           );
           
-          let r = 'friend';
-          if ( currentUser.usergroup != 20 ) r = 'musician';        
+          let r = 'musician';          
 
           let newProfile = new Profile( {
             o: hsw._id,
@@ -391,8 +389,7 @@ async function run(hc) {
             o: hsw._id,
             role: r,
             manager: false,
-            section: sec,
-            confirmed: true
+            section: sec            
           });
           await newUser.save();
 
@@ -420,8 +417,7 @@ async function run(hc) {
               o: hsw._id,
               role: 'scheduler',
               manager: false,
-              section: sec,
-              confirmed: true
+              section: sec              
             });
             await newUser.save();
           }

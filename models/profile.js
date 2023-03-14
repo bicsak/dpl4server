@@ -3,7 +3,11 @@ const { Schema } = mongoose;
 
 const profileSchema = new Schema({
     o: { type: Schema.Types.ObjectId, ref: 'Orchestra' },                    
-    role: { type: String, enum: ['office', 'musician', 'friend', 'scheduler'] },    
+    role: { type: String, enum: ['office', 'musician', 'board', 'scheduler'] }, 
+    /****
+     * scheduler (=Diensteinteiler) and board (=Orchestervorstand) must also have a musician profile 
+     * exactly one user with office (=Orchesterbüro) profile must be manager (=Orchesterdirektor)
+     * */   
     section: String, // section, not required
     manager: Boolean,
     confirmed: Boolean, // if pending request, false

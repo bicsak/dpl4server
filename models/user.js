@@ -26,14 +26,17 @@ const userSchema = new Schema({
     loginAttempts: { type: Number, required: true, default: 0 },
     lockUntil: { type: Number },    
 
+    activeMember: Boolean,  // currently 'festangestellt'
+    confirmationToken: String, // confirmation token if user just created account
+    // if undefined, already confirmed (or denied because wrong token etc.)
+
     profiles: [
         {
             //_id = _id of doc in profiles collection
             o: { type: Schema.Types.ObjectId, ref: 'Orchestra'  },
             role: { type: String },
             manager: { type: Boolean },
-            section: { type: String },
-            confirmed: Boolean
+            section: { type: String }
         }
     ]
 
