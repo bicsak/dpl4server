@@ -6,14 +6,16 @@ const User = require('../models/user');
 const { writeOperation } = require('../my_modules/orch-lock');
 
 router.get('/', async function(req, res) {    
-    // if manager: all profiles for this o; if scheduler, only for his section and only (confirmed) musicians
+    // if manager: all profiles for this o (for users component to invite users etc.)
+    //if scheduler, only for his section and only (confirmed) musicians
+    // (for periods component, creating new periods etc.)
     let filter = { o: req.authData.o };
     if ( req.authData.r == 'scheduler' ) {      
       filter = {
          ...filter,
          section: req.authData.s,
          confirmed: true,
-         role: 'musician'
+         role: 'musician'         
       };
     } else filter = { ...filter, manager: false };
     let resp = await Profile.find( filter ).populate('user').sort( {

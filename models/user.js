@@ -25,53 +25,40 @@ const userSchema = new Schema({
 
     loginAttempts: { type: Number, required: true, default: 0 },
     lockUntil: { type: Number },    
-
-    activeMember: Boolean,  // currently 'festangestellt'
-    confirmationToken: String, // confirmation token if user just created account
-    // if undefined, already confirmed (or denied because wrong token etc.)
+    
+    confirmed: Boolean,
+    confirmationToken: String, 
+    // confirmation token used when user created account
 
     profiles: [
         {
             //_id = _id of doc in profiles collection
             o: { type: Schema.Types.ObjectId, ref: 'Orchestra'  },
-            role: { type: String },
+            role: { type: String, enum: ['office', 'musician', 'board', 'scheduler'] },
             manager: { type: Boolean },
-            section: { type: String }
+            section: { type: String },
+            permanentMember: Boolean, // currently permanent employee (festangestellt) - only for musicians
+            trial: Boolean, // only for musicians with permanentMember == true
+            factor: Number, // 0 < x <= 1, 100%, 50% etc. Vollzeit/Teilzeit
+            remark: String, // 'Praktikant'/'ZV bis...'/'festangestellt seit...'
+            position: String, // '1. Flöte', 'Solo-Picc','Stimmführer' etc.
         }
     ]
-
-    //role: { type: String, enum: ['office', 'member', 'friend'] },    
-    //manager: Boolean,
-    //scheduler: Boolean,
-    //notifications: { type: Map, of: Boolean},
-    /*possible notification keys:         
-                enum: [
-                    'comment', 
-                    'dplNew', 
-                    'dplFinal', 
-                    'dplChanged', 
-                    'dplRejected', 
-                    'surveyFailed', 
-                    'surveyComplete'
-                ]         
-    */
-    // activePeriods: [ { type: Schema.Types.ObjectId, ref: 'Period' } ]
+   
 }, {
     toJSON: {
         transform: 
-        function(doc, ret, opt) {
+        function(doc, ret, opt) {            
             delete ret['pw'];
             delete ret['loginAttempts'];
             delete ret['lockUntil'];
+            delete ret['confirmationToken'];
             ret.birthday = ret.birthday.getTime();
+            
             return ret;
         }
     } 
 });
-/*
-userSchema.set('toJSON', {
-    transform: 
-});*/
 
 // expose enum on the model
 userSchema.statics.failedLogin = /*{
@@ -110,7 +97,7 @@ userSchema.methods.incLoginAttempts = function(cb) {
 };
 
 userSchema.statics.getAuthenticated = function(username, password, cb) { 
-    this.findOne({ email: username }, function(err, user) { 
+    this.findOne({ email: username, confirmed: true }, function(err, user) { 
         if (err) return cb(err);
         // make sure the user exists
         if (!user) {
@@ -151,7 +138,12 @@ userSchema.statics.getAuthenticated = function(username, password, cb) {
                 return cb(null, null, reasons.PASSWORD_INCORRECT);
             });
         });
-    }).populate('profiles.o');
+    }).populate(/*{
+        path: 'profiles.o',
+        match: {
+            'profiles.activeMember': true
+        }
+    }*/ 'profiles.o' );
 };
 
 module.exports = mongoose.model('User', userSchema);

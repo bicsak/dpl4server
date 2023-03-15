@@ -232,7 +232,8 @@ async function run(hc) {
             fn: 'Ilya',
             sn: 'Yossifov',
             birthday: new Date('1970-01-01T00:00:00.000Z'),
-            activeMember: true
+            confirmed: true,
+            confirmationToken: 'Created by MT'            
           } },
           { upsert: true, new: true } 
         );
@@ -242,6 +243,11 @@ async function run(hc) {
           role: 'office',        
           manager: true,        
           section: 'all',
+          permanentMember: true,
+          trial: false,
+          factor: 1,
+          remark: 'Created automatically by MT',
+          position: 'Created automatically by MT',
 
           confirmed: true,
           
@@ -261,7 +267,11 @@ async function run(hc) {
           role: 'office',
           manager: true,
           section: 'all',
-          confirmed: true
+          permanentMember: true,
+          trial: false,
+          factor: 1,
+          remark: 'Created automatically by MT',
+          position: 'Created automatically by MT'
         });
         await userManager.save();
 
@@ -281,7 +291,8 @@ async function run(hc) {
               fn: currentUser.first_name,
               sn: currentUser.surname,
               birthday: currentUser.birthday,
-              activeMember: currentUser.email != 'Richter' && currentUser.email != 'Bela'
+              confirmed: true,
+              confirmationToken: 'Created by MT'              
             } },
             { upsert: true, new: true } 
           );
@@ -296,6 +307,11 @@ async function run(hc) {
             role: r,
             section: s,
             manager: false,
+            permanentMember: currentUser.email != 'Richter',
+            trial: false,
+            factor: 1,
+            remark: 'Created automatically by MT',
+            position: 'Created automatically by MT',
 
             confirmed: true,
 
@@ -312,7 +328,12 @@ async function run(hc) {
             o: hsw._id,
             role: r,
             manager: false,
-            section: s            
+            section: s,
+            permanentMember: currentUser.email != 'Richter',
+            trial: false,
+            factor: 1,
+            remark: 'Created automatically by MT',
+            position: 'Created automatically by MT'
           });
           await newUser.save();
 
@@ -324,6 +345,11 @@ async function run(hc) {
               role: 'scheduler',
               section: sec,
               manager: false,
+              permanentMember: true,
+              trial: false,
+              factor: 1,
+              remark: 'Created automatically by MT',
+              position: 'Created automatically by MT',
 
               confirmed: true,
     
@@ -340,7 +366,12 @@ async function run(hc) {
               o: hsw._id,
               role: 'scheduler',
               manager: false,
-              section: sec              
+              section: sec,
+              permanentMember: true,
+              trial: false,
+              factor: 1,
+              remark: 'Created automatically by MT',
+              position: 'Created automatically by MT'              
             });
             await newUser.save();
           }
@@ -361,7 +392,8 @@ async function run(hc) {
               fn: currentUser.first_name,
               sn: currentUser.surname,
               birthday: currentUser.birthday,
-              activeMember: currentUser.email != 'Richter' && currentUser.email != 'Bela'
+              confirmed: true,
+              confirmationToken: 'Created by MT'              
             } },
             { upsert: true, new: true } 
           );
@@ -373,6 +405,11 @@ async function run(hc) {
             role: r,
             section: sec,
             manager: false,
+            permanentMember: currentUser.email != 'Bela',
+            trial: false,
+            factor: 1,
+            remark: 'Created automatically by MT',
+            position: 'Created automatically by MT',
 
             confirmed: true,
 
@@ -389,7 +426,12 @@ async function run(hc) {
             o: hsw._id,
             role: r,
             manager: false,
-            section: sec            
+            section: sec,
+            permanentMember: currentUser.email != 'Bela',
+            trial: false,
+            factor: 1,
+            remark: 'Created automatically by MT',
+            position: 'Created automatically by MT'
           });
           await newUser.save();
 
@@ -401,6 +443,11 @@ async function run(hc) {
               role: 'scheduler',
               section: sec,
               manager: false,
+              permanentMember: true,
+              trial: false,
+              factor: 1,
+              remark: 'Created automatically by MT',
+              position: 'Created automatically by MT',
 
               confirmed: true,
     
@@ -417,7 +464,12 @@ async function run(hc) {
               o: hsw._id,
               role: 'scheduler',
               manager: false,
-              section: sec              
+              section: sec,
+              permanentMember: true,
+              trial: false,
+              factor: 1,
+              remark: 'Created automatically by MT',
+              position: 'Created automatically by MT',              
             });
             await newUser.save();
           }

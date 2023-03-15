@@ -11,6 +11,11 @@ const profileSchema = new Schema({
     section: String, // section, not required
     manager: Boolean,
     confirmed: Boolean, // if pending request, false
+    permanentMember: Boolean, // currently permanent employee (festangestellt) - only for musicians
+    trial: Boolean, // only for musicians with permanentMember == true
+    factor: Number, // 0 < x <= 1, 100%, 50% etc. Vollzeit/Teilzeit
+    remark: String, // 'Praktikant'/'ZV bis...'/'festangestellt seit...'
+    position: String, // '1. Flöte', 'Solo-Picc','Stimmführer' etc.
 
     user: { type: Schema.Types.ObjectId, ref: 'User' },                    
 
