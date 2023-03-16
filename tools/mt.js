@@ -231,7 +231,8 @@ async function run(hc) {
             pw: hc,
             fn: 'Ilya',
             sn: 'Yossifov',
-            birthday: new Date('1970-01-01T00:00:00.000Z'),
+            birthday: new Date(Date.UTC(1970,0,1)),
+              //'1970-01-01T00:00:00.000Z'),
             confirmed: true,
             confirmationToken: 'Created by MT'            
           } },
@@ -258,7 +259,7 @@ async function run(hc) {
 
           userFn: 'Ilya',
           userSn: 'Jossifov',
-          userBirthday: new Date('1970-01-01T00:00:00.000Z'),
+          userBirthday: new Date(Date.UTC(1970,0,1)),
         } );
         await profileManager.save();
         userManager.profiles.push( {
@@ -284,13 +285,16 @@ async function run(hc) {
           `SELECT id_user,login_name,pw,first_name,surname,usergroup,email,birthday 
           FROM fl3_user WHERE usergroup<>'20'`);       
         for ( let currentUser of userRows ) {        
+          let bd = new Date(Date.UTC(currentUser.birthday.getUTCFullYear(),
+            currentUser.birthday.getUTCMonth(),
+            currentUser.birthday.getUTCDate()));
           const newUser = await User.findOneAndUpdate(
             { email: currentUser.email },
             { $set: { 
               pw: hc,
               fn: currentUser.first_name,
               sn: currentUser.surname,
-              birthday: currentUser.birthday,
+              birthday: bd,
               confirmed: true,
               confirmationToken: 'Created by MT'              
             } },
@@ -307,7 +311,7 @@ async function run(hc) {
             role: r,
             section: s,
             manager: false,
-            permanentMember: currentUser.email != 'Richter',
+            permanentMember: currentUser.login_name != 'Richter',
             trial: false,
             factor: 1,
             remark: 'Created automatically by MT',
@@ -319,7 +323,7 @@ async function run(hc) {
 
             userFn: currentUser.first_name,
             userSn: currentUser.surname,
-            userBirthday: currentUser.birthday
+            userBirthday: bd
           });
           await newProfile.save();
 
@@ -329,7 +333,7 @@ async function run(hc) {
             role: r,
             manager: false,
             section: s,
-            permanentMember: currentUser.email != 'Richter',
+            permanentMember: currentUser.login_name != 'Richter',
             trial: false,
             factor: 1,
             remark: 'Created automatically by MT',
@@ -357,7 +361,7 @@ async function run(hc) {
     
               userFn: currentUser.first_name,
               userSn: currentUser.surname,
-              userBirthday: currentUser.birthday
+              userBirthday: bd
             });
             await profile.save();
 
@@ -384,6 +388,9 @@ async function run(hc) {
           `SELECT id_user,login_name,pw,first_name,surname,usergroup,email,birthday 
           FROM fg3_user WHERE usergroup>20`); // for fg only members and scheduler
         for ( let currentUser of userRows ) {
+          let bd = new Date(Date.UTC(currentUser.birthday.getUTCFullYear(),
+            currentUser.birthday.getUTCMonth(),
+            currentUser.birthday.getUTCDate()));
                   
           const newUser = await User.findOneAndUpdate(
             { email: currentUser.email },
@@ -391,7 +398,7 @@ async function run(hc) {
               pw: hc,
               fn: currentUser.first_name,
               sn: currentUser.surname,
-              birthday: currentUser.birthday,
+              birthday: bd,
               confirmed: true,
               confirmationToken: 'Created by MT'              
             } },
@@ -405,7 +412,7 @@ async function run(hc) {
             role: r,
             section: sec,
             manager: false,
-            permanentMember: currentUser.email != 'Bela',
+            permanentMember: currentUser.login_name != 'Bela',
             trial: false,
             factor: 1,
             remark: 'Created automatically by MT',
@@ -417,7 +424,7 @@ async function run(hc) {
 
             userFn: currentUser.first_name,
             userSn: currentUser.surname,
-            userBirthday: currentUser.birthday
+            userBirthday: bd
           });
           await newProfile.save();
 
@@ -427,7 +434,7 @@ async function run(hc) {
             role: r,
             manager: false,
             section: sec,
-            permanentMember: currentUser.email != 'Bela',
+            permanentMember: currentUser.login_name != 'Bela',
             trial: false,
             factor: 1,
             remark: 'Created automatically by MT',
@@ -455,7 +462,7 @@ async function run(hc) {
     
               userFn: currentUser.first_name,
               userSn: currentUser.surname,
-              userBirthday: currentUser.birthday
+              userBirthday: bd
             });
             await profile.save();
 

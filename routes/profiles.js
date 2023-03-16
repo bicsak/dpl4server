@@ -17,7 +17,7 @@ router.get('/', async function(req, res) {
          confirmed: true,
          role: 'musician'         
       };
-    } else filter = { ...filter, manager: false };
+    } //else filter = { ...filter, manager: false };
     let resp = await Profile.find( filter ).populate('user').sort( {
       /*role: -1,*/
       userSn: 1,
@@ -33,7 +33,12 @@ router.get('/', async function(req, res) {
             manager: doc.manager,
             section: doc.section,
             
-            confirmed: doc.confirmed,
+            confirmed: doc.confirmed,            
+            permanentMember: doc.permanentMember, // currently permanent employee (festangestellt) - only for musicians
+            trial: doc.trial, // only for musicians with permanentMember == true
+            factor: doc.factor, // 0 < x <= 1, 100%, 50% etc. Vollzeit/Teilzeit
+            remark: doc.remark, // 'Praktikant'/'ZV bis...'/'festangestellt seit...'
+            position: doc.position, // '1. Flöte', 'Solo-Picc','Stimmführer' etc.
             
             userId: doc.user.id, 
             userFn: doc.userFn,
