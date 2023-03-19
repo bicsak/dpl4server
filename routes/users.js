@@ -8,9 +8,9 @@ router.get('/', async function(req, res){
       let sanitized = req.query.q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       let resp = await User.find( {         
         email: { $regex: sanitized, $options: '^' }
-      } ).select('email');                
+      } )/*.select('email')*/;                
       res.json( resp.map( val => {
-         return { name: val.email };
+         return { name: val.email, firstname: val.fn, surname: val.sn };
       }) ); 
    }
 });
