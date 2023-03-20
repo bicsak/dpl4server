@@ -18,35 +18,14 @@ router.get('/', async function(req, res) {
          role: 'musician'         
       };
     } //else filter = { ...filter, manager: false };
-    let resp = await Profile.find( filter ).populate('user').sort( {
+    let resp = await Profile.find( filter )
+    .sort( {
       /*role: -1,*/
       userSn: 1,
       userFn: 1
     } );
     console.log(resp);
-    res.json( resp.map(
-      doc => {
-         return {
-            _id: doc._id,
-        
-            role: doc.role,
-            manager: doc.manager,
-            section: doc.section,
-            
-            confirmed: doc.confirmed,            
-            permanentMember: doc.permanentMember, // currently permanent employee (festangestellt) - only for musicians
-            trial: doc.trial, // only for musicians with permanentMember == true
-            factor: doc.factor, // 0 < x <= 1, 100%, 50% etc. Vollzeit/Teilzeit
-            remark: doc.remark, // 'Praktikant'/'ZV bis...'/'festangestellt seit...'
-            position: doc.position, // '1. Flöte', 'Solo-Picc','Stimmführer' etc.
-            
-            userId: doc.user.id, 
-            userFn: doc.userFn,
-            userSn: doc.userSn,
-            userEmail: doc.user.email
-         };
-      }
-    ) );    
+    res.json( resp );    
  });
 
  router.delete('/:id', async function(req, res) {

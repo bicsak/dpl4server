@@ -6,11 +6,15 @@ router.get('/', async function(req, res){
    if ( req.query.q ) {
       console.log(`loading users for ${req.query.q}...`);
       let sanitized = req.query.q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      let resp = await User.find( {         
-        email: { $regex: sanitized, $options: '^' }
-      } )/*.select('email')*/;                
+      let configObj = {
+         sn: { $regex: sanitized.split(",")[0], $options: '^/ci' } 
+      };
+      if (sanitized.split(",").length > 1) configObj.fn = { $regex: sanitized.split(",")[1], $options: '^/ci' } 
+      //console.log(sanitized.split(",")[1]);
+      let resp = await User.find( configObj );                
+      console.log(resp);
       res.json( resp.map( val => {
-         return { name: val.email, firstname: val.fn, surname: val.sn };
+         return { name: val._id, firstname: val.fn, surname: val.sn, birthday: val.birthday };
       }) ); 
    }
 });
