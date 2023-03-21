@@ -37,11 +37,9 @@ router.get('/', async function(req, res) {
  });
 
  async function createProfile(session, params) { 
-  console.log(`Role: ${params.role}, sec: ${params.section}, user: ${params.username}`);        
+  console.log(`Role: ${params.role}, sec: ${params.section}, user: ${params.userId}`);        
 
-  let user = await User.findOne( {
-    email: params.username
-  }).session(session);  
+  let user = await User.findById( params.userId ).session(session);  
 
   const profile = new Profile( {
     o: params.o,
@@ -65,10 +63,11 @@ router.get('/', async function(req, res) {
   return {
     success: true, 
     content: //profile
-    {
+    profile._doc
+    /*{
       ...profile._doc,
       userEmail: profile.email
-    }
+    }*/
   };
  }
  

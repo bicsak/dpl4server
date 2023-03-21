@@ -285,9 +285,9 @@ async function run(hc) {
           `SELECT id_user,login_name,pw,first_name,surname,usergroup,email,birthday 
           FROM fl3_user WHERE usergroup<>'20'`);       
         for ( let currentUser of userRows ) {        
-          let bd = new Date(Date.UTC(currentUser.birthday.getUTCFullYear(),
-            currentUser.birthday.getUTCMonth(),
-            currentUser.birthday.getUTCDate()));
+          let bd = new Date(Date.UTC(currentUser.birthday.getFullYear(),
+            currentUser.birthday.getMonth(),
+            currentUser.birthday.getDate()));
           const newUser = await User.findOneAndUpdate(
             { email: currentUser.email },
             { $set: { 
@@ -388,9 +388,9 @@ async function run(hc) {
           `SELECT id_user,login_name,pw,first_name,surname,usergroup,email,birthday 
           FROM fg3_user WHERE usergroup>20`); // for fg only members and scheduler
         for ( let currentUser of userRows ) {
-          let bd = new Date(Date.UTC(currentUser.birthday.getUTCFullYear(),
-            currentUser.birthday.getUTCMonth(),
-            currentUser.birthday.getUTCDate()));
+          let bd = new Date(Date.UTC(currentUser.birthday.getFullYear(),
+            currentUser.birthday.getMonth(),
+            currentUser.birthday.getDate()));
                   
           const newUser = await User.findOneAndUpdate(
             { email: currentUser.email },
