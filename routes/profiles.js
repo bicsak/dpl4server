@@ -2,12 +2,37 @@ let express = require('express');
 let router = express.Router();
 const Profile = require('../models/profile');
 const User = require('../models/user');
+const Period = require('../models/period');
 
 const { writeOperation } = require('../my_modules/orch-lock');
 
-router.get('/', async function(req, res) {    
+router.get('/', async function(req, res) { 
+    if ( req.query.pending ) {      
+      let profileDocs = await Profile.find( {        
+        user: req.authData.user,
+        confirmed: false
+      }).populate('o', 'fullName');
+      console.log(profileDocs);
+      let resp = profileDocs.map(
+        p => {
+          return {
+            id: p._id,
+            orchestraFullName: p.o.fullName,
+            role: p.role,   
+            section: p.section,
+            factor: p.factor,
+            trial: p.trial,
+            remark: p.remark,
+            position: p.position,
+            permanent: p.permanentMember
+          }
+        }
+      );      
+      res.json(resp);
+      return;
+    }
     // if manager: all profiles for this o (for users component to invite users etc.)
-    //if scheduler, only for his section and only (confirmed) musicians
+    // if scheduler, only for his section and only (confirmed) musicians
     // (for periods component, creating new periods etc.)
     let filter = { o: req.authData.o };
     if ( req.authData.r == 'scheduler' ) {      
@@ -17,29 +42,62 @@ router.get('/', async function(req, res) {
          confirmed: true,
          role: 'musician'         
       };
-    } //else filter = { ...filter, manager: false };
-    let resp = await Profile.find( filter )
-    .sort( {
-      /*role: -1,*/
+    }
+    let resp = await Profile.find( filter ).sort( {    
       userSn: 1,
       userFn: 1
     } );
-    console.log(resp);
+    
     res.json( resp );    
  });
 
+ async function deleteProfile(session, params) { 
+  // delete profile (or if not yet confirmed, the invitation by manager)
+  // or deny invitation (user denies invitation)
+      
+  // check if delete is allowed
+  // delete profile possible for board, scheduler always, office (if not manager)
+  // musician: if not yet confirmed or confirmed but no periods involved  
+
+  let profileDoc = await Profile.findById( params.prof ).session(session);  
+  if ( !profileDoc || profileDoc.manager ) return;
+  if ( profileDoc.role == 'musician' && profileDoc.confirmed ) {
+    //check if profile is contained ina any periods
+    let periodDoc = await Period.findOne( {
+      o: params.o,
+      "members": { $elemMatch: {prof: params.prof} }
+    } ).session(session);
+    if ( periodDoc ) return;      
+  }
+
+  // update user doc's profiles array field in users collection (delete from array)
+  let userDoc = await User.findById( profileDoc.user ).session(session);
+  let indexOfProfile = userDoc.profiles.findIndex(
+    p => p._id == params.prof
+  );
+  userDoc.profiles.splice(indexOfProfile, 1);
+  await userDoc.save();
+
+  // delete profile doc
+  await profileDoc.deleteOne().session(session);
+ }
+
  router.delete('/:id', async function(req, res) {
-   //TODO delete profile (invitation by manager)
-   // or deny invitation (user denies invitation)
-   // check if not already confirmed
-   // update user doc's profiles field in users collection (delete from array)
-   
+  console.log(`Delete request for prof id ${req.params.id}`);
+  await writeOperation( req.authData.o, deleteProfile, {
+    prof: req.params.id,      
+    o: req.authData.o,             
+  });
  });
 
  async function createProfile(session, params) { 
   console.log(`Role: ${params.role}, sec: ${params.section}, user: ${params.userId}`);        
 
   let user = await User.findById( params.userId ).session(session);  
+  if ( !user ) return {
+    success: false,
+    reason: 'Benutzer existiert nicht'
+  };
 
   const profile = new Profile( {
     o: params.o,
@@ -62,18 +120,13 @@ router.get('/', async function(req, res) {
   
   return {
     success: true, 
-    content: //profile
-    profile._doc
-    /*{
-      ...profile._doc,
-      userEmail: profile.email
-    }*/
+    content: profile._doc 
   };
  }
  
  router.post('/', async function(req, res){    
     // Create new profile doc in profiles collection for a specific user with confirmed = false
-    // request body contains username (email) and section; if section == all, create office role, otherwise musician role
+    // request body contains userId, section, role
     // update user doc's profiles field in users collection (add new profile to array)
     // return new profile as IProfile
     
@@ -86,13 +139,44 @@ router.get('/', async function(req, res) {
    res.json( result );     
  });
 
- async function editProfile(session, params) { 
-  //TODO
-  // modify doc in profiles collection   
+ async function editProfile(session, params) {   
+  let profileDoc = await Profile.findById(params.prof).session(session);
+  if ( !profileDoc ) return {
+    success: false,
+    reason: "Benutzerprofil nicht gefunden"
+  };
+  
+  // modify doc in profiles collection
+  profileDoc.remark = params.remark;
+  profileDoc.position = params.position;
+  profileDoc.permanentMember = params.permanent;
+  profileDoc.trial = params.trial;
+  profileDoc.factor = params.factor;
+  await profileDoc.save();
+  
   // update doc in users collection (profiles field)   
+  let userDoc = await User.findById(profileDoc.user).session(session);
+  let indexOfProfile =  userDoc.profiles.findIndex(
+    p => p._id == params.prof
+  );  
+  userDoc.profiles[indexOfProfile].remark = params.remark;
+  userDoc.profiles[indexOfProfile].position = params.position;
+  userDoc.profiles[indexOfProfile].permanentMember = params.permanent;
+  userDoc.profiles[indexOfProfile].trial = params.trial;
+  userDoc.profiles[indexOfProfile].factor = params.factor;
+  await userDoc.save();
+  
   // return response as IEditProfileEditableData
-
-  return params;
+  return {
+    success: true,
+    content: {
+      remark: params.remark,
+      position: params.position,
+      permanent: params.permanent,
+      trial: params.trial,
+      factor: params.factor
+    }
+  };  
  }
 
  router.patch('/:id', async function(req, res) {
@@ -102,10 +186,10 @@ router.get('/', async function(req, res) {
     let result = await writeOperation( req.authData.o, editProfile, {
       ...req.body,      
       o: req.authData.o,             
-   });      
-   console.log(`Profile successfully created: ${result}`);                
+      prof: req.params.id
+   });         
     
-    res.json( {success: true, content: result} );     
+    res.json( result );     
   } else {
     //TODO accept invitation to an orchestra as musician/office
   }
@@ -113,5 +197,5 @@ router.get('/', async function(req, res) {
    
  });
  
- //export this router to use in our index.js
+ //export this router to use in server.js
  module.exports = router;
