@@ -70,9 +70,11 @@ router.get('/', async function(req, res) {
     } ).session(session);
     if ( periodDoc ) return;      
   }
+  console.log('Finding userDoc...');
 
   // update user doc's profiles array field in users collection (delete from array)
   let userDoc = await User.findById( profileDoc.user ).session(session);
+  console.log(userDoc);
   let indexOfProfile = userDoc.profiles.findIndex(
     p => p._id == params.prof
   );
@@ -80,7 +82,7 @@ router.get('/', async function(req, res) {
   await userDoc.save();
 
   // delete profile doc
-  await profileDoc.deleteOne().session(session);
+  await profileDoc.deleteOne();
  }
 
  router.delete('/:id', async function(req, res) {
@@ -187,7 +189,7 @@ router.get('/', async function(req, res) {
     reason: "Benutzerprofil nicht gefunden"
   };
   profileDoc.confirmed = true;
-  await profileDoc.save();
+  await profileDoc.save();  
 
   // update doc in users collection (push profile to profiles array)   
   let userDoc = await User.findById(profileDoc.user).session(session);  
@@ -205,15 +207,17 @@ router.get('/', async function(req, res) {
   };
   userDoc.profiles.push( profileParams );  
   await userDoc.save();
-  await userDoc.populate('o');
-  profileParams.o = userDoc.o;
+
+  let oId = profileDoc.o;
+  await profileDoc.populate('o');  
+  profileParams.o = profileDoc.o;
   profileParams.token = jwt.sign({
-      user: response._id,
-      pid: currVal._id,
-      r: currVal.role,
-      m: currVal.manager,
-      o: currVal.o._id,
-      s: currVal.section
+      user: profileDoc.user,
+      pid: params.prof,
+      r: profileDoc.role,
+      m: profileDoc.manager,
+      o: oId,
+      s: profileDoc.section
   }, process.env.JWT_PASS, { expiresIn: '1h' } );  
     
   return {
