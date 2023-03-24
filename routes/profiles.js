@@ -1,4 +1,5 @@
 let express = require('express');
+const jwt = require('jsonwebtoken');
 let router = express.Router();
 const Profile = require('../models/profile');
 const User = require('../models/user');
@@ -11,7 +12,7 @@ router.get('/', async function(req, res) {
       let profileDocs = await Profile.find( {        
         user: req.authData.user,
         confirmed: false
-      }).populate('o', 'fullName');
+      }).populate('o');
       console.log(profileDocs);
       let resp = profileDocs.map(
         p => {
@@ -19,7 +20,7 @@ router.get('/', async function(req, res) {
             id: p._id,
             orchestraFullName: p.o.fullName,
             role: p.role,   
-            section: p.section,
+            section: p.section == 'all' ? 'all' : p.o.sections.get(p.section).name, // 'Flöte' statt 'sec0'
             factor: p.factor,
             trial: p.trial,
             remark: p.remark,
@@ -179,6 +180,49 @@ router.get('/', async function(req, res) {
   };  
  }
 
+ async function confirmProfile(session, params) { 
+  let profileDoc = await Profile.findById(params.prof).session(session);
+  if ( !profileDoc ) return {
+    success: false,
+    reason: "Benutzerprofil nicht gefunden"
+  };
+  profileDoc.confirmed = true;
+  await profileDoc.save();
+
+  // update doc in users collection (push profile to profiles array)   
+  let userDoc = await User.findById(profileDoc.user).session(session);  
+  let profileParams = {
+    _id: params.prof,
+    o: profileDoc.o,
+    role: profileDoc.role,
+    manager: profileDoc.manager,
+    section: profileDoc.section,
+    permanentMember: profileDoc.permanentMember,
+    trial: profileDoc.trial,
+    factor: profileDoc.factor,
+    remark: profileDoc.remark,
+    position: profileDoc.position,
+  };
+  userDoc.profiles.push( profileParams );  
+  await userDoc.save();
+  await userDoc.populate('o');
+  profileParams.o = userDoc.o;
+  profileParams.token = jwt.sign({
+      user: response._id,
+      pid: currVal._id,
+      r: currVal.role,
+      m: currVal.manager,
+      o: currVal.o._id,
+      s: currVal.section
+  }, process.env.JWT_PASS, { expiresIn: '1h' } );  
+    
+  return {
+    success: true,
+    content: profileParams
+  }  
+
+ }
+
  router.patch('/:id', async function(req, res) {
   console.log(req.body);
   if ( req.body.op == 'edit' ) {
@@ -191,7 +235,14 @@ router.get('/', async function(req, res) {
     
     res.json( result );     
   } else {
-    //TODO accept invitation to an orchestra as musician/office
+    let result = await writeOperation( req.authData.o, confirmProfile, {      
+      o: req.authData.o,             
+      prof: req.params.id
+   });         
+    
+    res.json( result );  
+    
+
   }
   
    
