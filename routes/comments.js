@@ -5,6 +5,7 @@ const { writeOperation } = require('../my_modules/orch-lock');
 const mongoose = require('mongoose');
 const Orchestra = require('../models/orchestra');
 const Dpl = require('../models/dpl');
+const User = require('../models/user');
 const DplMeta = require('../models/dplmeta');
 
 /***********
@@ -25,7 +26,7 @@ router.get('/:dplId', async function(req, res) {
         dpl: req.params.dplId
     });
     //console.log(meta);
-    console.log( meta.toJSON().comments );
+    //console.log( meta.toJSON().comments );
     res.json( meta.toJSON().comments );
  });
 
@@ -91,10 +92,11 @@ router.get('/:dplId', async function(req, res) {
         dpl: params.dpl,
         sec: params.sec
     }).populate('dpl').session(session);
-    if ( !meta ) return {
+    let userDoc = await User.findById(params.user).session(session);
+    if ( !meta || !userDoc ) return {
         success: false,
-        reason: 'No such dpl'
-    };
+        reason: 'No such dpl or user'
+    };    
 
     let row = -1;
     if ( params.role == 'musician' ) {
@@ -113,6 +115,9 @@ router.get('/:dplId', async function(req, res) {
         _id: new mongoose.Types.ObjectId(),
         message: params.message,
         prof: params.prof,
+        user: params.user,
+        userFn: userDoc.fn,
+        userSn: userDoc.sn,
         feedback: Array(meta.periodMembers.length).fill(0),
         timestamp: new Date(),
         deleted: false,
@@ -127,18 +132,16 @@ router.get('/:dplId', async function(req, res) {
     };    
  }
 
- router.post('/:dplId', async function(req, res) {
-    console.log( `Creating new comment ${req.params.dplId} ${req.body.message}` );
-    
+ router.post('/:dplId', async function(req, res) {    
     let result = await writeOperation( req.authData.o, createComment, {
         message: req.body.message, 
         o: req.authData.o, 
         prof: req.authData.pid,
+        user: req.authData.user,
         role: req.authData.r,
         dpl: req.params.dplId,
         sec: req.authData.s
-     });      
-     console.log(`Comment successfully created: ${result}`);      
+     });           
          
      res.json( result );     
  });

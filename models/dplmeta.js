@@ -12,8 +12,10 @@ const dplMetaSchema = new Schema({
     } ],
     comments: [ {
         message: String,
-        prof: { type: Schema.Types.ObjectId, ref: 'Profile' }, // _id of user profile
-        // Deprecated, no more stored: email: [ Boolean ],
+        prof: { type: Schema.Types.ObjectId, ref: 'Profile' }, // _id of user profile doc
+        user: { type: Schema.Types.ObjectId, ref: 'User' }, // _id of user doc        
+        userFn: String, // data from users collection, not updated, only at the moment when comment was created
+        userSn: String,
         feedback: [ {type: Number, min: 0, max: 10} ], // reactions of the section to the comment 
         // 0: not yet answered, 1: smile, 2: ok, 3: not agree etc.
         timestamp: Date,

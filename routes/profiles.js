@@ -73,13 +73,14 @@ router.get('/', async function(req, res) {
   console.log('Finding userDoc...');
 
   // update user doc's profiles array field in users collection (delete from array)
-  let userDoc = await User.findById( profileDoc.user ).session(session);
-  console.log(userDoc);
-  let indexOfProfile = userDoc.profiles.findIndex(
-    p => p._id == params.prof
-  );
-  userDoc.profiles.splice(indexOfProfile, 1);
-  await userDoc.save();
+  if ( profileDoc.confirmed ) {
+    let userDoc = await User.findById( profileDoc.user ).session(session);  
+    let indexOfProfile = userDoc.profiles.findIndex(
+      p => p._id == params.prof
+    );
+    userDoc.profiles.splice(indexOfProfile, 1);
+    await userDoc.save();
+  }  
 
   // delete profile doc
   await profileDoc.deleteOne();

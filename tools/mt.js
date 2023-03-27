@@ -275,9 +275,7 @@ async function run(hc) {
           position: 'Created automatically by MT'
         });
         await userManager.save();
-
-
-        //let flUsersDictionary = []; let fgUsersDictionary = [];
+        
         let flUsersDictionary = {}; let fgUsersDictionary = {};
         let sec = "sec0";                         
 
@@ -380,7 +378,13 @@ async function run(hc) {
             await newUser.save();
           }
 
-          flUsersDictionary[currentUser.id_user] = newProfile._id;
+          flUsersDictionary[currentUser.id_user] = {
+            prof: newProfile._id,
+            user: newUser._id,
+            userFn: currentUser.first_name,
+            userSn: currentUser.surname
+          };                    
+          
         }
         
         sec = "sec3"; 
@@ -481,12 +485,13 @@ async function run(hc) {
             await newUser.save();
           }
 
-          fgUsersDictionary[currentUser.id_user] = newProfile._id;          
-        }
-
-        //console.log(flUsersDictionary);
-        //console.log(fgUsersDictionary);
-
+          fgUsersDictionary[currentUser.id_user] = {
+            prof: newProfile._id,
+            user: newUser._id,
+            userFn: currentUser.first_name,
+            userSn: currentUser.surname
+          };                    
+        }        
 
         /************ PERIODS *********** */      
         let newFlPeriods = {};      
@@ -504,7 +509,7 @@ async function run(hc) {
           };        
           
           newFlPeriods[p.begin.toISOString()].members.push( {
-            prof: flUsersDictionary[p.id_user],
+            prof: flUsersDictionary[p.id_user].prof,
             initial: p.initial,
             row: p.dplrow,
             start: p.offset,
@@ -542,7 +547,7 @@ async function run(hc) {
           };
 
           newFgPeriods[p.begin.toISOString()].members.push( {
-            prof: fgUsersDictionary[p.id_user],
+            prof: fgUsersDictionary[p.id_user].prof,
             initial: p.initial,
             row: p.dplrow,
             start: p.offset,
@@ -651,13 +656,16 @@ async function run(hc) {
             for ( let i = 0; i < comments.length; i++) {                   
               meta.comments.push( {
                 message: comments[i].message,
-                prof: flUsersDictionary[comments[i].id_user],   
+                prof: flUsersDictionary[comments[i].id_user].prof, 
+                user: flUsersDictionary[comments[i].id_user].user,  
+                userFn: flUsersDictionary[comments[i].id_user].userFn,
+                userSn: flUsersDictionary[comments[i].id_user].userSn,
                 feedback: [0, 0, 0, 0],
                 deleted: false,
                 timestamp: comments[i].posted,
                 row: //comments[i].id_user > 4 ? 1 : comments[i].id_user - 1
                 newFlPeriods[week.fl_p].members.findIndex(
-                  m => m.prof == flUsersDictionary[comments[i].id_user]
+                  m => m.prof == flUsersDictionary[comments[i].id_user].prof
                 )                 
               } );
             }
@@ -719,12 +727,15 @@ async function run(hc) {
             for ( let i = 0; i < comments.length; i++) {                        
               meta.comments.push( {
                 message: comments[i].message,
-                prof: fgUsersDictionary[comments[i].id_user], 
+                prof: fgUsersDictionary[comments[i].id_user].prof, 
+                user: fgUsersDictionary[comments[i].id_user].user,
+                userSn: fgUsersDictionary[comments[i].id_user].userSn,
+                userFn: fgUsersDictionary[comments[i].id_user].userFn,
                 feedback: [0, 0, 0, 0],             
                 deleted: false,
                 timestamp: comments[i].posted,
                 row: newFgPeriods[week.fg_p].members.findIndex(
-                  m => m.prof == fgUsersDictionary[comments[i].id_user]
+                  m => m.prof == fgUsersDictionary[comments[i].id_user].prof
                 )  
               } );
             }
