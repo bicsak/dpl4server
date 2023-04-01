@@ -28,6 +28,7 @@ const productions = require('./routes/productions.js');
 const dienste = require('./routes/dienste.js');      
 const users = require('./routes/users.js');      
 const login = require('./routes/login.js');      
+const accounts = require('./routes/accounts.js');      
 
 const Orchestra = require('./models/orchestra');
 
@@ -68,6 +69,9 @@ async function run() {
       app.use('/api/productions', verifyToken, productions);            
       app.use('/api/dienste', verifyToken, dienste);            
       app.use('/api/login', login);
+
+      app.use('/api/accounts', accounts);
+
 
       /* final catch-all route to index.html defined last */
       app.get('/*', (req, res) => {

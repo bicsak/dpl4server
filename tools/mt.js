@@ -233,8 +233,8 @@ async function run(hc) {
             sn: 'Yossifov',
             birthday: new Date(Date.UTC(1970,0,1)),
               //'1970-01-01T00:00:00.000Z'),
-            confirmed: true,
-            confirmationToken: 'Created by MT'            
+            status: 'active',            
+            confirmationCode: 'CreatedByMT_bicsak@gmx.net'            
           } },
           { upsert: true, new: true } 
         );
@@ -293,8 +293,8 @@ async function run(hc) {
               fn: currentUser.first_name,
               sn: currentUser.surname,
               birthday: bd,
-              confirmed: true,
-              confirmationToken: 'Created by MT'              
+              status: 'active',
+              confirmationCode: 'CreatedByMT_'+currentUser.email              
             } },
             { upsert: true, new: true } 
           );
@@ -403,8 +403,8 @@ async function run(hc) {
               fn: currentUser.first_name,
               sn: currentUser.surname,
               birthday: bd,
-              confirmed: true,
-              confirmationToken: 'Created by MT'              
+              status: 'active',
+              confirmationCode: 'CreatedByMT_'+currentUser.email              
             } },
             { upsert: true, new: true } 
           );
@@ -596,9 +596,9 @@ async function run(hc) {
         console.log(`${weeks.length} weeks detected`);
         
         /*************** DPL *********** */           
-        let productions = {};
+        let productions = {}; let count = 1;
         for ( let week of weeks ) {
-          //console.log(`Processing ${count++}. out of ${weeks.length} week...`);
+          console.log(`Processing ${count++}. week...`);
           let weekBegin = new Date(week.begin);        
           let monday = `${weekBegin.getFullYear()}-${pad(weekBegin.getMonth()+1)}-${pad(weekBegin.getDate())}`;        
 

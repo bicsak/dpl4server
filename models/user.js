@@ -18,16 +18,22 @@ const userSchema = new Schema({
     fn: String, // first name
     sn: String, // surname
     birthday: Date,
-
-    //un: String,    //username
+    
     email: String, // this is the username; also used to contact person if pw forgotten
     pw: String,    //password
 
     loginAttempts: { type: Number, required: true, default: 0 },
     lockUntil: { type: Number },    
-    
-    confirmed: Boolean,
-    confirmationToken: String, 
+
+    status: {
+        type: String,
+        enum: ['pending', 'active'],
+        default: 'pending'
+    },
+    confirmationCode: {
+        type: String,
+        unique: true
+    },    
     // confirmation token used when user created account
 
     profiles: [
@@ -45,14 +51,15 @@ const userSchema = new Schema({
         }
     ]
    
-}, {
+}, { timestamps: { createdAt: 'created_at' },
     toJSON: {
         transform: 
         function(doc, ret, opt) {            
             delete ret['pw'];
             delete ret['loginAttempts'];
             delete ret['lockUntil'];
-            delete ret['confirmationToken'];
+            delete ret['confirmationCode'];
+            delete ret['created_at'];
             ret.birthday = ret.birthday.getTime();
             
             return ret;
@@ -97,7 +104,7 @@ userSchema.methods.incLoginAttempts = function(cb) {
 };
 
 userSchema.statics.getAuthenticated = function(username, password, cb) { 
-    this.findOne({ email: username, confirmed: true }, function(err, user) { 
+    this.findOne({ email: username, status: 'active' }, function(err, user) { 
         if (err) return cb(err);
         // make sure the user exists
         if (!user) {
