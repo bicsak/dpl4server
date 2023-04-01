@@ -42,13 +42,9 @@ router.post('/sign-up', async (req, res, next) => {
                 msg: 'User alerady exists'
             });
         } else {
-            // on success send email with link to app route /verify-email (code: token + userId: userDoc._id)
-            console.log(`id: ${userDoc.id}, token: ${token}`);
-            let transporter = nodemailer.createTransport({
-                /*sendmail: true,
-                newline: 'unix',
-                path: '/usr/sbin/sendmail',                        */
-
+            // on success send email with link to app route /verify-email (code: token + userId: userDoc._id)            
+            console.log(`Url: ${req.get('origin')}/verify-email?id=${userDoc.id}&token=${token}`);
+            /*let transporter = nodemailer.createTransport({                
                 host: process.env.MAIL_HOST,                        
                 port: process.env.MAIL_PORT,
 
@@ -70,7 +66,58 @@ router.post('/sign-up', async (req, res, next) => {
                 html: `<p>Hallo ${userDoc.fn}, </p>
                  <p>Bitte Benutzerkonto bestätigen</p>`
             };
-            transporter.sendMail(message);                
+            transporter.sendMail(message); */
+            res.sendStatus(200);
+        }
+    }
+
+
+    catch (err) {
+        return res.status(400).send({
+            msg: err
+        });
+    }
+
+  });
+
+  router.post('/verify-email', async (req, res, next) => {
+    try {
+        console.log(req.params);
+        console.log(req.body);
+        
+        // TODO check if params.token == user's token
+                
+        if ( !userDoc) {
+            res.status(400).send({
+                msg: 'Verifying not succeeded'
+            });
+        } else {
+            // on success send email with link to app route /verify-email (code: token + userId: userDoc._id)            
+            //console.log(`Url: ${req.get('origin')}/verify-email?id=${userDoc.id}&token=${token}`);
+            /*let transporter = nodemailer.createTransport({                
+                host: process.env.MAIL_HOST,                        
+                port: process.env.MAIL_PORT,
+
+                secure: false, // upgrade later with STARTTLS
+                auth: {                          
+                  user: process.env.MAIL_USER,                          
+                  pass: process.env.MAIL_PASS
+                },
+                tls:{
+                    rejectUnauthorized:false  // if on local
+                }
+            });
+            let message = {
+                from: '"Orchesterdienstplan" no-reply@odp.bicsak.net',
+                to: userDoc.email,
+                subject: "Benutzekonto bestätigen",
+                text: `Hallo ${userDoc.fn}, 
+                Du hast eben für ODP registriert. Bitte bestätige dein BEnutzeraccount mit dem link`,
+                html: `<p>Hallo ${userDoc.fn}, </p>
+                 <p>Bitte Benutzerkonto bestätigen</p>`
+            };
+            transporter.sendMail(message); */
+            res.sendStatus(200);
         }
     }
 
