@@ -1,5 +1,6 @@
 let express = require('express');
 const nodemailer = require('nodemailer');
+const Email = require('email-templates');
 const crypto = require('crypto');
 
 const User = require('../models/user');
@@ -44,7 +45,8 @@ router.post('/sign-up', async (req, res, next) => {
         } else {
             // on success send email with link to app route /verify-email (code: token + userId: userDoc._id)            
             console.log(`Url: ${req.get('origin')}/verify-email?id=${userDoc.id}&token=${token}`);
-            /*let transporter = nodemailer.createTransport({                
+
+            let transporter = nodemailer.createTransport({                
                 host: process.env.MAIL_HOST,                        
                 port: process.env.MAIL_PORT,
 
@@ -57,7 +59,21 @@ router.post('/sign-up', async (req, res, next) => {
                     rejectUnauthorized:false  // if on local
                 }
             });
-            let message = {
+
+            const email = new Email({
+                message: {
+                  from: '"Orchesterdienstplan" no-reply@odp.bicsak.net'
+                },
+                // uncomment below to send emails in development/test env:
+                // send: true
+                transport: transporter
+                /*{
+                  jsonTransport: true
+                }*/
+              });
+
+            
+            /*let message = {
                 from: '"Orchesterdienstplan" no-reply@odp.bicsak.net',
                 to: userDoc.email,
                 subject: "Benutzekonto bestätigen",
@@ -67,7 +83,17 @@ router.post('/sign-up', async (req, res, next) => {
                  <p>Bitte Benutzerkonto bestätigen</p>`
             };
             transporter.sendMail(message); */
-            res.sendStatus(200);
+
+            email.send({
+                template: 'signup',
+                message: { to: userDoc.email },
+                locals: {
+                    name: userDoc.fn,
+                    link: `${req.get('origin')}/verify-email?id=${userDoc.id}&token=${token}`
+                }
+            }).then(console.log).catch(console.error);
+            //.then(res => { console.log('res.originalMessage', res.originalMessage) }).cathch...            
+            res.json(null);
         }
     }
 
