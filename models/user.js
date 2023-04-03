@@ -36,6 +36,9 @@ const userSchema = new Schema({
     },    
     // confirmation token used when user created account
 
+    resetPwToken: String,
+    resetPwTokenIssued: Date,
+
     profiles: [
         {
             //_id = _id of doc in profiles collection
