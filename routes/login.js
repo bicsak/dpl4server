@@ -1,6 +1,7 @@
 let express = require('express');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
+const Email = require('email-templates');
 
 const User = require('../models/user');
 
@@ -62,15 +63,10 @@ router.post('/', async (req, res, next) => {
                     // send email or otherwise notify user that account is
                     // temporarily locked
                     console.log('max attempts');
-                    
-                    let transporter = nodemailer.createTransport({
-                        /*sendmail: true,
-                        newline: 'unix',
-                        path: '/usr/sbin/sendmail',                        */
-
+                    const transporter = nodemailer.createTransport({                
                         host: process.env.MAIL_HOST,                        
                         port: process.env.MAIL_PORT,
-
+                    
                         secure: false, // upgrade later with STARTTLS
                         auth: {                          
                           user: process.env.MAIL_USER,                          
@@ -80,6 +76,21 @@ router.post('/', async (req, res, next) => {
                             rejectUnauthorized:false  // if on local
                         }
                     });
+                    const email = new Email({
+                        message: {
+                          from: '"Orchesterdienstplan" no-reply@odp.bicsak.net'
+                        },
+                        // uncomment below to send emails in development/test env:
+                        // send: true
+                        transport: transporter                
+                    });     
+                    // send email
+                    email.send({
+                        template: 'locklogin',
+                        message: { to: user.email },
+                        locals: { name: user.fn }
+                    }).then(console.log).catch(console.error);
+                                                
                     let message = {
                         from: '"Orchesterdienstplan" no-reply@odp.bicsak.net',
                         to: user.email,
