@@ -162,7 +162,8 @@ exports.createWeekDataRaw = async function (begin, authData, sec) {
             /* last 3 weeks' delta
             * if single section request (for scheduler and office) */
             if ( sec ) {
-               let prevDelta = [0, 0, 0];               
+               let grSize = dplRaw[sec].period.members.length;
+               let prevDelta = [Array(grSize).fill(0), Array(grSize).fill(0), Array(grSize).fill(0)];               
                let dtBegin = DateTime.fromJSDate(beginDate, {
                   zone: wplDoc.o.timezone
                });               
