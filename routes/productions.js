@@ -15,10 +15,11 @@ router.get('/', async function(req, res) {
       else {*/
         console.log(`loading Productions for ${req.query.q}...`);
         let sanitized = req.query.q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        console.log(sanitized);
 
           let resp = await Production.find( { 
               o: req.authData.o,              
-              name: { $regex: sanitized, $options: '^' }
+              name: { $regex: sanitized/*, $options: '^' */}
             } ).limit(10).select('name duration firstDienst').populate({
                path: 'firstDienst',
                select: 'begin -_id',

@@ -14,7 +14,7 @@ router.get('/', async function(req, res) {
             let resp = await DienstExtRef.find( { 
               o: req.authData.o,
               category: 2,
-              name: { $regex: sanitized, $options: '^' }
+              name: { $regex: sanitized/*, $options: '^'*/ }
             } ).limit(10).select('name -_id');                
             res.json( resp ); 
          } else {
