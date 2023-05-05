@@ -6,8 +6,9 @@ router.get('/', async function(req, res){
    if ( req.query.q ) {
       console.log(`loading users for ${req.query.q}...`);
       let sanitized = req.query.q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      console.log(sanitized.split(",")[0]);
       let configObj = {
-         sn: { $regex: sanitized.split(",")[0], $options: '^/ci' } 
+         sn: { $regex: sanitized.split(",")[0]/*, $options: '^/ci' */} 
       };
       if (sanitized.split(",").length > 1) configObj.fn = { $regex: sanitized.split(",")[1], $options: '^/ci' } 
       //console.log(sanitized.split(",")[1]);

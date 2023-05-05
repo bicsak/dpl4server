@@ -132,8 +132,9 @@ router.get('/', async function(req, res) {
     // Create new profile doc in profiles collection for a specific user with confirmed = false
     // request body contains userId, section, role
     // update user doc's profiles field in users collection (add new profile to array)
+    // hm...
     // return new profile as IProfile
-    
+    console.log(req.body);
     let result = await writeOperation( req.authData.o, createProfile, {
       ...req.body,      
       o: req.authData.o,             
