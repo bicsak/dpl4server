@@ -4,6 +4,8 @@ const Season = require('../models/season');
 const DienstExtRef = require('../models/dienst');
 const Week = require('../models/week');
 
+const { writeOperation } = require('../my_modules/orch-lock');
+
 async function addStat(s) {
    let countDienst = await DienstExtRef.countDocuments( { season: s._id } );
    let countCat0 = await DienstExtRef.countDocuments( { season: s._id, category: 0 } );
@@ -27,20 +29,36 @@ router.get('/', async function(req, res) {
    res.json( response );   
 });
 
-router.patch('/:id', async function(req, res){
-   console.log(`PATCH route on season ${req.params.id}, params: ${req.body}`);
-   let seasonDoc = await Season.findById( req.params.id );                     
-   // TODO update label and comment accoprdings to req.body.label, rey.body.comment
-   // save seasonDoc
+async function editSeason(session, params ) {
+
+   let seasonDoc = await Season.findById( params.id ).session(session);                     
+   if ( !seasonDoc) return false;      
    // if boundaries != 0, do a lot of things...
    // 1:    start one week later
    // 2: start one week earlier -> check if not in collision with other Season and create week doc
    // 3: finish one week later -> check in fno in collision and add new week doc
    // 4: finish earlier: delete dpls and DienstExtRefs. Update DPLs' counting, seating docs
-   response = await addStat(seasonDoc);
-   res.send( response );
+   seasonDoc.label = params.label;
+   seasonDoc.comment = params.comment;
+   await seasonDoc.save();
+   return await addStat(seasonDoc);   
+}
+
+router.patch('/:id', async function(req, res){
+   console.log(`PATCH route on season ${req.params.id}, params: ${req.body}`);
    console.log(req.body);
-   console.log(response);
+   let success = await writeOperation(req.authData.o, editSeason, {
+      ...req.body,
+      o: req.authData.o,
+      id: req.params.id,      
+   });     
+   console.log(success);
+  if (success) res.send( {
+   success: true,
+   content: success
+  });   else res.send( {
+   success: false, message: 'Fehler'
+  });      
 });
 
 router.post('/', function(req, res){

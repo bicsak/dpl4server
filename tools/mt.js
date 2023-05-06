@@ -1151,6 +1151,7 @@ async function run(hc) {
        await database.collection("periods").createIndex( { o: 1, s: 1, begin: 1 }, { unique: true });
        await database.collection("dplmetas").createIndex( { o: 1, dpl: 1 }, { unique: true });       
        await database.collection("seasons").createIndex( { o: 1, begin: 1 }, { unique: true });
+       await database.collection("seasons").createIndex( { o: 1, label: 1 }, { unique: true });
        await database.collection("weeks").createIndex( { o: 1, begin: 1 }, { unique: true });
        await database.collection("dpls").createIndex( { o: 1, s:1, weekBegin: 1 }, { unique: true });
        await database.collection("dienst").createIndex( { o: 1, begin: 1 });

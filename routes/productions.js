@@ -117,7 +117,7 @@ router.patch('/:id', async function(req, res) {
       
          if ( changes.name ) {
             let success = await writeOperation(req.authData.o, editProdName, {
-               o: authData.o,
+               o: req.authData.o,
                id: req.params.id,
                name: changes.name,
                all: changes.all
