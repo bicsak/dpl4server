@@ -20,13 +20,17 @@ async function addStat(s) {
 }
 
 router.get('/', async function(req, res) { 
-   let response = await Season.find( { o: req.authData.o } );         
-   if ( req.query.full == 'true' ) {      
-      for ( let i = 0; i < response.length; i++ ){        
-         response[i] = await addStat(response[i]);
+   try {
+      let response = await Season.find( { o: req.authData.o } );         
+      if ( req.query.full == 'true' ) {      
+         for ( let i = 0; i < response.length; i++ ){        
+            response[i] = await addStat(response[i]);
+         }      
       }      
-   }      
-   res.json( response );   
+      res.status(200).json( response );   
+   } catch (err) {
+      res.status(500).send(err.message);
+   }
 });
 
 async function editSeason(session, params ) {
@@ -56,7 +60,10 @@ router.patch('/:id', async function(req, res){
   if (success) res.send( {
    success: true,
    content: success
-  });   else res.send( {
+  });   
+
+  // res.status(400).json({ error: 'message' })
+  else res.send( {
    success: false, message: 'Fehler'
   });      
 });
