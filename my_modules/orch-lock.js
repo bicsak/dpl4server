@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const Orchestra = require('../models/orchestra');
 var app = require('../server');
 
@@ -13,8 +12,7 @@ exports.writeOperation = async function ( orch, txnFunc, params ) {
      * orch: the orchestra to lock
      * txnFunc: the function to call in a transaction
      * params: params for txnFunc
-     */
-    //const session = await mongoose.connection.startSession( { readPreference: { mode: "primary" } } );
+     */    
     let retryCount = 0;
     let orchDoc;
     let session = app.get('session');
@@ -31,14 +29,21 @@ exports.writeOperation = async function ( orch, txnFunc, params ) {
             retryCount++;            
         }
     }
-    if ( !orchDoc ) return false; // could not get write Lock, exit
+    if ( !orchDoc ) return {
+        statusCode: 423, message: 'Could not get orchestra lock for write operation'
+    }; // could not get write Lock, exit
 
     //2nd step: start transaction and run txnFnc
+    let result;
     try {
-        var result = await runTransactionWithRetryAndOrchLock( txnFunc, params, session );
+        result = await runTransactionWithRetryAndOrchLock( txnFunc, params, session );
     }
     catch ( err ) {
         console.log(err);
+        result = {
+            statusCode: 500,
+            message: err
+        }
     } 
     finally {
         orchDoc.writeLock = false;

@@ -36,7 +36,10 @@ router.get('/', async function(req, res) {
 async function editSeason(session, params ) {
 
    let seasonDoc = await Season.findById( params.id ).session(session);                     
-   if ( !seasonDoc) return false;      
+   if ( !seasonDoc) return {
+      statusCode: 404,
+      message: 'Specified season does not exist'
+   };      
    // if boundaries != 0, do a lot of things...
    // 1:    start one week later
    // 2: start one week earlier -> check if not in collision with other Season and create week doc
@@ -45,31 +48,53 @@ async function editSeason(session, params ) {
    seasonDoc.label = params.label;
    seasonDoc.comment = params.comment;
    await seasonDoc.save();
-   return await addStat(seasonDoc);   
+   let result = await addStat(seasonDoc);  
+   return {
+      statusCode: 200,
+      body: result
+   } ;
+   //{ statusCode: 304, message: `Season with id ${params.id} not updated`}
 }
 
 router.patch('/:id', async function(req, res){
    console.log(`PATCH route on season ${req.params.id}, params: ${req.body}`);
    console.log(req.body);
-   let success = await writeOperation(req.authData.o, editSeason, {
-      ...req.body,
-      o: req.authData.o,
-      id: req.params.id,      
-   });     
-   console.log(success);
-  if (success) res.send( {
-   success: true,
-   content: success
-  });   
-
-  // res.status(400).json({ error: 'message' })
-  else res.send( {
-   success: false, message: 'Fehler'
-  });      
+   try {
+      let result = await writeOperation(req.authData.o, editSeason, {
+         ...req.body,
+         o: req.authData.o,
+         id: req.params.id,      
+      });     
+      console.log(result);
+   if (result.statusCode == 200 ) res/*.status(200)*/.json( result.body);      
+   else res.status(result.statusCode).send( result.message);      
+} catch (err) {
+   res.status(400).send(`Patching season with id ${req.params.id} failed`);
+}
 });
 
 router.post('/', function(req, res){
-   res.send('POST route on seasons');
+   res.status(201).send('POST route on seasons');
+   console.log(req.params,req.body);
+   // 201: Successfully created
+   // 500: failed to create (conflict?)
+   // 400 otherwise (error)
+});
+
+router.delete('/:seasonId', async function(req, res) {    
+   console.log( `Deleting season ${req.params.seasonId}...` );
+
+   /*let result = await writeOperation( req.authData.o, deleteComment, {        
+       o: req.authData.o, 
+       prof: req.authData.pid,
+       role: req.authData.r,
+       dpl: req.params.dplId,
+       cId: req.params.commentId,
+       sec: req.authData.s,        
+    });   */          
+
+    // 400: problem, not deleted, 404: not found
+   res.status(202); // request accepted
 });
 
 //export this router to use in our index.js
