@@ -19,7 +19,7 @@ router.get('/', async function(req, res) {
 
           let resp = await Production.find( { 
               o: req.authData.o,              
-              name: { $regex: sanitized/*, $options: '^' */}
+              name: { $regex: '^'+sanitized, $options: 'i'}
             } ).limit(10).select('name duration firstDienst').populate({
                path: 'firstDienst',
                select: 'begin -_id',
