@@ -3,6 +3,8 @@ let router = express.Router();
 const Period = require('../models/period');
 const Dpl = require('../models/dpl');
 
+const { writeOperation } = require('../my_modules/orch-lock');
+
 /*****
  * Only for schedulers
  */
@@ -81,7 +83,10 @@ router.patch('/:pId', async function(req, res) {
          newComment: req.body.value
       });      
       console.log(`Comment changed: ${result}`);  
-      res.json( result );  
+      res.json( {
+         success: true,
+         content: result
+      } );  
    } else {
      res.status(404); // Bad request
    }      
@@ -93,37 +98,57 @@ async function createPeriod(session, params) {
    // check if operation is allowed; 
    // update other periods' nextPBegin and isOpenEnd
    // return new Period
+   return true;
 }
  
  router.post('/', async function(req, res) {
-   //TODO
-    res.send('POST route on periods');
+   //TODO    
+    console.log(req.body);
     let result = await writeOperation( req.authData.o, createPeriod, {      
       o: req.authData.o,       
       sec: req.authData.s/*, TODO other params from req.body*/
    });      
-   console.log(`Comment successfully created: ${result}`);      
+   console.log(`Period created: ${result}`);      
        
-   res.json( result );     
-
+   res.json( { success: false,
+      reason: "Not yet implemented" } );     
  });
 
- async function editPeriodMember(session, params) {     
-   //TODO
+ async function editPeriodMember(session, params) {        
+   let period = await Period.findById( params.pId ).session(session);
+   period.members[params.row].canWish = params.memberData.canWish;
+   period.members[params.row].canComment = params.memberData.canComment;
+   period.members[params.row].initial = params.memberData.initial;
+   // tODO check if initial is unique in the group
+   period.members[params.row].start = params.memberData.start;
+   if (params.memberData.comment) period.members[params.row].comment = params.memberData.comment;
+   await period.save();   
+   return true;
  }
 
  router.put('/:pId/:row', async function(req, res) {       
-   //TODO edit row-th member in pId period
-   let result = await writeOperation( req.authData.o, editPeriodMember, {      
-      o: req.authData.o, 
-      pId: req.params.pId,      
-      row: req.params.row,
-      sec: req.authData.s/*, TODO other 5 params from req.body*/
-   });      
-   console.log(`Comment successfully created: ${result}`);         
-       
-   res.json( result );     
-
+   // edit row-th member in pId period
+   console.log(req.params.pId, req.params.row, req.body.member);
+   try {
+      let result = await writeOperation( req.authData.o, editPeriodMember, {      
+         o: req.authData.o, 
+         pId: req.params.pId,      
+         row: req.params.row,
+         sec: req.authData.s,
+         memberData: req.body.member
+      });      
+      console.log(`Period member edited: ${result}`);                   
+      res.json( {
+         success: true,
+         content: req.body.member
+      } );        
+   } catch(err) {
+      res.status(409).send({
+         success: false,
+         reason: 'Konflikt'
+      });
+   }
+   
  });
  
  //export this router to use in our index.js
