@@ -135,6 +135,8 @@ async function createPeriod(session, params) {
    let dtBegin = DateTime.fromMillis(params.begin*1000, {zone: orchDoc.timezone }).startOf('week').toJSDate();   
    
    let nextPeriodDoc = await Period.find({
+      o: params.o,
+      s: params.sec,
       begin: { '$gt': dtBegin }
    }).session(session).sort({begin: 'asc'}).limit(1);
    /*let nextPeriodDoc = await Period
@@ -145,6 +147,8 @@ async function createPeriod(session, params) {
    .sort('begin').limit(1);*/
    
    let lastPeriodDoc = await Period.find({
+      o: params.o,
+      s: params.sec,
       begin: { '$lt': dtBegin }
    }).session(session).sort({begin: 'desc'}).limit(1);
    /*let lastPeriodDoc = await Period
@@ -160,10 +164,11 @@ async function createPeriod(session, params) {
       let lastDplDoc = await Dpl.find({
          o: params.o,
          s: params.sec,
-         p: lastPeriodDoc[0]._id
-      }).session(session).sort('-begin').limit(1);
-
-      if ( lastDplDoc.length && lastDplDoc[0].begin > dtBegin ) {
+         p: String(lastPeriodDoc[0]._id)
+      }).session(session).sort('-weekBegin').limit(1);
+      console.log(params.o, params.sec, lastPeriodDoc[0]._id);
+      console.log('Last Dpl for this period:', lastDplDoc[0]);
+      if ( lastDplDoc.length && lastDplDoc[0].weekBegin.getTime() >= dtBegin.getTime() ) {
          // operation not allowed, abort:
          return false;
       }
