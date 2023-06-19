@@ -35,14 +35,14 @@ router.get('/', async function(req, res) {
          ...periodDocs[i].toJSON(),
          countDpl: c
       } );
-      if ( periodDocs[i].isOpenEnd ) {
+      //if ( periodDocs[i].isOpenEnd ) {
          let lastDpl = await Dpl.find( {
             o: req.authData.o,
             s: req.authData.s,
             p: periodDocs[i]._id
          } ).sort('-weekBegin').limit(1).select('weekBegin');         
          resp[resp.length - 1].lastDplBegin = lastDpl[0]?.weekBegin.getTime();
-      }
+      //}
     }
     console.log(resp);
     res.send(resp);
@@ -67,13 +67,14 @@ router.get('/', async function(req, res) {
    
    // set last period's isOpenEnd and nextPBegin, nextP (id) fields
    let lastPeriodDoc = await Period.findOne({
-      nextP: params.pId
+      next: params.pId
    }).session(session);
-   if ( lastPeriodDoc.length ) {
-      lastPeriodDoc[0].nextP = nextP;
-      lastPeriodDoc[0].nextPBegin = nextPBegin;
-      lastPeriodDoc[0].isOpenEnd = !nextP;
-      await lastPeriodDoc[0].save();
+   console.log("Last Period:", lastPeriodDoc);
+   if ( lastPeriodDoc ) {
+      lastPeriodDoc.nextP = nextP;
+      lastPeriodDoc.nextPBegin = nextPBegin;
+      lastPeriodDoc.isOpenEnd = !nextP;
+      await lastPeriodDoc.save();
    }
    
    return true;
