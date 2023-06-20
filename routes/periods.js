@@ -60,7 +60,7 @@ router.get('/', async function(req, res) {
 
    let periodDoc = await Period.findById(params.pId).session(session);
    let nextPBegin = periodDoc.nextPBegin;
-   let nextP = periodDoc.nextP;
+   let nextP = periodDoc.next;
    // delete period doc from collection
    //await periodDoc.deleteOne(); // ??
    await Period.findByIdAndRemove(params.pId).session(session);
@@ -146,6 +146,7 @@ async function createPeriod(session, params) {
       s: params.sec      
    }).session(session).where('begin').gt(dtBegin)
    .sort('begin').limit(1);*/
+   console.log('Next Period:', nextPeriodDoc);
    
    let lastPeriodDoc = await Period.find({
       o: params.o,
@@ -158,7 +159,7 @@ async function createPeriod(session, params) {
       s: params.sec,
    }).session(session).where('begin').lt(dtBegin)
    .sort('-begin').limit(1);*/
-   console.log(lastPeriodDoc);
+   console.log('Last period:', lastPeriodDoc);
 
    if ( lastPeriodDoc.length ) {
       // get last dpl of this last period
@@ -180,7 +181,7 @@ async function createPeriod(session, params) {
       s: params.sec,
       begin: dtBegin,
       next: nextPeriodDoc.length ? nextPeriodDoc[0]._id : undefined,
-      nextPBegin: nextPeriodDoc.length ? dtBegin : undefined,
+      nextPBegin: nextPeriodDoc.length ? nextPeriodDoc[0].begin : undefined,
       isOpenEnd: !nextPeriodDoc.length,      
       comment: params.comment,
       members: params.group
