@@ -325,8 +325,7 @@ async function deleteDienst(session, params ) {
     return true;
 }
 
-router.delete('/:mts/:did', async function(req, res) {
-   //jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
+router.delete('/:mts/:did', async function(req, res) {   
       if ( req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }
       console.log(`Deleting Dienst req ${req.params.mts}, ${req.params.did}`);
       let result = await writeOperation( req.authData.o, deleteDienst, {
@@ -335,9 +334,71 @@ router.delete('/:mts/:did', async function(req, res) {
       
       // return new week plan            
       let resp = await createWeekDataRaw(req.params.mts, req.authData);
-      res.json( resp );            
-   //});
+      res.json( resp );               
 });
+
+async function clearWeek(session, params ) {
+   let weekDoc = await Week.findOne({
+      o: params.o,
+      begin: params.mts
+   }).session(session);
+   
+   // for all in weekDoc.dienst[]...
+
+   for ( let i = 0; i < weekDoc.dienst.length; i++) {      
+      // read dienst to get season id and prod id for renumber function
+      let dienstDoc = await Dienst.findById( weekDoc.dienst[i]._id ).session(session);    
+      
+      //delete dienst from dienstextref coll
+      //await Dienst.deleteOne( { '_id': params.did } ).session(session);
+      await Dienst.findByIdAndRemove(weekDoc.dienst[i]._id, {session: session});           
+      
+      if ( dienstDoc.prod ) {
+      //update first and last dienst for this prod
+      await updateProductionsFirstAndLastDienst(session, params.o, dienstDoc.prod);      
+      
+      // recalc OA1, etc. for season and production (if not sonst. dienst):     
+      await renumberProduction(session, dienstDoc.season, dienstDoc.prod);            
+      }
+      
+      // recalc dienstzahlen for all dpls for this week    
+      await recalcNumbersAfterWeightChange(session, params.o, dienstDoc.w, dienstDoc._id);        
+      
+      // delete seatings subdocs from all dpls
+      await Dpl.updateMany({
+      o: params.o,
+      w: dienstDoc.w
+      }, {
+      '$pull': {
+         seatings: {
+            d: dienstDoc._id
+         }
+      }
+      } ).session(session);   
+   }
+   
+   // delete all dienst from weeks coll   
+   weekDoc.dienst = [];
+   await weekDoc.save();   
+
+   return true;
+}
+
+/**********
+ * clears this week (deletes all dienst)
+ */
+router.delete('/:mts', async function(req, res) {   
+      if ( req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }
+      console.log(`Erasing week req ${req.params.mts}`);
+      let result = await writeOperation( req.authData.o, clearWeek, {
+         o: req.authData.o, mts: req.params.mts });      
+      console.log(`Week is clean, result: ${result}`);
+      
+      // return new week plan            
+      let resp = await createWeekDataRaw(req.params.mts, req.authData);
+      res.json( resp );               
+});
+
 
 async function createDienst(session, params) {
    console.log('createDienst transaction fn');

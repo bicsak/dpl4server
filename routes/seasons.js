@@ -38,25 +38,58 @@ router.get('/', async function(req, res) {
 });
 
 async function editSeason(session, params ) {
-
    let seasonDoc = await Season.findById( params.id ).session(session);                     
    if ( !seasonDoc) return {
       statusCode: 404,
       message: 'Specified season does not exist'
-   };      
-   // if boundaries != 0, do a lot of things...
-   // 1: start one week later (see nr 4)
-   // 2: start one week earlier -> check if not in collision with other Season and create week doc
-   // 3: finish one week later -> check if not in collision and add new week doc
-   // 4: finish earlier: delete dpls and DienstExtRefs. Update DPLs' counting, seating docs, renumber dienste (OA1, 2...) in DienstExtRef and week docs
+   };         
+   if ( params.boundaries == 1 ) {
+      // start season one week later...
+      //TODO
+      // delete dpls and DienstExtRefs. Update DPLs' counting, seating docs, renumber dienste (OA1, 2...) in DienstExtRef and week docs
+   } else if ( params.boundaries == 2 ) {
+      // start one week earlier
+      console.log("setting season's begin one week earlier...");
+      // change season doc's begin and add new week doc
+      let newBegin = DateTime.fromJSDate(seasonDoc.begin).minus({weeks: 1}).toJSDate();
+      seasonDoc.begin = newBegin;
+      await Week.create([{
+         o: params.o,
+         season: seasonDoc._id,
+         begin: newBegin,
+         remark: "",
+         editable: false,
+         dpls: {},
+         dienst: []
+      }], {session});
+   } else if ( params.boundaries == 3 ) {
+      // finish one week later
+      console.log("setting season's end one week later...");
+      // change season doc's end and add new week doc
+      let newEnd = DateTime.fromJSDate(seasonDoc.end).plus({weeks: 1}).toJSDate();      
+      await Week.create([{
+         o: params.o,
+         season: seasonDoc._id,
+         begin: seasonDoc.end,
+         remark: "",
+         editable: false,
+         dpls: {},
+         dienst: []
+      }], {session});
+      seasonDoc.end = newEnd;
+   } else if ( params.boundaries == 4 ) {
+      //finish season one week earlier TODO
+      // delete dpls and DienstExtRefs. Update DPLs' counting, seating docs, renumber dienste (OA1, 2...) in DienstExtRef and week docs
+   }   
+   
    seasonDoc.label = params.label;
    seasonDoc.comment = params.comment;
    await seasonDoc.save();
-   let result = await addStat(seasonDoc);  
+   //let result = await addStat(seasonDoc);  
    return {
       statusCode: 200,
-      body: result
-   } ;
+      body: seasonDoc
+   };
    //{ statusCode: 304, message: `Season with id ${params.id} not updated`}
 }
 
@@ -70,7 +103,9 @@ router.patch('/:id', async function(req, res){
          id: req.params.id,      
       });     
       console.log(result);
-      if (result.statusCode == 200 ) res/*.status(200)*/.json( result.body);      
+      if (result.statusCode == 200 ) res/*.status(200)*/.json( 
+         await addStat(result.body)
+      );      
       else res.status(result.statusCode).send( result.message);      
    } catch (err) {
       res.status(400).send(`Patching season with id ${req.params.id} failed`);
@@ -131,6 +166,21 @@ router.post('/', async function(req, res){
 });
 
 async function deleteSeason(session, params ) {
+   // check: only if does not contain any dienste and no dpls
+   let countDpls = await Dpl.countDocuments({
+      o: req.authData.o,
+      weekSeason: req.params.seasonId
+   }).session(session);
+   let countDienst = await DienstExtRef.countDocuments({
+      o: req.authData.o,
+      season: req.params.seasonId
+   }).session(session);
+   if ( countDpls || countDienst ) {      
+      return {
+         statusCode: 400,
+         body: `Spielzeit kann nicht gelöscht werden`
+      };
+   }
    let result = await Season.deleteOne({
       _id: params.id,
       o: params.o
@@ -148,20 +198,7 @@ async function deleteSeason(session, params ) {
 }
 
 router.delete('/:seasonId', async function(req, res) {    
-   console.log( `Deleting season ${req.params.seasonId}...` );
-   // check: only if does not contain any dienste and no dpls
-   let countDpls = await Dpl.countDocuments({
-      o: req.authData.o,
-      weekSeason: req.params.seasonId
-   });
-   let countDienst = await DienstExtRef.countDocuments({
-      o: req.authData.o,
-      season: req.params.seasonId
-   });
-   if ( countDpls || countDienst ) {
-      res.status(400).send(`Spielzeit kann nicht gelöscht werden`);
-      return;
-   }
+   console.log( `Deleting season ${req.params.seasonId}...` );   
    try {
       let result = await writeOperation(req.authData.o, deleteSeason, {
          id: req.params.seasonId,
