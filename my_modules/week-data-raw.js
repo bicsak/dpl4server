@@ -1,10 +1,12 @@
 const Dpl = require('../models/dpl');
 const Period = require('../models/period');
 const Week = require('../models/week');
+const Dienst = require('../models/dienst');
+const Production = require('../models/production');
 
 const { DateTime } = require("luxon");
 
-exports.createWeekDataRaw = async function (begin, authData, sec) {
+async function createWeekDataRaw (begin /* UNIX ts in Seconds*/, authData, sec) {
    let beginDate = new Date(begin*1000); 
 
    let weekRaw = { begin: parseInt(begin) }; // for return value
@@ -208,3 +210,220 @@ exports.createWeekDataRaw = async function (begin, authData, sec) {
    
    return weekRaw;          
 }
+
+async function renumberProduction(session, sId /* season */, pId /* prod id */ ) {
+   /***************************************
+   * Fill seqnr, total for all dienst (BO1, 2, 3/6...)
+   *****************************************/       
+ 
+   aggregatedDienst = await Week.aggregate( [        
+     { "$match": { season: sId }  }, // specified season
+     { "$unwind": { 'path': '$dienst'} },
+     { "$match": { 
+       'dienst.category': { '$ne': 2 }, // no special dienste
+       'dienst.subtype': { '$ne': 6}, // no extra rehearsal type (with special suffix)
+       'dienst.total': { '$ne': -1 } ,  // no excluded dienste
+       'dienst.prod':  pId } // specified production
+     },     
+     { "$project": {  
+            _id: 0, // no week doc id
+          'dienst.begin': 1, 
+          'dienst.category': 1, 
+          'dienst.subtype': 1, 
+          'dienst.seq': 1, 
+          'dienst.total': 1,
+          'dienst._id': 1       
+    } },                  
+    { "$replaceRoot": { newRoot: '$dienst'} },
+    { "$sort": { begin: 1 } }        
+   ] ).session(session);
+   console.log('renumbering prod');
+   console.log(aggregatedDienst);
+   
+     let max = {
+       r: [0, 0, 0, 0, 0, 0], // rehearsals
+       p: 0 // performance
+     }; 
+
+     for ( let d of aggregatedDienst ) {
+       if ( d.category == 0 ) {                          
+         let rehearsalType = d.subtype;
+         if ( d.subtype == 3 ) /* vBO */ {
+           rehearsalType = 2;
+         }
+         d.seq = ++max.r[rehearsalType];                             
+       } else {        
+         d.seq = ++max.p;                          
+       }
+     }
+
+     for ( let d of aggregatedDienst ) {
+       let rehearsalType = d.subtype;
+       if ( d.subtype == 3 ) rehearsalType = 2;
+       await Week.findOneAndUpdate(
+         {'dienst._id': d._id},
+         { 'dienst.$.seq': d.seq, 
+           'dienst.$.total': d.category == 0 ? max.r[rehearsalType] : max.p //d.total
+         }).session( session);                        
+       //await Dienst.updateOne(
+       await Dienst.findByIdAndUpdate(         
+         d._id,
+         { 'seq': d.seq, 
+         'total': d.category == 0 ? max.r[rehearsalType] : max.p //d.total
+         }, {session: session});
+     }    
+}
+
+// Subtracts dienst-weight after deleting or change in dienst weight
+// corrects numbers for current and all succeding dpls for each group and members who had this dienst
+async function recalcNumbersAfterWeightChange(session, o /* orchestra id*/, w /* week doc id */, 
+did /* dienst id */, correction) {
+   let dplDocs = await Dpl.find({o: o, w: w}).session(session);
+    for (let dpl of dplDocs) {
+      let seating = dpl.seatings.find(s => s.d == did);
+      let diff = correction ? correction : seating.dienstWeight;      
+      let corr = seating.sp.map( (num, idx) => num >= 16 ? diff : 0);            
+      dpl.delta.forEach( (num, idx, arr) => arr[idx] = num - corr[idx]);      
+      await dpl.save();
+      let succedingDpls = await Dpl.find({o: o, d: dpl.s, p: dpl.p, weekBegin: {$gt: dpl.weekBegin} }).session(session);
+      for (let succ of succedingDpls) {         
+         succ.start.forEach( (num, idx, arr) => arr[idx] = num - corr[idx]);      
+         await  succ.save()    
+      }    
+    }     
+}
+
+async function updateProductionsFirstAndLastDienst(session, o, p) {
+   let firstLast = await Dienst.aggregate([
+      {
+        '$match': {
+          'o': o, 
+          'prod': p
+        }
+      }, {
+        '$sort': {
+          'begin': 1
+        }
+      }, {
+        '$group': {
+          '_id': null, 
+          'firstDienst': {
+            '$first': '$_id'
+          }, 
+          'lastDienst': {
+            '$last': '$_id'
+          }
+        }
+      }
+    ]).session(session);
+    console.log(firstLast);
+    if ( firstLast) {
+      /*await Production.updateOne( {
+        o: o,
+         _id: p
+      }, {
+         firstDienst: firstLast.firstDienst,
+         lastDienst: firstLast.lastDienst
+      }).session(session);*/
+      await Production.findByIdAndUpdate( p, {
+          firstDienst: firstLast.firstDienst,
+          lastDienst: firstLast.lastDienst
+       }, {session: session});
+   } else {
+      /*await Production.deleteOne({
+         o: o, _id: p
+      }).session(session);*/
+      await Production.findByIdAndRemove(p, {session: session});
+   }
+}
+
+async function recalcAfterReset( session, o, w, counting, deleteCorrection = false ) {
+   console.log('recalc DZ...');
+   let dplDocs = await Dpl.find({o: o, weekBegin: new Date(w)}).session(session);
+   console.log('dpls:', dplDocs);
+    for (let dpl of dplDocs) {            
+      dpl.delta.forEach( (_, idx, arr) => arr[idx] = 0);
+      if ( deleteCorrection ) dpl.correction.forEach( (_, idx, arr) => arr[idx] = 0);
+      await dpl.save();
+      let succedingDpls = await Dpl.find({o: o, s: dpl.s, p: dpl.p, weekBegin: {$gt: dpl.weekBegin} }).session(session);
+      for (let succ of succedingDpls) {         
+         succ.start.forEach( (num, idx, arr) => arr[idx] = num - counting.get(dpl.s)[idx]);      
+         await succ.save()    
+      }    
+    }    
+}
+
+async function cleanWeek(session, o, w /* UTC timestamp in Milliseconds*/, deleteCorrection = false) {   
+   // delete week's data in other collections      
+   console.log('Clean week', w);
+   let begin = new Date(w);   
+   // find weekDoc
+   console.log(o);
+   console.log(begin);
+   let weekDoc = await Week.findOne({
+      o: o,
+      begin: begin
+   }).session(session);
+   console.log('weekDoc', weekDoc);
+   
+   // create array of distinct productions  
+   const productions = [...new Set(weekDoc.dienst.map( d => d.prod))];   
+   console.log('productions', productions);
+   
+   // save counting array (diff + correction ? ha deleteCorrection) for all dpls
+   let dplDocs = await Dpl.find({
+      o: o,
+      weekBegin: begin
+   }).session(session);
+   console.log('dpls', dplDocs);
+
+   const counting = new Map(
+      dplDocs.map( dpl => [
+         dpl.s, 
+         deleteCorrection ? dpl.delta.map( (x, ind) => x + dpl.correction[ind]) : dpl.delta
+      ])
+   );
+   console.log('counting', counting);
+         
+   for ( let i = 0; i < weekDoc.dienst.length; i++) {            
+      //delete dienst from dienstextref coll      
+      console.log('deleting dienst with id:', weekDoc.dienst[i]._id);
+      await Dienst.findByIdAndRemove(weekDoc.dienst[i]._id, {session: session});                 
+                 
+      // delete seatings subdocs from all dpls      
+      await Dpl.updateMany({
+         o: o,
+         w: weekDoc._id
+         }, {
+         '$pull': {
+            seatings: {
+               d: weekDoc.dienst[i]._id
+            }
+         }
+      } ).session(session);
+   }
+
+   /* ***** for all productions in the list **** */
+   
+   for ( let i = 0; i < productions.length; i++ ) {      
+         //update first and last dienst for this prod
+         await updateProductionsFirstAndLastDienst(session, o, productions[i]);      
+         
+         // recalc OA1, etc. for season and production (if not sonst. dienst):     
+         await renumberProduction(session, weekDoc.season, productions[i]);                  
+   }
+   /****** end of production loop **** */
+   
+   // Update all DPLs' counting (delta, correction, start), for succeeding weeks, too
+   await recalcAfterReset(session, o, w, counting, deleteCorrection ); 
+   
+   // delete all dienst from weeks coll   
+   weekDoc.dienst = [];
+   await weekDoc.save();      
+}
+
+exports.createWeekDataRaw = createWeekDataRaw;
+exports.renumberProduction = renumberProduction;
+exports.recalcNumbersAfterWeightChange = recalcNumbersAfterWeightChange;
+exports.updateProductionsFirstAndLastDienst = updateProductionsFirstAndLastDienst;
+exports.cleanWeek = cleanWeek;

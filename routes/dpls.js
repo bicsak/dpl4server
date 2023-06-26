@@ -505,6 +505,7 @@ async function createDpl( session, params ) {
       o: params.authData.o,
       dpl: dplId,
       dplPeriod: week.assignedPeriod._id,
+      weekBegin: dtBegin,
       periodMembers: week.assignedPeriod.members.map(
          mem => {
             return {

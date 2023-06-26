@@ -5,6 +5,7 @@ const dplMetaSchema = new Schema({
     o: { type: Schema.Types.ObjectId, ref: 'Orchestra' },       
     dpl: { type: Schema.Types.ObjectId, ref: 'Dpl' },            
     dplPeriod: { type: Schema.Types.ObjectId, ref: 'Period' },            
+    weekBegin: Date,
     periodMembers: [ {        
         prof: { type: Schema.Types.ObjectId, ref: 'Profile' },            
         row: Number,

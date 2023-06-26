@@ -1,12 +1,16 @@
 let express = require('express');
 let router = express.Router();
+
 const Season = require('../models/season');
 const DienstExtRef = require('../models/dienst');
 const Week = require('../models/week');
 const Orchestra = require('../models/orchestra');
 const Dpl = require('../models/dpl');
+const Dplmeta = require('../models/dplmeta');
 
 const { writeOperation } = require('../my_modules/orch-lock');
+const { cleanWeek } = require('../my_modules/week-data-raw');
+
 const { DateTime } = require("luxon");
 
 
@@ -42,50 +46,81 @@ async function editSeason(session, params ) {
    if ( !seasonDoc) return {
       statusCode: 404,
       message: 'Specified season does not exist'
-   };         
-   if ( params.boundaries == 1 ) {
-      // start season one week later...
-      //TODO
-      // delete dpls and DienstExtRefs. Update DPLs' counting, seating docs, renumber dienste (OA1, 2...) in DienstExtRef and week docs
-   } else if ( params.boundaries == 2 ) {
-      // start one week earlier
-      console.log("setting season's begin one week earlier...");
-      // change season doc's begin and add new week doc
-      let newBegin = DateTime.fromJSDate(seasonDoc.begin).minus({weeks: 1}).toJSDate();
-      seasonDoc.begin = newBegin;
-      await Week.create([{
-         o: params.o,
-         season: seasonDoc._id,
-         begin: newBegin,
-         remark: "",
-         editable: false,
-         dpls: {},
-         dienst: []
-      }], {session});
-   } else if ( params.boundaries == 3 ) {
-      // finish one week later
-      console.log("setting season's end one week later...");
-      // change season doc's end and add new week doc
-      let newEnd = DateTime.fromJSDate(seasonDoc.end).plus({weeks: 1}).toJSDate();      
-      await Week.create([{
-         o: params.o,
-         season: seasonDoc._id,
-         begin: seasonDoc.end,
-         remark: "",
-         editable: false,
-         dpls: {},
-         dienst: []
-      }], {session});
-      seasonDoc.end = newEnd;
-   } else if ( params.boundaries == 4 ) {
-      //finish season one week earlier TODO
-      // delete dpls and DienstExtRefs. Update DPLs' counting, seating docs, renumber dienste (OA1, 2...) in DienstExtRef and week docs
-   }   
+   };   
+   if ( params.boundaries ) {
+      let orchDoc = await Orchestra.findById(params.o);   
+      if ( params.boundaries == 1 ) {
+         // start season one week later...         
+         let newBegin = DateTime.fromJSDate(seasonDoc.begin, {zone: orchDoc.timezone}).plus({weeks: 1}).toJSDate();         
+         // TODO check if still ok (season contains at least 1 week)
+         // if so, following 3 lines:
+         await cleanWeek(session, params.o, seasonDoc.begin.getTime(), true);
+         await Week.deleteOne({o: params.o, begin: seasonDoc.begin}).session(session);                  
+         await Dpl.deleteMany( {
+            o: params.o,
+            weekBegin: seasonDoc.begin
+         }).session(session);
+         // delete dplMetas as well
+         await Dplmeta.deleteMany( {
+            o: params.o,
+            weekBegin: seasonDoc.begin
+         }).session(session);      
+         seasonDoc.begin = newBegin;
+      } else if ( params.boundaries == 2 ) {
+         // start one week earlier
+         console.log("setting season's begin one week earlier...");      
+         // change season doc's begin and add new week doc
+         let newBegin = DateTime.fromJSDate(seasonDoc.begin, {zone: orchDoc.timezone}).minus({weeks: 1}).toJSDate();
+         // TODO check if still ok (no collision with prev season)
+         seasonDoc.begin = newBegin;
+         await Week.create([{
+            o: params.o,
+            season: seasonDoc._id,
+            begin: newBegin,
+            remark: "",
+            editable: false,
+            dpls: {},
+            dienst: []
+         }], {session});
+      } else if ( params.boundaries == 3 ) {
+         // finish one week later
+         console.log("setting season's end one week later...");
+         // change season doc's end and add new week doc         
+         let newEnd = DateTime.fromJSDate(seasonDoc.end, {zone: orchDoc.timezone}).plus({weeks: 1}).toJSDate();      
+         // TODO check if still ok (no collision with next season)
+         await Week.create([{
+            o: params.o,
+            season: seasonDoc._id,
+            begin: seasonDoc.end,
+            remark: "",
+            editable: false,
+            dpls: {},
+            dienst: []
+         }], {session});
+         seasonDoc.end = newEnd;
+      } else if ( params.boundaries == 4 ) {
+         //finish season one week earlier
+         let newEnd = DateTime.fromJSDate(seasonDoc.end, {zone: orchDoc.timezone}).minus({weeks: 1}).toJSDate();               
+         // TODO check if still ok (season contains at least 1 week, i.e. begin < newEnd)
+         // if so, following 3 lines:         
+         await cleanWeek(session, params.o, newEnd.getTime(), true);
+         await Week.deleteOne({o: params.o, begin: newEnd}).session(session);         
+         await Dpl.deleteMany( {
+            o: params.o,
+            weekBegin: newEnd
+         }).session(session);                  
+         await Dplmeta.deleteMany( {
+            o: params.o,
+            weekBegin: newEnd
+         }).session(session);         
+         seasonDoc.end = newEnd;
+      }      
+   }
    
    seasonDoc.label = params.label;
    seasonDoc.comment = params.comment;
    await seasonDoc.save();
-   //let result = await addStat(seasonDoc);  
+   
    return {
       statusCode: 200,
       body: seasonDoc

@@ -711,6 +711,7 @@ async function run(hc) {
             let meta = new DplMeta( {
               o: hsw._id,
               dpl: dpl._id,
+              weekBegin: weekBegin,
               dplPeriod: dpl.p,
               periodMembers: newFgPeriods[week.fg_p].members.map(
                 mem => {
