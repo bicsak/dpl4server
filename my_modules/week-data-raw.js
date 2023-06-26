@@ -237,7 +237,8 @@ async function renumberProduction(session, sId /* season */, pId /* prod id */ )
     { "$replaceRoot": { newRoot: '$dienst'} },
     { "$sort": { begin: 1 } }        
    ] ).session(session);
-   console.log('renumbering prod');
+   console.log('renumbering prod', pId);
+   console.log('Dienste für diese Produktion:');
    console.log(aggregatedDienst);
    
      let max = {
@@ -256,6 +257,7 @@ async function renumberProduction(session, sId /* season */, pId /* prod id */ )
          d.seq = ++max.p;                          
        }
      }
+     console.log('max:', max);
 
      for ( let d of aggregatedDienst ) {
        let rehearsalType = d.subtype;
@@ -264,13 +266,16 @@ async function renumberProduction(session, sId /* season */, pId /* prod id */ )
          {'dienst._id': d._id},
          { 'dienst.$.seq': d.seq, 
            'dienst.$.total': d.category == 0 ? max.r[rehearsalType] : max.p //d.total
-         }).session( session);                        
+         }).session( session);      
        //await Dienst.updateOne(
-       await Dienst.findByIdAndUpdate(         
+         console.log('Updating dienst:', d._id);
+         console.log('Updating with:', d.seq);         
+       let result = await Dienst.findByIdAndUpdate(         
          d._id,
          { 'seq': d.seq, 
          'total': d.category == 0 ? max.r[rehearsalType] : max.p //d.total
-         }, {session: session});
+         }, {new: true, session: session});
+      console.log('Updated Dienst:', result);
      }    
 }
 
@@ -403,6 +408,10 @@ async function cleanWeek(session, o, w /* UTC timestamp in Milliseconds*/, delet
       } ).session(session);
    }
 
+   // delete all dienst from weeks coll   
+   weekDoc.dienst = [];
+   await weekDoc.save();      
+
    /* ***** for all productions in the list **** */
    
    for ( let i = 0; i < productions.length; i++ ) {      
@@ -415,11 +424,7 @@ async function cleanWeek(session, o, w /* UTC timestamp in Milliseconds*/, delet
    /****** end of production loop **** */
    
    // Update all DPLs' counting (delta, correction, start), for succeeding weeks, too
-   await recalcAfterReset(session, o, w, counting, deleteCorrection ); 
-   
-   // delete all dienst from weeks coll   
-   weekDoc.dienst = [];
-   await weekDoc.save();      
+   await recalcAfterReset(session, o, w, counting, deleteCorrection );       
 }
 
 exports.createWeekDataRaw = createWeekDataRaw;
