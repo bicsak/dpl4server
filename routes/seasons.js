@@ -9,7 +9,7 @@ const Dpl = require('../models/dpl');
 const Dplmeta = require('../models/dplmeta');
 
 const { writeOperation } = require('../my_modules/orch-lock');
-const { cleanWeek } = require('../my_modules/week-data-raw');
+const { resetCorrection } = require('../my_modules/week-data-raw');
 
 const { DateTime } = require("luxon");
 
@@ -52,9 +52,19 @@ async function editSeason(session, params ) {
       if ( params.boundaries == 1 ) {
          // start season one week later...         
          let newBegin = DateTime.fromJSDate(seasonDoc.begin, {zone: orchDoc.timezone}).plus({weeks: 1}).toJSDate();         
-         // TODO check if still ok (season contains at least 1 week)
-         // if so, following 3 lines:
-         await cleanWeek(session, params.o, seasonDoc.begin.getTime(), true);
+         //check if still ok (season contains at least 1 week)         
+         if ( newBegin.getTime() >= seasonDoc.end.getTime() ) return {
+            statusCode: 304,
+            message: 'Die Spielziet muss mindestens 1 Woche enthalten'
+         };   
+         
+         let weekDoc = Week.find({o: params.o, begin: seasonDoc.begin});
+         if ( weekDoc.dienst != [] )  return {
+            statusCode: 304,
+            message: 'Die erste Woche der Spielzeit enthält Dienste. Diese Woche kann nicht gelöscht werden'
+         };   
+         
+         await resetCorrection(session, o, seasonDoc.begin.getTime());
          await Week.deleteOne({o: params.o, begin: seasonDoc.begin}).session(session);                  
          await Dpl.deleteMany( {
             o: params.o,
@@ -71,7 +81,7 @@ async function editSeason(session, params ) {
          console.log("setting season's begin one week earlier...");      
          // change season doc's begin and add new week doc
          let newBegin = DateTime.fromJSDate(seasonDoc.begin, {zone: orchDoc.timezone}).minus({weeks: 1}).toJSDate();
-         // TODO check if still ok (no collision with prev season)
+         
          seasonDoc.begin = newBegin;
          await Week.create([{
             o: params.o,
@@ -87,7 +97,7 @@ async function editSeason(session, params ) {
          console.log("setting season's end one week later...");
          // change season doc's end and add new week doc         
          let newEnd = DateTime.fromJSDate(seasonDoc.end, {zone: orchDoc.timezone}).plus({weeks: 1}).toJSDate();      
-         // TODO check if still ok (no collision with next season)
+
          await Week.create([{
             o: params.o,
             season: seasonDoc._id,
@@ -101,9 +111,18 @@ async function editSeason(session, params ) {
       } else if ( params.boundaries == 4 ) {
          //finish season one week earlier
          let newEnd = DateTime.fromJSDate(seasonDoc.end, {zone: orchDoc.timezone}).minus({weeks: 1}).toJSDate();               
-         // TODO check if still ok (season contains at least 1 week, i.e. begin < newEnd)
-         // if so, following 3 lines:         
-         await cleanWeek(session, params.o, newEnd.getTime(), true);
+         // check if still ok (season contains at least 1 week, i.e. begin < newEnd)
+         if ( newEnd.getTime() <= seasonDoc.begin.getTime() ) return {
+            statusCode: 304,
+            message: 'Die Spielziet muss mindestens 1 Woche enthalten'
+         };   
+         let weekDoc = Week.find({o: params.o, begin: newEnd});
+         if ( weekDoc.dienst != [] )  return {
+            statusCode: 304,
+            message: 'Die letzte Woche der Spielzeit enthält Dienste. Diese Woche kann nicht gelöscht werden'
+         };   
+         
+         await recalcAfterDelDpl(session, o, newEnd.getTime());
          await Week.deleteOne({o: params.o, begin: newEnd}).session(session);         
          await Dpl.deleteMany( {
             o: params.o,

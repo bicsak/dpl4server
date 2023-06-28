@@ -217,20 +217,14 @@ router.delete('/:mts/:did', async function(req, res) {
       res.json( resp );               
 });
 
-async function clearWeek(session, params ) {   
-   await cleanWeek(session, params.o, params.mts);
-
-   return true;
-}
-
 /**********
  * clears this week (deletes all dienst)
  */
 router.delete('/:mts', async function(req, res) {   
       if ( req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }
       console.log(`Erasing week req ${req.params.mts}`);
-      let result = await writeOperation( req.authData.o, clearWeek, {
-         o: req.authData.o, mts: req.params.mts*1000 });      
+      let result = await writeOperation( req.authData.o, cleanWeek, {
+         o: req.authData.o, w: req.params.mts*1000 });      
       console.log(`Week is clean, result: ${result}`);
       console.log(result);
       
