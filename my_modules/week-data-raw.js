@@ -292,14 +292,16 @@ async function renumberProduction(session, sId /* season */, pId /* prod id */ )
      console.log(`Updated ${countUpdate} dienste`);
 }
 
-// Subtracts dienst-weight after deleting or change in dienst weight
-// corrects numbers for current and all succeding dpls for each group and members who had this dienst
-async function recalcNumbersAfterWeightChange(session, o /* orchestra id*/, w /* week doc id */, 
-did /* dienst id */, correction) {
+/*** Subtracts dienst-weight before deleting dienst or change in dienst weight by Manager
+ corrects delta for current and start for all succeding dpls for all sections and members who had this dienst
+ dienst should still exist with old weight 
+ */
+async function recalcNumbersOnWeightChange(session, o /* orchestra id*/, w /* week doc id */, 
+did /* dienst id */, newWeight /* new weight for dienst, 0 for delete*/) {
    let dplDocs = await Dpl.find({o: o, w: w}).session(session);
     for (let dpl of dplDocs) {
       let seating = dpl.seatings.find(s => s.d == did);
-      let diff = correction ? correction : seating.dienstWeight;      
+      let diff = seating.dienstWeight - newWeight;      
       let corr = seating.sp.map( (num, idx) => num >= 16 ? diff : 0);            
       dpl.delta.forEach( (num, idx, arr) => arr[idx] = num - corr[idx]);      
       await dpl.save();
@@ -345,96 +347,14 @@ async function updateProductionsFirstAndLastDienst(session, o, p) {
    }
 }
 
-async function resetDelta( session, o, w ) {
-   console.log('recalc DZ...');
-   let dplDocs = await Dpl.find({o: o, weekBegin: new Date(w)}).session(session);
-   //console.log('dpls:', dplDocs);
-    for (let dpl of dplDocs) {                  
-      let succedingDpls = await Dpl.find({o: o, s: dpl.s, p: dpl.p, weekBegin: {$gt: dpl.weekBegin} }).session(session);
-      for (let succ of succedingDpls) {         
-         succ.start.forEach( (num, idx, arr) => arr[idx] = num - dpl.delta[idx]);      
-         await succ.save()    
-      }    
-      dpl.delta.forEach( (_, idx, arr) => arr[idx] = 0);      
-      await dpl.save();
-    }    
-}
+module.exports = {
+   createWeekDataRaw,
+   renumberProduction,
+   recalcNumbersOnWeightChange,
+   updateProductionsFirstAndLastDienst   
+};
 
-async function resetCorrection( session, o, w /* UTC timestamp in milliseconds*/) {
-   // adjust value of start for all succeeding weeks' dpls if dpl was deleted. Dpl doc must still exist! Correction
-   console.log('recalc DZ...');
-   let dplDocs = await Dpl.find({o: o, weekBegin: new Date(w)}).session(session);
-   //console.log('dpls:', dplDocs);
-    for (let dpl of dplDocs) {                  
-      let succedingDpls = await Dpl.find({o: o, s: dpl.s, p: dpl.p, weekBegin: {$gt: dpl.weekBegin} }).session(session);
-      for (let succ of succedingDpls) {         
-         succ.start.forEach( (num, idx, arr) => arr[idx] = num - dpl.correction[idx]);      
-         await succ.save()    
-      }    
-      dpl.correction.forEach( (_, idx, arr) => arr[idx] = 0);      
-      await dpl.save();
-    }    
-}
-
-async function cleanWeek(session, params) {
-   //o, w /* UTC timestamp in Milliseconds*/
-   // delete week's data in other collections      
-
-   console.log('Clean week', params.w);
-   let begin = new Date(params.w);      
-   //console.log(params.o);
-   //console.log(begin);
-   let weekDoc = await Week.findOne({
-      o: params.o,
-      begin: begin
-   }).session(session);
-   //console.log('weekDoc', weekDoc);
-   
-   // create array of distinct productions  
-   const productions = [...new Set(weekDoc.dienst.map( d => d.prod).filter(val => Boolean(val)))];     
-   console.log('productions: ', productions);      
-         
-   for ( let i = 0; i < weekDoc.dienst.length; i++) {            
-      //delete dienst from dienstextref coll      
-      console.log('deleting dienst with id:', weekDoc.dienst[i]._id);
-      await Dienst.findByIdAndRemove(weekDoc.dienst[i]._id, {session: session});                 
-                 
-      // delete seatings subdocs from all dpls      
-      await Dpl.updateMany({
-         o: params.o,
-         w: weekDoc._id
-         }, {
-         '$pull': {
-            seatings: {
-               d: weekDoc.dienst[i]._id
-            }
-         }
-      } ).session(session);
-   }
-
-   // delete all dienst from weeks coll   
-   weekDoc.dienst = [];
-   await weekDoc.save();      
-
-   /* ***** for all productions in the list **** */
-   
-   for ( let i = 0; i < productions.length; i++ ) {      
-         //update first and last dienst for this prod
-         await updateProductionsFirstAndLastDienst(session, params.o, productions[i]);      
-         
-         // recalc OA1, etc. for season and production (if not sonst. dienst):     
-         await renumberProduction(session, weekDoc.season, productions[i]);                  
-   }
-   /****** end of production loop **** */
-   
-   // Update all DPLs' counting (delta), for succeeding weeks (start), too
-   await resetDelta(session, params.o, params.w );   
-   return true;    
-}
-
-exports.createWeekDataRaw = createWeekDataRaw;
+/*exports.createWeekDataRaw = createWeekDataRaw;
 exports.renumberProduction = renumberProduction;
 exports.recalcNumbersAfterWeightChange = recalcNumbersAfterWeightChange;
-exports.updateProductionsFirstAndLastDienst = updateProductionsFirstAndLastDienst;
-exports.resetCorrection = resetCorrection;
-exports.cleanWeek = cleanWeek;
+exports.updateProductionsFirstAndLastDienst = updateProductionsFirstAndLastDienst;*/

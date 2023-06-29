@@ -9,7 +9,6 @@ const Dpl = require('../models/dpl');
 const Dplmeta = require('../models/dplmeta');
 
 const { writeOperation } = require('../my_modules/orch-lock');
-const { resetCorrection } = require('../my_modules/week-data-raw');
 
 const { DateTime } = require("luxon");
 
@@ -40,6 +39,26 @@ router.get('/', async function(req, res) {
       res.status(500).send(err.message);
    }
 });
+
+async function resetCorrection( session, o, w /* UTC timestamp in milliseconds*/) {
+   /**** adjust value of start for all succeeding weeks' dpls if dpl should be deleted. 
+   Dpl doc must still exist! Correction will be subtracted and set to zero*/
+   console.log('recalc DZ...');
+   let dplDocs = await Dpl.find({o: o, weekBegin: new Date(w)}).session(session);
+   //console.log('dpls:', dplDocs);
+    for (let dpl of dplDocs) {   
+      if ( dpl.correction.some(v=>v) ) {
+         //only if correction array contains at elast one non-zero element
+         let succedingDpls = await Dpl.find({o: o, s: dpl.s, p: dpl.p, weekBegin: {$gt: dpl.weekBegin} }).session(session);
+         for (let succ of succedingDpls) {         
+            succ.start.forEach( (num, idx, arr) => arr[idx] = num - dpl.correction[idx]);      
+            await succ.save()    
+         }    
+         dpl.correction.forEach( (_, idx, arr) => arr[idx] = 0);      
+         await dpl.save();
+      }                    
+    }    
+}
 
 async function editSeason(session, params ) {
    let seasonDoc = await Season.findById( params.id ).session(session);                     
@@ -122,7 +141,7 @@ async function editSeason(session, params ) {
             message: 'Die letzte Woche der Spielzeit enthält Dienste. Diese Woche kann nicht gelöscht werden'
          };   
          
-         await recalcAfterDelDpl(session, o, newEnd.getTime());
+         await resetCorrection(session, o, newEnd.getTime());
          await Week.deleteOne({o: params.o, begin: newEnd}).session(session);         
          await Dpl.deleteMany( {
             o: params.o,
