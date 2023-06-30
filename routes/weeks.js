@@ -498,19 +498,25 @@ async function editDienst(session, params) {
    await renumberProduction(session, dienstDoc.season, dienstDoc.prod);            
    
    //update all seating docs in all 
-   let dplDocs = await Dpl.find({o: params.o, w: dienstDoc.w}).session(session);
+   let dplDocs = await Dpl.find({o: params.o, w: dienstDoc.w}).session(session);   
     for (let dpl of dplDocs) {
+      console.log(dpl.seatings);
+      let ind = dpl.seatings.findIndex(s => s.d.toString() == dienstDoc._id.toString());
+      console.log('index:', ind, 'dienstDoc._id:', dienstDoc._id);
       let seating = {
          d: dienstDoc._id,
-         ext: 0,
-         sp: Array(dpl.start.legth).fill(0),
-         comment: '',
+         ext: dpl.seatings[ind].ext,
+         sp: /*Array(dpl.start.legth).fill(0)*/ [...dpl.seatings[ind].sp],
+         comment: dpl.seatings[ind].comment,
+         available: [...dpl.seatings[ind].available],
          dienstBegin: dienstDoc.begin,
          dienstWeight: dienstDoc.weight,
          dienstInstr: dienstDoc.instrumentation.get(dpl.s)
       };                  
 
       await Dpl.findOneAndUpdate({
+         o: dpl.o,
+         s: dpl.s,
          'seatings.d': dienstDoc._id
       }, {
          '$set': { 'seatings.$':  seating}               

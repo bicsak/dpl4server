@@ -140,7 +140,7 @@ async function createWeekDataRaw (begin /* UNIX ts in Seconds*/, authData, sec) 
             if ( (authData.r === 'musician' || authData.r === 'scheduler') && sec ) {   
                dplRaw[dplDocs[i].s] = {
                   ...dplRaw[dplDocs[i].s],
-                  start: dplDocs[i].start,
+                  start: dplDocs[i].start.map( (v, ind) => v + dplDocs[i].p.members[ind].start),
                   correction: dplDocs[i].correction                
                };
                
@@ -159,7 +159,7 @@ async function createWeekDataRaw (begin /* UNIX ts in Seconds*/, authData, sec) 
                   let endOfWeek = lastDplDoc[0].start.map( (val, j) => 
                      val + lastDplDoc[0].correction[j] + lastDplDoc[0].delta[j]*dplDocs[i].p.members[j].factor + dplDocs[i].p.members[j].start );                  
                   normVal = Math.min(...endOfWeek);                  
-                  dplRaw[dplDocs[i].s].start = dplDocs[i].start.map( (val) => val-normVal );
+                  dplRaw[dplDocs[i].s].start = dplDocs[i].start.map( (val,ind) => val+ dplDocs[i].p.members[ind].start-normVal );
                }               
             }       
             

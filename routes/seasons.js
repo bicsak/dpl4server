@@ -77,13 +77,14 @@ async function editSeason(session, params ) {
             message: 'Die Spielziet muss mindestens 1 Woche enthalten'
          };   
          
-         let weekDoc = Week.find({o: params.o, begin: seasonDoc.begin});
-         if ( weekDoc.dienst != [] )  return {
-            statusCode: 304,
+         let weekDoc = await Week.findOne({o: params.o, begin: seasonDoc.begin}).session(session);         
+         console.log(weekDoc);
+         if ( weekDoc.dienst.length )  return {
+            statusCode: /*304*/ 400,
             message: 'Die erste Woche der Spielzeit enthält Dienste. Diese Woche kann nicht gelöscht werden'
          };   
          
-         await resetCorrection(session, o, seasonDoc.begin.getTime());
+         await resetCorrection(session, params.o, seasonDoc.begin.getTime());
          await Week.deleteOne({o: params.o, begin: seasonDoc.begin}).session(session);                  
          await Dpl.deleteMany( {
             o: params.o,
@@ -135,13 +136,13 @@ async function editSeason(session, params ) {
             statusCode: 304,
             message: 'Die Spielziet muss mindestens 1 Woche enthalten'
          };   
-         let weekDoc = Week.find({o: params.o, begin: newEnd});
-         if ( weekDoc.dienst != [] )  return {
+         let weekDoc = await Week.findOne({o: params.o, begin: newEnd}).session(session);
+         if ( weekDoc.dienst.length )  return {
             statusCode: 304,
             message: 'Die letzte Woche der Spielzeit enthält Dienste. Diese Woche kann nicht gelöscht werden'
          };   
          
-         await resetCorrection(session, o, newEnd.getTime());
+         await resetCorrection(session, params.o, newEnd.getTime());
          await Week.deleteOne({o: params.o, begin: newEnd}).session(session);         
          await Dpl.deleteMany( {
             o: params.o,
