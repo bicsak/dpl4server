@@ -73,6 +73,7 @@ async function run(hc) {
       const DienstExtRef = require('../models/dienst');
       const Period = require('../models/period');
       const Production = require('../models/production');      
+      const Event = require('../models/event');      
       
       let pad = function(num) { return ('00'+num).slice(-2) };      
       const subtypeMap = {
@@ -187,7 +188,7 @@ async function run(hc) {
       let collections = [
         'orchestras', 'seasons', 'users', 
         'profiles', 'periods', 'weeks', 'dpls', 
-        'dplmetas', 'dienst', 'productions'];
+        'dplmetas', 'dienst', 'productions', 'events'];
 
       collections.forEach(coll => mongoose.connection.db.dropCollection(coll, function(err, result) {
         if (err) console.log(`No existing ${coll} collection`);
@@ -197,22 +198,7 @@ async function run(hc) {
         //************** ORCHESTRA ****************/            
         console.log(`+++Orchestra: ${orchConfig.code}+++`);
         const hsw = new Orchestra( orchConfig );
-        await hsw.save();      
-
-        //***************** SEASONS ************       
-        let seasons = [];
-        let seasonRows = await mysqlDb.query(
-          `SELECT first_day AS begin, DATE_ADD(last_day, INTERVAL 1 DAY) AS end, comment, label        
-          FROM fl3_season`);  
-     
-        for ( let currentSeason of seasonRows ) {
-          let season = new Season( {
-            ...currentSeason,          
-            o: hsw._id          
-          });
-          seasons.push({id: season._id, begin: season.begin, end: season.end});
-          await season.save();
-        }        
+        await hsw.save();              
         
         //*********** USERS && PROFILES ******************           
         let n = {
@@ -491,6 +477,31 @@ async function run(hc) {
             userFn: currentUser.first_name,
             userSn: currentUser.surname
           };                    
+        }      
+        
+        //***************** SEASONS ************       
+        let seasons = [];
+        let seasonRows = await mysqlDb.query(
+          `SELECT first_day AS begin, DATE_ADD(last_day, INTERVAL 1 DAY) AS end, comment, label        
+          FROM fl3_season`);  
+     
+        for ( let currentSeason of seasonRows ) {
+          let season = new Season( {
+            ...currentSeason,          
+            o: hsw._id          
+          });
+          seasons.push({id: season._id, begin: season.begin, end: season.end});
+          await season.save();
+          let event = new Event( {
+            o: hsw._id,
+            weekBegin: currentSeason.begin,
+            profiles: [],
+            entity: 'season',
+            action: 'new',
+            extra: 'created automatically by MT',
+            user: profileManager._id
+          });
+          await event.save();
         }        
 
         /************ PERIODS *********** */      
@@ -628,7 +639,8 @@ async function run(hc) {
               delta: Array(newFlPeriods[week.fl_p].members.length).fill(0),
               start: Array(newFlPeriods[week.fl_p].members.length).fill(0),
               w: week.id,
-              p: newFlPeriods[week.fl_p].newId
+              p: newFlPeriods[week.fl_p].newId,
+              periodMembers: newFlPeriods[week.fl_p].members.map( m => m.prof )
             } );
             await dpl.save(); 
             week.fl_newid = dpl._id;         
@@ -698,7 +710,8 @@ async function run(hc) {
               delta: Array(newFgPeriods[week.fg_p].members.length).fill(0),
               start: Array(newFgPeriods[week.fg_p].members.length).fill(0),            
               w: week.id,
-              p: newFgPeriods[week.fg_p].newId
+              p: newFgPeriods[week.fg_p].newId,
+              periodMembers: newFgPeriods[week.fg_p].members.map( m => m.prof )
             } );
             await dpl.save();
             week.fg_newid = dpl._id;         
@@ -1157,6 +1170,7 @@ async function run(hc) {
        await database.collection("dpls").createIndex( { o: 1, s:1, weekBegin: 1 }, { unique: true });
        await database.collection("dienst").createIndex( { o: 1, begin: 1 });
        await database.collection("productions").createIndex( { o: 1, name: 1 });        
+       await database.collection("events").createIndex( { o: 1, weekBegin: 1 });        
     }      
     catch ( err ) {
       console.log(err);

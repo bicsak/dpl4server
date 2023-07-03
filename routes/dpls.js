@@ -486,6 +486,7 @@ async function createDpl( session, params ) {
       o: params.authData.o,
       w: week.wpl._id,
       p: week.assignedPeriod._id,
+      periodMembers: week.assignedPeriod.members.map( m => m.prof ),
       s: params.authData.s, // section
       weekBegin: dtBegin,
       weekEditable: true,
@@ -496,7 +497,7 @@ async function createDpl( session, params ) {
       absent: absent, 
       correction: Array(groupSize).fill(0),
       delta: Array(groupSize).fill(0),
-      start: lastDplDoc[0] ? lastDplDoc[0].end : Array(groupSize).fill(0), // TODO ha van előző hét, annak a vége, egyébként 0,0,0...
+      start: lastDplDoc[0] ? lastDplDoc[0].end : Array(groupSize).fill(0), // ha van előző hét, annak a vége, egyébként 0,0,0...
       seatings: seatings
    }], { session } );
 

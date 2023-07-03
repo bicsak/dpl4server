@@ -27,6 +27,7 @@ const periods = require('./routes/periods.js');
 const productions = require('./routes/productions.js');      
 const dienste = require('./routes/dienste.js');      
 const users = require('./routes/users.js');      
+const next = require('./routes/next.js');      
 const login = require('./routes/login.js');      
 const accounts = require('./routes/accounts.js');      
 
@@ -68,6 +69,7 @@ async function run() {
       app.use('/api/periods', verifyToken, checkPeriodPermission, periods);            
       app.use('/api/productions', verifyToken, productions);            
       app.use('/api/dienste', verifyToken, dienste);            
+      app.use('/api/next', verifyToken, next);            
       app.use('/api/login', login);
 
       app.use('/api/accounts', accounts);

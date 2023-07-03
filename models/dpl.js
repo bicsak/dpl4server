@@ -41,6 +41,7 @@ const dplSchema = new Schema({
     o: { type: Schema.Types.ObjectId, ref: 'Orchestra' },
     w: { type: Schema.Types.ObjectId, ref: 'Week' },
     p: { type: Schema.Types.ObjectId, ref: 'Period' },
+    periodMembers: [ { type: Schema.Types.ObjectId, ref: 'Profile'} ],
     s: String, // section
     weekBegin: Date,
     weekEditable: Boolean,
