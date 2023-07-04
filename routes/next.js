@@ -1,84 +1,56 @@
 let express = require('express');
 let router = express.Router();
+const mongoose = require( 'mongoose' );
+const app = require('../server');
 
-const Season = require('../models/season');
 const DienstExtRef = require('../models/dienst');
-const Week = require('../models/week');
-const Orchestra = require('../models/orchestra');
 const Dpl = require('../models/dpl');
-const Dplmeta = require('../models/dplmeta');
-
-const { writeOperation } = require('../my_modules/orch-lock');
 
 const { DateTime } = require("luxon");
 
-
 router.get('/', async function(req, res) { 
+  console.log(req.authData);
     try {
-       /*let response = await Season.find( { o: req.authData.o } );         
-       if ( req.query.full == 'true' ) {      
-          for ( let i = 0; i < response.length; i++ ){        
-             response[i] = await addStat(response[i]);
-          }      
-       }      */
-       //res.status(200).json( response );   
-/*
-       db.getCollection('dpls').aggregate(
-        [
-          {
-            $match: {
-              o: ObjectId('64a32e4acaf5a894577d4771'), // req.authData.o
-              s: section // TODO
-              weekBegin: {
-                $gte: ISODate(
-                  '2023-05-20T22:00:00.000Z' // TODO last monday to current date
-                )
-              },
-              periodMembers: ObjectId( // req.authData.prof
-                '64a32e4bcaf5a894577d478d'
-              )
-            }
-          },
-          {
-            $addFields: {
-              memberInd: {
-                $indexOfArray: [
-                  '$periodMembers',
-                  ObjectId('64a32e4bcaf5a894577d478d') // same as above
-                ]
-              }
-            }
-          },
-          { $unwind: { path: '$seatings' } },
-          {
-            $addFields: {
-              disp: {
-                $arrayElemAt: [
-                  '$seatings.sp',
-                  '$memberInd'
-                ]
-              }
-            }
-          },
-          { $match: { disp: 16 } } // if eingeteilt, which codes?
-          // last stage: project dienst id
-        ],  await, session!! then find these dienst in dienst ext ref coll
-        { maxTimeMS: 60000, allowDiskUse: true }
-      );*/
-
-       res.status(200).json([{
-        _id: "proba",
-        begin: 0, //2017-05-22T08:00:00.000Z
-        name: "proba", // Lohengrin
-        prod: null,
-        category: 0, //rehearsal
-        subtype: 0, //OA
-        seq: 1, //OA1
-        total: 1,
-        instrumentation: { },
-        weight: 1    
-       }]);
+      let session = app.get('session');             
+      let result = await Dpl.aggregate( [
+        {
+          '$match': { 
+            'o': mongoose.Types.ObjectId(req.authData.o), 
+            'weekBegin': { '$gte': DateTime.now().startOf('week').toJSDate() },
+            'periodMembers': mongoose.Types.ObjectId(req.authData.pid)
+          }
+        }, 
+        { '$addFields': { 'memberInd': { '$indexOfArray': [ '$periodMembers', mongoose.Types.ObjectId(req.authData.pid) ] } } }, 
+        { '$unwind': { 'path': '$seatings' } }, 
+        { '$addFields': { 'disp': { '$arrayElemAt': [ '$seatings.sp', '$memberInd' ] } } }, 
+        { '$match': { 'disp': { $in: [1, 16] } } }, 
+        { '$sort': { 'seatings.dienstBegin': 1 } }, 
+        { '$limit': 3 },
+        { '$lookup': { from: 'dienst', localField: 'seatings.d', foreignField: '_id', as: 'dienst' } },
+        { '$project': {    
+          'published': 1,
+          'weekBegin': 1,
+          'dienst': { $arrayElemAt: ["$dienst", 0] }
+          }
+        }
+      ]).session(session);
+    console.log('Aggregation result:', result);
+    let response = result.map( val => {
+      return {
+        weekBegin: val.weekBegin.getTime(),
+        published: val.published,
+        name: val.dienst.name,
+        category: val.dienst.category,
+        subtype: val.dienst.subtype,
+        seq: val.dienst.seq,
+        total: val.dienst.total,
+        dienstBegin: val.dienst.begin.getTime()
+      }
+    });
+    console.log('Converted:', response);
+    res.status(200).json(response);       
     } catch (err) {
+      console.log(err);
        res.status(500).send(err.message);
     }
  });
