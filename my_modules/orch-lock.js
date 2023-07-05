@@ -1,17 +1,22 @@
 const Orchestra = require('../models/orchestra');
 var app = require('../server');
 
+const Event = require('../models/event');
+
 const { setTimeout } = require('timers/promises');
 
 const maxRetry = 5;
 const retryDelay = 200;
 
-exports.writeOperation = async function ( orch, txnFunc, params ) {        
+exports.writeOperation = async function ( orch, txnFunc, params, event ) {        
+    console.log('write operation params', orch, params, event);
     /**************
      * @params
      * orch: the orchestra to lock
      * txnFunc: the function to call in a transaction
      * params: params for txnFunc
+     * event: config obj for creating an entry in events coll
+     * { weekBegin: Date, sec: String, profiles: [], entity, action, extra: String, user }     
      */    
     let retryCount = 0;
     let orchDoc;
@@ -36,7 +41,7 @@ exports.writeOperation = async function ( orch, txnFunc, params ) {
     //2nd step: start transaction and run txnFnc
     let result;
     try {
-        result = await runTransactionWithRetryAndOrchLock( txnFunc, params, session );
+        result = await runTransactionWithRetryAndOrchLock( orch, txnFunc, params, session, event );
     }
     catch ( err ) {
         console.log(err);
@@ -61,7 +66,7 @@ exports.writeOperation = async function ( orch, txnFunc, params ) {
  * params params for txnFunc
  * session: session object within to run the transaction
  */
-runTransactionWithRetryAndOrchLock = async function ( txnFunc, params, session  ) {
+runTransactionWithRetryAndOrchLock = async function ( orch, txnFunc, params, session, event ) {
     let retryCount = 0;
     
     while ( retryCount < maxRetry ) {
@@ -74,6 +79,9 @@ runTransactionWithRetryAndOrchLock = async function ( txnFunc, params, session  
             } );
             
             var result = await txnFunc(session, params);  // performs transaction                                                
+            if (event) {
+                await Event.create([{...event, o: orch}], { session: session });                
+            }            
             break;
         } catch (error) {
             console.log("Caught exception during transaction, aborting.");

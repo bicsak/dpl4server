@@ -496,9 +496,10 @@ async function run(hc) {
             o: hsw._id,
             weekBegin: currentSeason.begin,
             profiles: [],
+            sec: '',
             entity: 'season',
             action: 'new',
-            extra: 'created automatically by MT',
+            extra: season.label,
             user: profileManager._id
           });
           await event.save();
@@ -540,6 +541,17 @@ async function run(hc) {
             newFlPeriods[key].doc.isOpenEnd = false;                        
           } else newFlPeriods[key].doc.isOpenEnd = true;                
           await val.doc.save();
+          /*let event = new Event( {
+            o: hsw._id,
+            weekBegin: val.begin,
+            profiles: [], //TODO
+            sec: 'sec0',
+            entity: 'period',
+            action: 'new',
+            extra: '',
+            user: profileManager._id //TODO
+          });
+          await event.save();*/
         }
         
         let newFgPeriods = {};      

@@ -171,10 +171,22 @@ router.patch('/:id', async function(req, res){
    console.log(`PATCH route on season ${req.params.id}, params: ${req.body}`);
    console.log(req.body);
    try {
+      let orchDoc = await Orchestra.findById(req.authData.o);         
+      let weekBegin = DateTime.fromObject({
+         year: req.body.fromDate.year, month: req.body.fromDate.month, day: req.body.fromDate.day
+      }, {zone: orchDoc.timezone }).startOf('week');       
       let result = await writeOperation(req.authData.o, editSeason, {
          ...req.body,
          o: req.authData.o,
          id: req.params.id,      
+      },{
+         weekBegin: weekBegin.toJSDate(),
+         sec: '', 
+         profiles: [], 
+         entity: 'season', 
+         action: 'edit', 
+         extra: 'Spielzeitparameter geändert',
+         user: req.authData.pid
       });     
       console.log(result);
       if (result.statusCode == 200 ) res/*.status(200)*/.json( 
@@ -224,10 +236,25 @@ async function createSeason(session, params ) {
 
 router.post('/', async function(req, res){
    console.log(req.params,req.body);
+   console.log('authData:', req.authData);
    try {
+      let orchDoc = await Orchestra.findById(req.authData.o);   
+      console.log('orchDoc', orchDoc);
+      let weekBegin = DateTime.fromObject({
+         year: req.body.fromDate.year, month: req.body.fromDate.month, day: req.body.fromDate.day
+      }, {zone: orchDoc.timezone }).startOf('week'); 
+      console.log(weekBegin);
       let result = await writeOperation(req.authData.o, createSeason, {
          ...req.body,
          o: req.authData.o,         
+      }, {
+         weekBegin: weekBegin.toJSDate(),
+         sec: '', 
+         profiles: [], 
+         entity: 'season', 
+         action: 'new', 
+         extra: req.body.label,
+         user: req.authData.pid
       });     
       console.log(result);
       res.status(result.statusCode).send( result.body );      
@@ -242,12 +269,12 @@ router.post('/', async function(req, res){
 async function deleteSeason(session, params ) {
    // check: only if does not contain any dienste and no dpls
    let countDpls = await Dpl.countDocuments({
-      o: req.authData.o,
-      weekSeason: req.params.seasonId
+      o: params.o,
+      weekSeason: params.id
    }).session(session);
    let countDienst = await DienstExtRef.countDocuments({
-      o: req.authData.o,
-      season: req.params.seasonId
+      o: params.o,
+      season: params.id
    }).session(session);
    if ( countDpls || countDienst ) {      
       return {
@@ -277,7 +304,15 @@ router.delete('/:seasonId', async function(req, res) {
       let result = await writeOperation(req.authData.o, deleteSeason, {
          id: req.params.seasonId,
          o: req.authData.o,         
-      });           
+      },{
+         weekBegin: new Date(), // TODO dummy-value
+         sec: '', 
+         profiles: [], 
+         entity: 'season', 
+         action: 'del', 
+         extra: 'Spielzeit gelöscht',
+         user: req.authData.pid
+      });
       if ( result === true ) res.status(202).send();      // request accepted
       else res.status(result.statusCode).send( result.body ); 
    } catch (err) {
