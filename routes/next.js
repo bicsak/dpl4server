@@ -26,6 +26,7 @@ router.get('/', async function(req, res) {
         { '$match': { 
           'seatings.dienstBegin': {'$gt': DateTime.now().toJSDate()},
           'disp': { $in: [1, 16] } } 
+          // TODO if Krank...
         }, 
         { '$sort': { 'seatings.dienstBegin': 1 } }, 
         { '$limit': 3 },

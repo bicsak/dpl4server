@@ -71,6 +71,7 @@ router.get('/:dplId', async function(req, res) {
 
  router.delete('/:dplId/:commentId', async function(req, res) {    
     console.log( `Deleting ${req.params.dplId}/${req.params.commentId}...` );
+    let dplDoc = await Dpl.findById(req.params.dplId);
 
     let result = await writeOperation( req.authData.o, deleteComment, {        
         o: req.authData.o, 
@@ -79,6 +80,8 @@ router.get('/:dplId', async function(req, res) {
         dpl: req.params.dplId,
         cId: req.params.commentId,
         sec: req.authData.s,        
+     }, {
+        weekBegin: dplDoc.weekBegin, sec: req.authData.sec, profiles: dplDoc.periodMembers, entity: "comment", action: "del", extra: "", user: req.authData.pid
      });             
 
     res.json( result );
@@ -132,7 +135,8 @@ router.get('/:dplId', async function(req, res) {
     };    
  }
 
- router.post('/:dplId', async function(req, res) {    
+ router.post('/:dplId', async function(req, res) {  
+    let dplDoc = await Dpl.findById(req.params.dplId);  
     let result = await writeOperation( req.authData.o, createComment, {
         message: req.body.message, 
         o: req.authData.o, 
@@ -141,6 +145,9 @@ router.get('/:dplId', async function(req, res) {
         role: req.authData.r,
         dpl: req.params.dplId,
         sec: req.authData.s
+     }, {
+        weekBegin: dplDoc.weekBegin, sec: req.authData.sec, profiles: dplDoc.periodMembers, entity: "comment", action: "new", 
+        extra: req.body.message, user: req.authData.pid
      });           
          
      res.json( result );     

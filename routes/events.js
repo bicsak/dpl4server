@@ -14,8 +14,13 @@ router.get('/', async function(req, res) {
     try {
       let session = app.get('session');             
       let eventDocs = await Event.find({
-        o: req.authData.o
-      }).sort({'created_at': -1});
+        o: req.authData.o,
+        $or: [
+          { $and: [ {profiles: []}, {sec: ''} ] },
+          { $and: [ {profiles: []}, {sec: req.authData.sec}]},
+          { profiles: req.authData.pid }
+        ]          
+      }).sort({'created_at': -1}).session(session);
       
       console.log(eventDocs);
       let converted = eventDocs.map( ev => {
