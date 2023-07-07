@@ -11,7 +11,7 @@ const eventSchema = new Schema({
     //comment: { type: Schema.Types.ObjectId, ref: 'Comment'}, // for reacting to comment
     entity: {
         type: String,
-        enum: ['comment', 'dpl', 'dienst', 'fw', 'dw', 'reaction', 'survey', 'season', 'period']
+        enum: ['comment', 'dpl', 'dienst', 'fw', 'dw', 'survey', 'season', 'period']
         //default: 'dpl'
     },
     action: {

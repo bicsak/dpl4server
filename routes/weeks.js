@@ -8,6 +8,8 @@ const Week = require('../models/week');
 const Dienst = require('../models/dienst');
 const Production = require('../models/production');
 
+const { DateTime } = require("luxon");
+
 const { writeOperation } = require('../my_modules/orch-lock');
 const { 
    createWeekDataRaw, 
@@ -165,15 +167,16 @@ router.patch('/:mts/:did', async function(req, res) {
  * params Object: did, mts, o
  * @return true if success
  */
-async function deleteDienst(session, params ) {
+async function deleteDienst(session, params, createEvent ) {
     // read dienst to get season id and prod id for renumber function
-    let dienstDoc = await Dienst.findById( params.did ).session(session);    
+    let dienstDoc = await Dienst.findById( params.did ).session(session);
+    let orchestraDoc = await Orchestra.findById(params.o).session(session);                      
 
     // delete dienst from weeks coll
    // recalc dienstzahlen for all dpls for this week and succeeding dpls  
    await recalcNumbersOnWeightChange(session, params.o, dienstDoc.w, params.did, 0);        
 
-    await Week.updateOne( { o: params.o, 'dienst._id': params.did }, 
+   let weekDoc = await Week.findOneAndUpdate( { o: params.o, 'dienst._id': params.did }, 
     //{ '$pull': { dienst: { '$elemMatch': {_id: params.did} } } } ).session(session);
     { '$pull': { dienst: { _id: params.did} } }).session(session);
     
@@ -200,6 +203,18 @@ async function deleteDienst(session, params ) {
          }
       }
     } ).session(session);
+
+
+    let dtDienstBegin = DateTime.fromJSDate(dienstDoc.begin, {zone: orchestraDoc.timezone});
+    await createEvent({
+      weekBegin: weekDoc.begin,
+      sec: '', 
+      profiles: [], 
+      entity: 'dienst', 
+      action: 'del', 
+      extra: `${dienstDoc.name} ${dtDienstBegin.day}.${dtDienstBegin.month}.${dtDienstBegin.year} ${dtDienstBegin.hour}:${dtDienstBegin.minute}`,
+      user: params.user
+   } );
     
     return true;
 }
@@ -208,7 +223,7 @@ router.delete('/:mts/:did', async function(req, res) {
       if ( req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }
       console.log(`Deleting Dienst req ${req.params.mts}, ${req.params.did}`);
       let result = await writeOperation( req.authData.o, deleteDienst, {
-         o: req.authData.o, did: req.params.did, mts: req.params.mts });      
+         o: req.authData.o, suer: req.authData.pid, did: req.params.did, mts: req.params.mts });      
       console.log(`Dienst successfully deleted: ${result}`);
       
       // return new week plan            
@@ -231,7 +246,7 @@ async function resetDelta( session, o, w ) {
     }    
 }
 
-async function cleanWeek(session, params) {
+async function cleanWeek(session, params, createEvent) {
    //o, w /* UTC timestamp in Milliseconds*/
    // delete week's data in other collections      
 
@@ -239,6 +254,7 @@ async function cleanWeek(session, params) {
    let begin = new Date(params.w);      
    //console.log(params.o);
    //console.log(begin);
+   let orchestraDoc = await Orchestra.findById(params.o).session(session);                  
    let weekDoc = await Week.findOne({
       o: params.o,
       begin: begin
@@ -284,6 +300,16 @@ async function cleanWeek(session, params) {
    
    // Update all DPLs' counting (delta), for succeeding weeks (start), too
    await resetDelta(session, params.o, params.w );   
+   let dtBegin = DateTime.fromMillis(params.w, {zone: orchestraDoc.timezone});
+   await createEvent({
+      weekBegin: weekDoc.begin,
+      sec: '', 
+      profiles: [], 
+      entity: 'dienst', 
+      action: 'del', 
+      extra: `Alle Dienste der Woche ${dtBegin.weekYear} KW ${dtBegin.weekNumber} gelöscht`,
+      user: params.user
+   } )
    return true;    
 }
 
@@ -295,7 +321,7 @@ router.delete('/:mts', async function(req, res) {
       if ( req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }
       console.log(`Erasing week req ${req.params.mts}`);
       let result = await writeOperation( req.authData.o, cleanWeek, {
-         o: req.authData.o, w: req.params.mts*1000 });      
+         o: req.authData.o, user: req.authData.pid, w: req.params.mts*1000 });      
       console.log(`Week is clean, result: ${result}`);
       console.log(result);
       
@@ -306,7 +332,7 @@ router.delete('/:mts', async function(req, res) {
 });
 
 
-async function createDienst(session, params) {
+async function createDienst(session, params, createEvent) {
    console.log('createDienst transaction fn');
    console.log(params);
 
@@ -431,7 +457,17 @@ async function createDienst(session, params) {
       dpl.seatings.push( seatingDoc );      
       //console.log(seatingDoc);
       await dpl.save();      
-    }     
+    }
+    let dtDienstBegin = DateTime.fromMillis(params.begin, {zone: orchestraDoc.timezone});
+    await createEvent({
+      weekBegin: weekDoc.begin,
+      sec: '', 
+      profiles: [], 
+      entity: 'dienst', 
+      action: 'new', 
+      extra: `${dienstDoc.name} ${dtDienstBegin.day}.${dtDienstBegin.month}.${dtDienstBegin.year} ${dtDienstBegin.hour}:${dtDienstBegin.minute}`,
+      user: params.user
+   } );
    
    return true;
 }
@@ -442,6 +478,7 @@ router.post('/:mts', async function(req, res) {
       let result = await writeOperation( req.authData.o, createDienst, {
          ...req.body, 
          o: req.authData.o, 
+         user: req.authData.pid,
          mts: req.params.mts
       });      
       console.log(`Dienst successfully created: ${result}`);      
@@ -452,7 +489,7 @@ router.post('/:mts', async function(req, res) {
   // });
 });
 
-async function editDienst(session, params) {
+async function editDienst(session, params, createEvent) {
    console.log(params);
 
    // read dienst to get season id and prod id for renumber function
@@ -462,7 +499,7 @@ async function editDienst(session, params) {
       params.weight); 
 
 
-   await Week.findOneAndUpdate( { 
+   let weekDoc = await Week.findOneAndUpdate( { 
       o: params.o,
       /*begin: new Date(params.mts * 1000),*/
       'dienst._id': params.did
@@ -527,8 +564,20 @@ async function editDienst(session, params) {
       
       // does not work
       // dpl.seatings.id(dienstDoc._id) not the id but d      
-    }     
-   
+    }
+    
+    let orchestraDoc = await Orchestra.findById(params.o).session(session);                  
+    let dtDienstBegin = DateTime.fromJSDate(dienstDoc.begin, {zone: orchestraDoc.timezone});
+
+   await createEvent({
+      weekBegin: weekDoc.begin,
+      sec: '', 
+      profiles: [], 
+      entity: 'dienst', 
+      action: 'edit', 
+      extra: `${dienstDoc.name} ${dtDienstBegin.day}.${dtDienstBegin.month}.${dtDienstBegin.year} ${dtDienstBegin.hour}:${dtDienstBegin.minute}`,
+      user: params.user
+   })
 
    return true;
 }
@@ -540,6 +589,7 @@ router.post('/:mts/:did', async function(req, res) {
       let result = await writeOperation( req.authData.o, editDienst, {
          ...req.body, 
          o: req.authData.o, 
+         user: req.authData.pid,
          mts: req.params.mts, 
          did: req.params.did, 
       });      

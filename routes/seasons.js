@@ -165,7 +165,7 @@ async function editSeason(session, params, createEvent ) {
       profiles: [], 
       entity: 'season', 
       action: 'edit', 
-      extra: 'Spielzeitparameter geändert',
+      extra: params.label,
       user: params.user
    } );
    
@@ -276,12 +276,9 @@ async function deleteSeason(session, params, createEvent ) {
          statusCode: 400,
          body: `Spielzeit kann nicht gelöscht werden`
       };
-   }
-   let result = await Season.deleteOne({
-      _id: params.id,
-      o: params.o
-   }).session(session);
-   if ( !result.deletedCount ) return {
+   }   
+   let result = await Season.findByIdAndRemove(params.id).session(session);
+   if ( !result ) return {
       statusCode: 404,
       body: "Nicht gefunden"
    };
@@ -291,12 +288,12 @@ async function deleteSeason(session, params, createEvent ) {
       season: params.id
    }).session(session);
    await createEvent({
-      weekBegin: new Date(), // TODO dummy-value
+      weekBegin: result.begin, 
       sec: '', 
       profiles: [], 
       entity: 'season', 
       action: 'del', 
-      extra: 'Spielzeit gelöscht',
+      extra: result.label,
       user: params.user
    })
    return true;

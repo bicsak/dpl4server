@@ -8,6 +8,13 @@ const Dpl = require('../models/dpl');
 const User = require('../models/user');
 const DplMeta = require('../models/dplmeta');
 
+const { DateTime } = require("luxon");
+
+function abbrev(message, length) {
+    return message.substring(0, Math.min(length,message.length))
+    + (message.length > length ? '...' : '');
+}
+
 /***********
  * Handles following cases
  * 
@@ -34,6 +41,7 @@ router.get('/:dplId', async function(req, res) {
     // check if scheduler's profile or 
     // member and req.authData.p profile is in members' array for this dpl's period
     console.log(`deleting comment dpl: ${params.dpl}, sec: ${params.sec}, o: ${params.o}`);
+    let orchestraDoc = await Orchestra.findById(params.o).session(session);                      
     let meta = await DplMeta.findOne({
         o: params.o,
         dpl: params.dpl,
@@ -60,17 +68,23 @@ router.get('/:dplId', async function(req, res) {
         success: false,
         reason: 'Not authorized'
     }     
-    
-    meta.comments.splice(cIndex, 1);
+    let commentData = {
+        fn: meta.comments[cIndex].userFn,
+        sn: meta.comments[cIndex].userSn,
+        message: abbrev(meta.comments[cIndex].message, 20)
+    };
+    //meta.comments.splice(cIndex, 1);
+    meta.comments[cIndex].deleted = true;
     await meta.save();
     
-    let dplDoc = await Dpl.findById(req.params.dplId);
+    let dtBegin = DateTime.fromJSDate(meta.dpl.weekBegin, {zone: orchestraDoc.timezone});
     await createEvent( {        
-        weekBegin: dplDoc.weekBegin, 
-        sec: req.authData.s, 
-        profiles: dplDoc.periodMembers, 
-        entity: "comment", action: "del", extra: "", 
-        user: req.authData.pid
+        weekBegin: meta.dpl.weekBegin, 
+        sec: params.sec, 
+        profiles: meta.dpl.periodMembers, 
+        entity: "comment", action: "del", 
+        extra: `Woche: ${dtBegin.weekYear} KW ${dtBegin.weekNumber} ${commentData.fn} ${commentData.sn}: ${commentData.message}`, 
+        user: params.prof
      });
     
     return {
@@ -87,7 +101,7 @@ router.get('/:dplId', async function(req, res) {
         role: req.authData.r,
         dpl: req.params.dplId,
         cId: req.params.commentId,
-        sec: req.authData.s,        
+        sec: req.authData.s        
      });             
 
     res.json( result );
@@ -95,7 +109,7 @@ router.get('/:dplId', async function(req, res) {
 
  async function createComment(session, params, createEvent) {    
     console.log(`Role: ${params.role}, prof: ${params.prof}`);        
-    
+    let orchestraDoc = await Orchestra.findById(params.o).session(session);                      
     let meta = await DplMeta.findOne({
         o: params.o,
         dpl: params.dpl,
@@ -134,12 +148,13 @@ router.get('/:dplId', async function(req, res) {
     };
     meta.comments.push( comment )
     await meta.save();
-    comment.timestamp = comment.timestamp.getTime();
-    let dplDoc = await Dpl.findById(params.dpl);  
+    comment.timestamp = comment.timestamp.getTime();    
+    let dtBegin = DateTime.fromJSDate(meta.dpl.weekBegin, {zone: orchestraDoc.timezone});
     await createEvent({
-        weekBegin: dplDoc.weekBegin, 
-        sec: dplDoc.s, profiles: dplDoc.periodMembers, entity: "comment", action: "new", 
-        extra: comment, user: params.prof
+        weekBegin: meta.dpl.weekBegin, 
+        sec: meta.dpl.s, profiles: meta.dpl.periodMembers, entity: "comment", action: "new", 
+        extra: `Woche: ${dtBegin.weekYear} KW ${dtBegin.weekNumber} Von ${userDoc.fn} ${userDoc.sn}: ${abbrev(params.message, 20)}`, 
+        user: params.prof
      });
     return {
         success: true,
@@ -161,7 +176,7 @@ router.get('/:dplId', async function(req, res) {
      res.json( result );     
  });
 
- async function reactToComment(session, params) {  
+ async function reactToComment(session, params, createEvent) {  
     let meta = await DplMeta.findOne({
         o: params.o,
         dpl: params.dpl,
@@ -171,6 +186,7 @@ router.get('/:dplId', async function(req, res) {
         success: false,
         reason: 'No such dpl'
     };
+    let orchestraDoc = await Orchestra.findById(params.o).session(session);                      
     
     let row = -1;
     if ( params.role == 'musician' ) {
@@ -192,6 +208,17 @@ router.get('/:dplId', async function(req, res) {
     }
     meta.comments[cIndex].feedback[row] = params.value;
     await meta.save();
+    let dtBegin = DateTime.fromJSDate(meta.dpl.weekBegin, {zone: orchestraDoc.timezone});
+    await createEvent({
+        weekBegin: meta.dpl.weekBegin,
+        sec: meta.dpl.s, 
+        profiles: meta.dpl.periodMembers, 
+        entity: 'comment', 
+        action: 'edit', 
+        extra: `Woche: ${dtBegin.weekYear} KW ${dtBegin.weekNumber} Reaktion auf Nachricht von ${meta.comments[cIndex].userFn} ${meta.comments[cIndex].userSn}`,
+        user: params.prof
+     } );
+
     return {
         success: true,
         content: params.value
