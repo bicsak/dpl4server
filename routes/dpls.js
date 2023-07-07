@@ -332,7 +332,7 @@ router.patch('/:mts', async function(req, res) {
    //});
 });
 
-async function editDpl( session, params ) {
+async function editDpl( session, params, createEvent ) {
    let returnVal;   
 
    let affectedDpl = await Dpl.findOne( {
@@ -387,6 +387,14 @@ async function editDpl( session, params ) {
    console.log(params);
    console.log(affectedDpl);*/
 
+   await createEvent({
+      weekBegin: affectedDpl.weekBegin, 
+      sec: params.sec, 
+      profiles: affectedDpl.periodMembers, 
+      entity: "dpl", action: "edit", extra: "", 
+      user: params.user
+   });
+
    returnVal = true;
    
    return returnVal;
@@ -397,11 +405,12 @@ async function editDpl( session, params ) {
  */
 router.post('/:mts', async function(req, res) {   
    console.log(req.body); 
-   
+
    let result = await writeOperation( req.authData.o, editDpl, {
       ...req.body, 
       o: req.authData.o, 
       sec: req.authData.s,
+      user: req.authData.pid,
       begin: new Date(req.params.mts * 1000)          
    });      
    console.log(`Dpl successfully updated: ${result}`);      
@@ -411,7 +420,7 @@ router.post('/:mts', async function(req, res) {
    res.json( result === true ? { success: true, week: resp} : result );            
  });
 
- async function deleteDpl( session, params ) {      
+ async function deleteDpl( session, params, createEvent ) {      
    let dpl = await Dpl.findOne( { 
       o: params.o, _id: params.dpl, weekEditable: true }).session(session);
    /********
@@ -426,7 +435,14 @@ router.post('/:mts', async function(req, res) {
    await Dpl.deleteOne( { _id: params.dpl, o: params.o } ).session(session);
    let weekDoc = await Week.findOne({ o: params.o, begin: dpl.weekBegin }).session(session);
    weekDoc.dpls[params.sec] = undefined;
-   await weekDoc.save();   
+   await weekDoc.save(); 
+   await createEvent({
+      weekBegin: dpl.weekBegin, 
+      sec: dpl.s, 
+      profiles: dplpl.periodMembers, 
+      entity: "dpl", action: "del", extra: "", 
+      user: params.user
+   });
  }
 
  router.delete('/:dplId', async function(req, res) {    
@@ -436,11 +452,12 @@ router.post('/:mts', async function(req, res) {
        prof: req.authData.pid,
        role: req.authData.r,
        dpl: req.params.dplId,       
-       sec: req.authData.s,        
+       sec: req.authData.s, 
+       user: req.authData.pid       
     });             
 });
 
-async function createDpl( session, params ) {
+async function createDpl( session, params, createEvent ) {
    // Create new Dpl
    console.log('In transaction fcn');
    let week = await createWeekDataRaw(params.begin, params.authData, params.authData.s);
@@ -481,12 +498,13 @@ async function createDpl( session, params ) {
    console.log(lastDplDoc[0].end);
 
    let dplId = new mongoose.Types.ObjectId();
+   let members = week.assignedPeriod.members.map( m => m.prof );
    await Dpl.create( [{
       _id: dplId,
       o: params.authData.o,
       w: week.wpl._id,
       p: week.assignedPeriod._id,
-      periodMembers: week.assignedPeriod.members.map( m => m.prof ),
+      periodMembers: members,
       s: params.authData.s, // section
       weekBegin: dtBegin,
       weekEditable: true,
@@ -526,6 +544,13 @@ async function createDpl( session, params ) {
       dplRef: dplId
    } );
    await weekDoc.save();
+   await createEvent({
+      weekBegin: dtBegin, 
+      sec: params.authData.s, 
+      profiles: members, 
+      entity: "dpl", action: "new", extra: "", 
+      user: params.authData.pid
+   });
 
    return true;   
 }
@@ -536,7 +561,7 @@ router.post('/', async function(req, res) {
    let result = await writeOperation( req.authData.o, createDpl, {      
       authData: req.authData,
       begin: req.body.mts,
-      remark: req.body.remark
+      remark: req.body.remark      
    });      
    console.log(`Dpl successfully created: ${result}`);      
    

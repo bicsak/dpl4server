@@ -30,7 +30,7 @@ router.get('/:dplId', async function(req, res) {
     res.json( meta.toJSON().comments );
  });
 
- async function deleteComment(session, params) {    
+ async function deleteComment(session, params, createEvent) {    
     // check if scheduler's profile or 
     // member and req.authData.p profile is in members' array for this dpl's period
     console.log(`deleting comment dpl: ${params.dpl}, sec: ${params.sec}, o: ${params.o}`);
@@ -64,14 +64,22 @@ router.get('/:dplId', async function(req, res) {
     meta.comments.splice(cIndex, 1);
     await meta.save();
     
+    let dplDoc = await Dpl.findById(req.params.dplId);
+    await createEvent( {        
+        weekBegin: dplDoc.weekBegin, 
+        sec: req.authData.s, 
+        profiles: dplDoc.periodMembers, 
+        entity: "comment", action: "del", extra: "", 
+        user: req.authData.pid
+     });
+    
     return {
         success:true
     };
  }
 
  router.delete('/:dplId/:commentId', async function(req, res) {    
-    console.log( `Deleting ${req.params.dplId}/${req.params.commentId}...` );
-    let dplDoc = await Dpl.findById(req.params.dplId);
+    console.log( `Deleting ${req.params.dplId}/${req.params.commentId}...` );    
 
     let result = await writeOperation( req.authData.o, deleteComment, {        
         o: req.authData.o, 
@@ -80,14 +88,12 @@ router.get('/:dplId', async function(req, res) {
         dpl: req.params.dplId,
         cId: req.params.commentId,
         sec: req.authData.s,        
-     }, {
-        weekBegin: dplDoc.weekBegin, sec: req.authData.sec, profiles: dplDoc.periodMembers, entity: "comment", action: "del", extra: "", user: req.authData.pid
      });             
 
     res.json( result );
  });
 
- async function createComment(session, params) {    
+ async function createComment(session, params, createEvent) {    
     console.log(`Role: ${params.role}, prof: ${params.prof}`);        
     
     let meta = await DplMeta.findOne({
@@ -129,14 +135,19 @@ router.get('/:dplId', async function(req, res) {
     meta.comments.push( comment )
     await meta.save();
     comment.timestamp = comment.timestamp.getTime();
+    let dplDoc = await Dpl.findById(params.dpl);  
+    await createEvent({
+        weekBegin: dplDoc.weekBegin, 
+        sec: dplDoc.s, profiles: dplDoc.periodMembers, entity: "comment", action: "new", 
+        extra: comment, user: params.prof
+     });
     return {
         success: true,
         comment: comment
     };    
  }
 
- router.post('/:dplId', async function(req, res) {  
-    let dplDoc = await Dpl.findById(req.params.dplId);  
+ router.post('/:dplId', async function(req, res) {      
     let result = await writeOperation( req.authData.o, createComment, {
         message: req.body.message, 
         o: req.authData.o, 
@@ -145,9 +156,6 @@ router.get('/:dplId', async function(req, res) {
         role: req.authData.r,
         dpl: req.params.dplId,
         sec: req.authData.s
-     }, {
-        weekBegin: dplDoc.weekBegin, sec: req.authData.sec, profiles: dplDoc.periodMembers, entity: "comment", action: "new", 
-        extra: req.body.message, user: req.authData.pid
      });           
          
      res.json( result );     

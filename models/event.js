@@ -6,7 +6,7 @@ const eventSchema = new Schema({
     o: { type: Schema.Types.ObjectId, ref: 'Orchestra' },       
     //w: { type: Schema.Types.ObjectId, ref: 'Week' },  
     weekBegin: Date,
-    sec: String,
+    sec: String, // if this event is relevant for scheduler, this is the section whoose scheduler should read it
     profiles: [ {type: Schema.Types.ObjectId, ref: 'Profile'} ], // for these profiles interesting
     //comment: { type: Schema.Types.ObjectId, ref: 'Comment'}, // for reacting to comment
     entity: {

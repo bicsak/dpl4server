@@ -8,15 +8,14 @@ const { setTimeout } = require('timers/promises');
 const maxRetry = 5;
 const retryDelay = 200;
 
-exports.writeOperation = async function ( orch, txnFunc, params, event ) {        
-    console.log('write operation params', orch, params, event);
+exports.writeOperation = async function ( orch, txnFunc, params/*, event*/ ) {        
+    console.log('write operation params', orch, params/*, event*/);
     /**************
      * @params
      * orch: the orchestra to lock
      * txnFunc: the function to call in a transaction
-     * params: params for txnFunc
-     * event: config obj for creating an entry in events coll
-     * { weekBegin: Date, sec: String, profiles: [], entity, action, extra: String, user }     
+     * should take up to 3 params: session, params, createEvent (async callback to create Event doc)
+     * params: params as config Obj to call txnFunc with
      */    
     let retryCount = 0;
     let orchDoc;
@@ -41,7 +40,7 @@ exports.writeOperation = async function ( orch, txnFunc, params, event ) {
     //2nd step: start transaction and run txnFnc
     let result;
     try {
-        result = await runTransactionWithRetryAndOrchLock( orch, txnFunc, params, session, event );
+        result = await runTransactionWithRetryAndOrchLock( orch, txnFunc, params, session/*, event */);
     }
     catch ( err ) {
         console.log(err);
@@ -66,7 +65,7 @@ exports.writeOperation = async function ( orch, txnFunc, params, event ) {
  * params params for txnFunc
  * session: session object within to run the transaction
  */
-runTransactionWithRetryAndOrchLock = async function ( orch, txnFunc, params, session, event ) {
+runTransactionWithRetryAndOrchLock = async function ( orch, txnFunc, params, session/*, event*/ ) {
     let retryCount = 0;
     
     while ( retryCount < maxRetry ) {
@@ -78,10 +77,17 @@ runTransactionWithRetryAndOrchLock = async function ( orch, txnFunc, params, ses
                 writeConcern: { w: "majority" } 
             } );
             
-            var result = await txnFunc(session, params);  // performs transaction                                                
-            if (event) {
+            //var result = await txnFunc(session, params);  // performs transaction                                                
+            var result = await txnFunc(session, params, async event => {
                 await Event.create([{...event, o: orch}], { session: session });                
-            }            
+                console.log('event created', event);
+            });  // performs transaction    
+            /* event: config obj for creating an entry in events coll
+            * { weekBegin: Date, sec: String, profiles: [], entity, action, extra: String, user('s prof id) }     
+            */
+            /*if (event) {
+                await Event.create([{...event, o: orch}], { session: session });                
+            } */           
             break;
         } catch (error) {
             console.log("Caught exception during transaction, aborting.");

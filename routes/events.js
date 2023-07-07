@@ -13,14 +13,20 @@ router.get('/', async function(req, res) {
   console.log(req.authData);
     try {
       let session = app.get('session');             
-      let eventDocs = await Event.find({
+      // TODO delete older docs from Events coll
+      let findConfig = {
         o: req.authData.o,
         $or: [
-          { $and: [ {profiles: []}, {sec: ''} ] },
-          { $and: [ {profiles: []}, {sec: req.authData.sec}]},
+          { $and: [ {profiles: []}, {sec: ''} ] },          
           { profiles: req.authData.pid }
-        ]          
-      }).sort({'created_at': -1}).session(session);
+        ],
+        'created_at': { $gt : DateTime.now().minus({days: 30}).toJSDate() }          
+      };
+      if ( req.authData.r == 'scheduler' ) {
+        findConfig.$or.push( {sec: req.authData.s} );
+      }
+      console.log(findConfig);
+      let eventDocs = await Event.find(findConfig).sort({'created_at': -1}).session(session);
       
       console.log(eventDocs);
       let converted = eventDocs.map( ev => {
