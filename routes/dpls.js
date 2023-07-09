@@ -9,6 +9,7 @@ const Orchestra = require('../models/orchestra');
 const Week = require('../models/week');
 const Dpl = require('../models/dpl');
 const Dplmeta = require('../models/dplmeta');
+const { DateTime } = require('luxon');
 
 /***********
  * Handles following cases
@@ -41,11 +42,12 @@ async function countFw(orchId, section, periodId, seasonId, memberIndex) {
 }
 
 // Freiwunsch, Dienstwunsch eintragen/löschen
-async function editFwDw( session, params ) {
+async function editFwDw( session, params, createEvent ) {
    let returnVal;    
 
    let orch = await Orchestra.findById(params.o).session(session);
    let tz = orch.timezone;
+   
    
    // check if dpl's monday is in the future)
    if ( params.begin <= Date.now() ) return { 
@@ -65,6 +67,8 @@ async function editFwDw( session, params ) {
       success: false, 
       reason: 'Dienstplan existiert nicht, abgeschlossen oder Woche nicht zum Einteilen freigegeben'
    };
+
+   let lxBegin = DateTime.fromJSDate(affectedDpl.weekBegin, {zone: tz});
       
    let row = affectedDpl.p.members.findIndex( mem => mem.prof == params.prof );
    if ( row == -1 || !affectedDpl.p.members[row].canWish ) return { 
@@ -86,6 +90,8 @@ async function editFwDw( session, params ) {
       let dt = DateTime.fromMillis(
          affectedDpl.seatings[seatingIndex].dienstBegin.getTime(), 
          { zone: tz } );            
+      console.log('Ittvagyok', dt);
+      console.log('Ittvagyok', affectedDpl.seatings[seatingIndex].dienstBegin);
       let ind = dt.weekday - 1;
       let pmOffset = dt.hour >= 12 ? 1 : 0;                      
       if ( seatingIndex < 0 || 
@@ -96,7 +102,16 @@ async function editFwDw( session, params ) {
          affectedDpl.seatings[seatingIndex].available[params.mi] = !params.erase;
          await affectedDpl.save();
          returnVal = { success: true };
-      }      
+      } 
+      await createEvent({
+         weekBegin: affectedDpl.weekBegin,
+         sec: params.sec, 
+         profiles: affectedDpl.periodMembers, 
+         entity: 'dpl', 
+         action: 'edit', 
+         extra: `${lxBegin.toFormat("kkkk 'KW' W")}: Dienstwunsch gelöscht/eingetragen ${dt.toFormat('dd.MM.yyyy HH:mm')}, ${affectedDpl.p.members[row].initial}`,
+         user: params.user
+      });     
    } else {  
       // *********** Freiwunsch **************           
       let numberOfWeeks = 0;
@@ -174,7 +189,17 @@ async function editFwDw( session, params ) {
          success: true, 
          fwCount: params.erase ? undefined : fwCount + 1,
          maxFw: params.erase ? undefined : numberOfWeeks * maxFW
-      };      
+      };
+      const daysAbbr = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+      await createEvent({
+         weekBegin: affectedDpl.weekBegin,
+         sec: params.sec, 
+         profiles: affectedDpl.periodMembers, 
+         entity: 'dpl', 
+         action: 'edit', 
+         extra: `${lxBegin.toFormat("kkkk 'KW' W")}: Freiwunsch gelöscht/eingetragen, ${affectedDpl.p.members[row].initial} ${daysAbbr[Math.floor(params.col/2)]} ${params.col % 2 ? 'Vorm.' : 'Nachm.'}`,
+         user: params.user
+      });         
    }
    return returnVal; 
 } // End of transaction function
@@ -195,7 +220,7 @@ async function recalcNumbersAfterEdit(session, o /* orchestra id*/, s /* section
       }      
 }
 
-async function editCorrection( session, params) {
+async function editCorrection( session, params, createEvent) {
    //params: o, sec, begin, correction 
    
    let dpl = await Dpl.findOne( { o: params.o, weekBegin: params.begin,
@@ -209,8 +234,39 @@ async function editCorrection( session, params) {
    let difference = params.correction.map((val, index) => oldCorrection[index] - val);
    await recalcNumbersAfterEdit(session, 
       params.o, params.sec, params.begin, dpl.p, difference);
+   let orchestraDoc = await Orchestra.findById(params.o).session(session);
+   let lxBegin = DateTime.fromJSDate(dpl.weekBegin, {zone: orchestraDoc. timezone});
+   await createEvent({
+      weekBegin: dpl.weekBegin,
+      sec: params.sec, 
+      profiles: dpl.periodMembers, 
+      entity: 'dpl', 
+      action: 'edit', 
+      extra: `Dienstzahlkorrekturen bearbeitet ${lxBegin.toFormat("kkkk 'KW' W")}`,
+      user: params.user
+   });
 
    return true;
+}
+
+async function editSchedulersRemark(session, params, createEvent) {
+   let dplDoc = await Dpl.findOneAndUpdate( { 
+      o: params.o,
+      weekBegin: params.begin,
+      s: params.sec
+   }, { remark: params.remark }).session(session);
+   let orchestraDoc = await Orchestra.findById(params.o).session(session);
+   let lxBegin = DateTime.fromJSDate(dplDoc.weekBegin, {zone: orchestraDoc.timezone});   
+   await createEvent({
+      weekBegin: dplDoc.weekBegin,
+      sec: params.sec, 
+      profiles: dplDoc.periodMembers, 
+      entity: 'dpl', 
+      action: 'edit', 
+      extra: `Dienstplan ${orchestraDoc.sections.get(params.sec).name}: Kommentar des Diensteinteilers bearbeitet ${lxBegin.toFormat("kkkk 'KW' W")}`,
+      user: params.user
+   });
+   return params.remark;
 }
 
 router.patch('/:mts', async function(req, res) {
@@ -225,33 +281,25 @@ router.patch('/:mts', async function(req, res) {
             res.sendStatus(401); 
             return; 
          }
-
-         if ( req.body.op === 'replace' ) {            
-            await Dpl.findOneAndUpdate( { 
-               o: req.authData.o,
-               weekBegin: new Date(req.params.mts * 1000),
-               s: req.authData.s
-            }, {
-               remark: req.body.value
-            });
-            res.json( { remark: req.body.value } ); 
-            return;
-         } else if (req.body.op === 'remove' ) {            
-            await Dpl.findOneAndUpdate( { 
-               o: req.authData.o,
-               weekBegin: new Date(req.params.mts * 1000),
-               s: req.authData.s
-            }, {
-               remark: null
-            });
-            res.sendStatus( 204 ); 
-            return;
-         }
+         
+         let result = await writeOperation( req.authData.o,
+            editSchedulersRemark, {
+               o: req.authData.o, sec: req.authData.s,
+               user: req.authData.pid,
+               begin: new Date(req.params.mts * 1000),                              
+               remark: req.body.op == 'replace' ? req.body.value : null
+         });                
+         
+         if (req.body.op == 'replace') res.json( { remark: result } ); 
+         else  res.sendStatus( 204 ); 
+         return;
+          
       } else if (req.body.path === '/correction') { 
          console.log(`Editing dz correction`);
          let result = await writeOperation( req.authData.o,
             editCorrection, {
                o: req.authData.o, sec: req.authData.s,
+               user: req.authData.pid,
                begin: new Date(req.params.mts * 1000),               
                correction: req.body.value
             });                        
@@ -271,7 +319,7 @@ router.patch('/:mts', async function(req, res) {
          res.json( { correction: req.body.value } ); 
          return;*/
       } else if (req.body.op == 'delwish' || req.body.op == 'newwish') {
-         if ( err || req.authData.r !== 'musician' ) { 
+         if ( req.authData.r !== 'musician' ) { 
             res.sendStatus(401); 
             return; 
          }
@@ -386,12 +434,15 @@ async function editDpl( session, params, createEvent ) {
    /*console.log('In editDpl');
    console.log(params);
    console.log(affectedDpl);*/
-
+   let orchestraDoc = await Orchestra.findById(params.o).session(session);                      
+   let dtBegin = DateTime.fromJSDate(affectedDpl.weekBegin, {zone: orchestraDoc.timezone});
    await createEvent({
       weekBegin: affectedDpl.weekBegin, 
       sec: params.sec, 
       profiles: affectedDpl.periodMembers, 
-      entity: "dpl", action: "edit", extra: "", 
+      public: affectedDpl.published,
+      entity: "dpl", action: "edit", 
+      extra: `Dienstplan ${orchestraDoc.sections.get(params.sec).name}, ${dtBegin.toFormat("kkkk 'KW' W")}`, 
       user: params.user
    });
 
@@ -436,11 +487,16 @@ router.post('/:mts', async function(req, res) {
    let weekDoc = await Week.findOne({ o: params.o, begin: dpl.weekBegin }).session(session);
    weekDoc.dpls[params.sec] = undefined;
    await weekDoc.save(); 
+
+   let orchestraDoc = await Orchestra.findById(params.o).session(session);                      
+   let dtBegin = DateTime.fromJSDate(dpl.weekBegin, {zone: orchestraDoc.timezone});
    await createEvent({
       weekBegin: dpl.weekBegin, 
       sec: dpl.s, 
-      profiles: dplpl.periodMembers, 
-      entity: "dpl", action: "del", extra: "", 
+      profiles: dpl.periodMembers, 
+      public: dpl.published,
+      entity: "dpl", action: "del", 
+      extra: `Dienstplan ${orchestraDoc.sections.get(params.sec).name}, ${dtBegin.toFormat("kkkk 'KW' W")}`, 
       user: params.user
    });
  }
@@ -544,11 +600,14 @@ async function createDpl( session, params, createEvent ) {
       dplRef: dplId
    } );
    await weekDoc.save();
+   let orchestraDoc = await Orchestra.findById(params.authData.o).session(session);                      
+   let lxBegin = DateTime.fromJSDate(dtBegin, {zone: orchestraDoc.timezone});
    await createEvent({
       weekBegin: dtBegin, 
       sec: params.authData.s, 
-      profiles: members, 
-      entity: "dpl", action: "new", extra: "", 
+      profiles: members,       
+      entity: "dpl", action: "new", 
+      extra: `Dienstplan ${orchestraDoc.sections.get(params.authData.s).name}, ${lxBegin.toFormat("kkkk 'KW' W")}`, 
       user: params.authData.pid
    });
 

@@ -7,8 +7,10 @@ const eventSchema = new Schema({
     //w: { type: Schema.Types.ObjectId, ref: 'Week' },  
     weekBegin: Date,
     sec: String, // if this event is relevant for scheduler, this is the section whoose scheduler should read it
+    /* if <> '', show this event also for scheduler of this section*/
     profiles: [ {type: Schema.Types.ObjectId, ref: 'Profile'} ], // for these profiles interesting
-    //comment: { type: Schema.Types.ObjectId, ref: 'Comment'}, // for reacting to comment
+    /* show this event only for these profiles */
+    public: Boolean, /* office may see this event also (dpl is public) */
     entity: {
         type: String,
         enum: ['comment', 'dpl', 'dienst', 'fw', 'dw', 'survey', 'season', 'period']

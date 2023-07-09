@@ -1,6 +1,6 @@
 function checkDplPermission(req,res,next) {
    if ( req.authData.r == 'scheduler' || 
-   req.authata.r == 'musician' && (req.body.op == 'delwish' || req.body.op == 'newwish') ) {
+   req.authData.r == 'musician' && (req.body.op == 'delwish' || req.body.op == 'newwish') ) {
       next();
    } else {
       console.log('Not authorized for manipulating dpl');

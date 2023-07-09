@@ -71,7 +71,8 @@ router.get('/:dplId', async function(req, res) {
     let commentData = {
         fn: meta.comments[cIndex].userFn,
         sn: meta.comments[cIndex].userSn,
-        message: abbrev(meta.comments[cIndex].message, 20)
+        //message: abbrev(meta.comments[cIndex].message, 20)
+        ts: DateTime.fromJSDate(meta.comments[cIndex].timestamp, {zone: orchestraDoc.timezone})
     };
     //meta.comments.splice(cIndex, 1);
     meta.comments[cIndex].deleted = true;
@@ -83,7 +84,7 @@ router.get('/:dplId', async function(req, res) {
         sec: params.sec, 
         profiles: meta.dpl.periodMembers, 
         entity: "comment", action: "del", 
-        extra: `Woche: ${dtBegin.weekYear} KW ${dtBegin.weekNumber} ${commentData.fn} ${commentData.sn}: ${commentData.message}`, 
+        extra: `Zur Woche ${dtBegin.toFormat("kkkk 'KW' W")} von ${commentData.fn} ${commentData.sn} ${commentData.ts.toFormat('dd.MM.yyyy HH:mm')}`, 
         user: params.prof
      });
     
@@ -153,7 +154,7 @@ router.get('/:dplId', async function(req, res) {
     await createEvent({
         weekBegin: meta.dpl.weekBegin, 
         sec: meta.dpl.s, profiles: meta.dpl.periodMembers, entity: "comment", action: "new", 
-        extra: `Woche: ${dtBegin.weekYear} KW ${dtBegin.weekNumber} Von ${userDoc.fn} ${userDoc.sn}: ${abbrev(params.message, 20)}`, 
+        extra: `Zur Woche ${dtBegin.toFormat("kkkk 'KW' W")} Von ${userDoc.fn} ${userDoc.sn}: ${abbrev(params.message, 20)}`, 
         user: params.prof
      });
     return {

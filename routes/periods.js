@@ -6,6 +6,7 @@ const Orchestra = require('../models/orchestra');
 
 const { writeOperation } = require('../my_modules/orch-lock');
 const { DateTime } = require("luxon");
+const period = require('../models/period');
 
 /*****
  * Only for schedulers
@@ -48,7 +49,7 @@ router.get('/', async function(req, res) {
     res.send(resp);
  });
 
- async function deletePeriod(session, params) {    
+ async function deletePeriod(session, params, createEvent) {    
    // params.o, params. sec, params.pId
    // check if period contains any dpls - if yes, abort
    let dplDoc = await Dpl.findOne({
@@ -76,6 +77,17 @@ router.get('/', async function(req, res) {
       lastPeriodDoc.isOpenEnd = !nextP;
       await lastPeriodDoc.save();
    }
+   let orchestraDoc = await Orchestra.findById(params.o).session(session);  
+   let lxBegin = DateTime.fromJSDate(period.begin, {zone: orchestraDoc.timezone});
+   await createEvent({
+      weekBegin: period.begin,
+      sec: params.sec, 
+      profiles: period.members.map(m => m.prof), 
+      entity: 'period', 
+      action: 'del', 
+      extra: `Fachgruppe ${orchestraDoc.sections.get(params.sec).name}, ab ${lxBegin.toFormat("kkkk 'KW' W")}`,
+      user: params.pId
+   });
    
    return true;
  }
@@ -123,7 +135,7 @@ router.patch('/:pId', async function(req, res) {
    }      
 });
 
-async function createPeriod(session, params) {     
+async function createPeriod(session, params, createEvent) {     
    // create period with date, comment and group;
    // check if operation is allowed 
    // update other periods' nextPBegin and isOpenEnd
@@ -133,7 +145,8 @@ async function createPeriod(session, params) {
    //let dtBegin = new Date(params.begin*1000);
    // must be a monday! get last monday for this date
    let orchDoc = await Orchestra.findById(params.o);
-   let dtBegin = DateTime.fromMillis(params.begin*1000, {zone: orchDoc.timezone }).startOf('week').toJSDate();   
+   let lxBegin = DateTime.fromMillis(params.begin*1000, {zone: orchDoc.timezone }).startOf('week');
+   let dtBegin = lxBegin.toJSDate();   
    
    let nextPeriodDoc = await Period.find({
       o: params.o,
@@ -198,6 +211,15 @@ async function createPeriod(session, params) {
    await newPeriod.populate('members.prof', 'userSn userFn userBirthday user');
    // for all members populate profile: userSn, userFn, userBirthday, user (id)
    
+   await createEvent({
+      weekBegin: dtBegin,
+      sec: params.sec, 
+      profiles: period.members.map(m => m.prof), 
+      entity: 'period', 
+      action: 'new', 
+      extra: `Fachgruppe ${orchDoc.sections.get(params.sec).name}, ab ${lxBegin.toFormat("kkkk 'KW' W")}`,
+      user: params.user
+   });
    return {
       ...newPeriod.toJSON(),
       countDpl: 0
@@ -218,7 +240,8 @@ router.post('/', async function(req, res) {
                row: index,
                prof: req.body.profileIds[index]
             }
-         })
+         }),
+         user: req.authData.pid
       });      
       console.log(`Period created, result of write operation: ${result}`); 
       console.log(result);
@@ -238,7 +261,7 @@ router.post('/', async function(req, res) {
    }
 });
 
- async function editPeriodMember(session, params) {        
+ async function editPeriodMember(session, params, createEvent) {        
    let period = await Period.findById( params.pId ).session(session);
    period.members[params.row].canWish = params.memberData.canWish;
    period.members[params.row].canComment = params.memberData.canComment;
@@ -246,7 +269,18 @@ router.post('/', async function(req, res) {
    // TODO check if initial is unique in the group
    period.members[params.row].start = params.memberData.start;
    if (params.memberData.comment) period.members[params.row].comment = params.memberData.comment;
-   await period.save();   
+   await period.save();  
+   let orchDoc = await Orchestra.findById(params.o);
+   let lxBegin = DateTime.fromJSDate(period.begin, {zone: orchDoc.timezone });
+   await createEvent({
+      weekBegin: period.begin,
+      sec: params.sec, 
+      profiles: period.members.map(m => m.prof), 
+      entity: 'period', 
+      action: 'edit', 
+      extra: `Fachgruppe ${orchDoc.sections.get(params.sec).name}, ab ${lxBegin.toFormat("kkkk 'KW' W")}`,
+      user: params.user
+   });
    return true;
  }
 

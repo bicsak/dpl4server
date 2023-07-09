@@ -35,91 +35,94 @@ const {
 
 
 // Change editable flag for week in a transaction
-async function changeEditable( session, params ) {              
+async function changeEditable( session, params, createEvent ) {              
     let weekDoc = await Week.findOneAndUpdate( { 
         o: params.o,
         begin: params.begin
-    }, {
-        editable: params.editable
-    }, { session: session } );    
+    }, { editable: params.editable }, { session: session } );    
 
     await Dpl.updateMany( { 
         o: params.o,
         w: weekDoc._id
-    }, {
-        weekEditable: params.editable
-    }, { session: session  } );   
-
+    }, { weekEditable: params.editable }, { session: session  } );   
+    let orchestraDoc = await Orchestra.findById(params.o).session(session);
+   let lxBegin = DateTime.fromJSDate(weekDoc.begin, {zone: orchestraDoc. timezone});
+    await createEvent({
+      weekBegin: weekDoc.begin,      
+      public: true,
+      sec: '',
+      profiles: [], 
+      entity: 'dpl', 
+      action: 'edit', 
+      extra: `Status vom Orchesterdirektor bearbeitet ${lxBegin.toFormat("kkkk 'KW' W")}`,
+      user: params.user
+   });
     return params.editable; // TODO
 } // End of transaction function
 
-router.get('/:mts', async function(req, res) {
-   /*jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
-      if (err) 
-         res.sendStatus(401);
-      else {*/
-         let resp = await createWeekDataRaw(req.params.mts, req.authData);          
-         res.json( resp );
-      /*}
-   });*/
+router.get('/:mts', async function(req, res) {   
+   let resp = await createWeekDataRaw(req.params.mts, req.authData);          
+   res.json( resp );      
 });
 
-router.get('/:section/:mts', async function(req, res) {
-   /*jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
-      if (err) 
-         res.sendStatus(401);
-      else {*/
-         let resp = await createWeekDataRaw(req.params.mts, req.authData, req.params.section);                   
-         res.json( resp );
-      /*}
-   });*/
+router.get('/:section/:mts', async function(req, res) {   
+   let resp = await createWeekDataRaw(req.params.mts, req.authData, req.params.section);                   
+   res.json( resp );
 });
 
-router.patch('/:mts', async function(req, res) {
-   //jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
+async function editManagersRemark( session, params, createEvent ) {
+   let weekDoc = await Week.findOneAndUpdate( { 
+      o: params.o,
+      begin: params.begin
+   }, { remark: params.remark }).session(session);
+   let orchestraDoc = await Orchestra.findById(params.o).session(session);
+   let lxBegin = DateTime.fromJSDate(weekDoc.begin, {zone: orchestraDoc. timezone});
+   await createEvent({
+      weekBegin: weekDoc.begin,      
+      profiles: [], 
+      entity: 'dpl', 
+      action: 'edit', 
+      extra: `Kommentar des Orchesterdirektors bearbeitet ${lxBegin.toFormat("kkkk 'KW' W")}`,
+      user: params.user
+   });
+   return { remark: params.remark } ;    
+
+}
+
+router.patch('/:mts', async function(req, res) {   
       if ( req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }
       if ( req.body.path === '/remark' ) {
-         if ( req.body.op === 'replace' ) {            
-            await Week.findOneAndUpdate( { 
-               o: req.authData.o,
-               begin: new Date(req.params.mts * 1000)
-            }, {
-               remark: req.body.value
-            });
-            res.json( { remark: req.body.value } ); 
-            return;
-         } else if (req.body.op === 'remove' ) {            
-            await Week.findOneAndUpdate( { 
-               o: req.authData.o,
-               begin: new Date(req.params.mts * 1000)
-            }, {
-               remark: null
-            });
-            res.sendStatus( 204 ); 
-            return;
-         }
+         let result = await writeOperation( req.authData.o,
+            editManagersRemark, {
+               o: req.authData.o, user: req.authData.pid,
+               begin: new Date(req.params.mts * 1000),
+               remark: req.body.op == 'replace' ? req.body.value : null
+            });                        
+         
+         if (req.body.op == 'replace') res.json( { remark: result } ); 
+         else  res.sendStatus( 204 ); 
+         return;
       } else if ( req.body.path === '/editable' && req.body.op === 'replace' ) {
          let result = await writeOperation( req.authData.o,
             changeEditable, {
-               o: req.authData.o,               
+               o: req.authData.o, user: req.authData.pid,              
                begin: new Date(req.params.mts * 1000),
                editable: req.body.value
             });                        
 
          res.json( { editable: result } ); //TODO push-notifications
          return;
-      }
-   //});
+      }   
 });
 
-async function editInstrumentation( session, params ) {
+async function editInstrumentation( session, params, createEvent ) {
    let weekDoc = await Week.findOneAndUpdate({
       'dienst._id': params.did
    }, {
       '$set': { 'dienst.$.instrumentation': params.instr }               
    }, { session: session } );
 
-   await Dienst.findByIdAndUpdate(params.did, {
+   let dienstDoc = await Dienst.findByIdAndUpdate(params.did, {
       '$set': { 'instrumentation': params.instr }               
    }, { session: session } );    
    
@@ -135,6 +138,18 @@ async function editInstrumentation( session, params ) {
          }, { session: session } );          
       }
    }
+   let orchestraDoc = await Orchestra.findById(params.o).session(session);                      
+   let dtDienstBegin = DateTime.fromJSDate(dienstDoc.begin, {zone: orchestraDoc.timezone});
+   await createEvent({
+      weekBegin: weekDoc.begin,
+      sec: '', 
+      profiles: [], 
+      public: true,
+      entity: 'dienst', 
+      action: 'edit', 
+      extra: `Soll-Besetzung geändert, ${dienstDoc.name}, ${dtDienstBegin.toFormat('dd.MM.yyyy HH:mm')}`,
+      user: params.user
+   });
 
    return params.instr;
 }
@@ -151,7 +166,8 @@ router.patch('/:mts/:did', async function(req, res) {
             editInstrumentation, {
                o: req.authData.o,
                did: req.params.did,               
-               instr: req.body.value               
+               instr: req.body.value,
+               user: req.authData.pid
             });                        
             res.json( { instrumentation: result } );            
             return;
@@ -212,7 +228,7 @@ async function deleteDienst(session, params, createEvent ) {
       profiles: [], 
       entity: 'dienst', 
       action: 'del', 
-      extra: `${dienstDoc.name} ${dtDienstBegin.day}.${dtDienstBegin.month}.${dtDienstBegin.year} ${dtDienstBegin.hour}:${dtDienstBegin.minute}`,
+      extra: `${dienstDoc.name} ${dtDienstBegin.toFormat('dd.MM.yyyy HH:mm')}`,
       user: params.user
    } );
     
@@ -307,7 +323,7 @@ async function cleanWeek(session, params, createEvent) {
       profiles: [], 
       entity: 'dienst', 
       action: 'del', 
-      extra: `Alle Dienste der Woche ${dtBegin.weekYear} KW ${dtBegin.weekNumber} gelöscht`,
+      extra: `Alle Dienste der Woche ${dtBegin.toFormat("kkkk 'KW' W")} gelöscht`,
       user: params.user
    } )
    return true;    
@@ -465,7 +481,7 @@ async function createDienst(session, params, createEvent) {
       profiles: [], 
       entity: 'dienst', 
       action: 'new', 
-      extra: `${dienstDoc.name} ${dtDienstBegin.day}.${dtDienstBegin.month}.${dtDienstBegin.year} ${dtDienstBegin.hour}:${dtDienstBegin.minute}`,
+      extra: `${dienstDoc.name} ${dtDienstBegin.toFormat('dd.MM.yyyy HH:mm')}`,
       user: params.user
    } );
    
@@ -575,7 +591,7 @@ async function editDienst(session, params, createEvent) {
       profiles: [], 
       entity: 'dienst', 
       action: 'edit', 
-      extra: `${dienstDoc.name} ${dtDienstBegin.day}.${dtDienstBegin.month}.${dtDienstBegin.year} ${dtDienstBegin.hour}:${dtDienstBegin.minute}`,
+      extra: `${dienstDoc.name}  ${dtDienstBegin.toFormat('dd.MM.yyyy HH:mm')}`,
       user: params.user
    })
 
