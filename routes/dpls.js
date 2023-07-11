@@ -32,13 +32,15 @@ async function countFw(orchId, section, periodId, seasonId, memberIndex) {
          'o': mongoose.Types.ObjectId(orchId), 
          's': section,
          'p': mongoose.Types.ObjectId(periodId), 
-      'weekSeason': mongoose.Types.ObjectId(seasonId) } }, 
+         'weekSeason': mongoose.Types.ObjectId(seasonId) 
+      } }, 
       { '$unwind': { 'path': '$absent' } }, 
       { '$unwind': { 'path': '$absent', 'includeArrayIndex': 'member' } }, 
       { '$match': { 'member': memberIndex, 'absent': 4 } }, 
       { '$count': 'countFw' }
-   ] );   
-   return result[0].countFw;
+   ] ); 
+   console.log('Hiba: ', result)  ;
+   return result.length ? result[0].countFw : 0;
 }
 
 // Freiwunsch, Dienstwunsch eintragen/löschen
@@ -87,6 +89,7 @@ async function editFwDw( session, params, createEvent ) {
          "seatings.d": params.did
       }, { $set: updateOpt } , { session: session  } );*/      
       let seatingIndex = affectedDpl.seatings.findIndex( s => s.d == params.did );
+      console.log('dienst begin ts',  affectedDpl.seatings[seatingIndex].dienstBegin.getTime());
       let dt = DateTime.fromMillis(
          affectedDpl.seatings[seatingIndex].dienstBegin.getTime(), 
          { zone: tz } );            
@@ -534,7 +537,7 @@ async function createDpl( session, params, createEvent ) {
          comment: '', // scheduler's comment    
          available: Array(groupSize).fill(false),
 
-         dienstBegin: new Date(dienst.begin * 1000),
+         dienstBegin: new Date(dienst.begin.getTime()),
          dienstWeight: dienst.weight,
          dienstInstr: dienst.instrumentation.get(params.authData.s) // for this section only
       });
