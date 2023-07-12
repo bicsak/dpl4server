@@ -13,7 +13,7 @@ const eventSchema = new Schema({
     public: Boolean, /* office may see this event also (dpl is public) */
     entity: {
         type: String,
-        enum: ['comment', 'dpl', 'dienst', 'fw', 'dw', 'survey', 'season', 'period']
+        enum: ['comment', 'dpl', 'dienst', 'week', 'fw', 'dw', 'survey', 'season', 'period']
         //default: 'dpl'
     },
     action: {

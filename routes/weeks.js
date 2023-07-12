@@ -52,7 +52,7 @@ async function changeEditable( session, params, createEvent ) {
       public: true,
       sec: '',
       profiles: [], 
-      entity: 'dpl', 
+      entity: 'week', 
       action: 'edit', 
       extra: `Status vom Orchesterdirektor bearbeitet ${lxBegin.toFormat("kkkk 'KW' W")}`,
       user: params.user
@@ -79,8 +79,9 @@ async function editManagersRemark( session, params, createEvent ) {
    let lxBegin = DateTime.fromJSDate(weekDoc.begin, {zone: orchestraDoc. timezone});
    await createEvent({
       weekBegin: weekDoc.begin,      
-      profiles: [], 
-      entity: 'dpl', 
+      profiles: [],
+      sec: '', 
+      entity: 'week', 
       action: 'edit', 
       extra: `Kommentar des Orchesterdirektors bearbeitet ${lxBegin.toFormat("kkkk 'KW' W")}`,
       user: params.user
@@ -99,7 +100,7 @@ router.patch('/:mts', async function(req, res) {
                remark: req.body.op == 'replace' ? req.body.value : null
             });                        
          
-         if (req.body.op == 'replace') res.json( { remark: result } ); 
+         if (req.body.op == 'replace') res.json( result ); 
          else  res.sendStatus( 204 ); 
          return;
       } else if ( req.body.path === '/editable' && req.body.op === 'replace' ) {
