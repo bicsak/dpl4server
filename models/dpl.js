@@ -31,8 +31,25 @@ const seatingSchema = new Schema({
 });
 
 const surveySchema = new Schema({
-    comment: String //TODO etc. etc.
-    //TODO group survey    
+    comment: String, // scheduler's general remark for this survey
+    feedbacks: [ {
+        row: Number,
+        member: { type: Schema.Types.ObjectId, ref: 'Profile' },
+        vote: { type: String, enum: ['pending', 'yes', 'no'], default: 'pending' },
+        timestamp: Date,
+        comment: String // only if answered with no
+    } ]
+});
+
+const officeSurveySchema = new Schema({
+    status: {
+        type: String,
+        enum: ['pending', 'refused', 'confirmed'],
+        default: 'pending'
+    },
+    timestamp: Date,
+    editedBy: { type: Schema.Types.ObjectId, ref: 'Profile' }, // only, if refused or confirmed
+    comment: String // only if refused
 });
 
 
@@ -54,16 +71,8 @@ const dplSchema = new Schema({
     delta: [ Number ],
     start: [ Number ],
     seatings: [ seatingSchema ],
-    officeSurvey: {
-        status: {
-            type: String,
-            enum: ['inactive', 'pending', 'refused', 'confirmed'],
-            default: 'inactive'
-        },
-        timestamp: Date,
-        comment: String 
-    },
-    groupSurvey: surveySchema  // TODO   
+    officeSurvey: officeSurveySchema, // can be undefined
+    groupSurvey: surveySchema // can be undefined
 }, { 
     collection: 'dpls', 
     optimisticConcurrency: true, 
