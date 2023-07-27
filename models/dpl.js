@@ -39,6 +39,13 @@ const surveySchema = new Schema({
         timestamp: Date,
         comment: String // only if answered with no
     } ]
+}, {
+    toJSON: {
+        transform: function(doc, ret, opt) {
+            ret.feedbacks.forEach(fb => fb.timestamp = fb.timestamp.getTime());
+            return ret;
+        }
+    }
 });
 
 const officeSurveySchema = new Schema({
@@ -50,6 +57,13 @@ const officeSurveySchema = new Schema({
     timestamp: Date,
     editedBy: { type: Schema.Types.ObjectId, ref: 'Profile' }, // only, if refused or confirmed
     comment: String // only if refused
+}, {
+    toJSON: {
+        transform: function(doc, ret, opt) {
+            ret.timestamp = ret.timestamp.getTime();
+            return ret;
+        }
+    }
 });
 
 
