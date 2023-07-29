@@ -35,7 +35,7 @@ const surveySchema = new Schema({
     feedbacks: [ {
         row: Number,
         member: { type: Schema.Types.ObjectId, ref: 'Profile' },
-        vote: { type: String, enum: ['pending', 'yes', 'no'], default: 'pending' },
+        vote: { type: String, enum: ['inactive', 'pending', 'yes', 'no'], default: 'pending' },
         timestamp: Date,
         comment: String // only if answered with no
     } ]
@@ -56,11 +56,12 @@ const officeSurveySchema = new Schema({
     },
     timestamp: Date,
     editedBy: { type: Schema.Types.ObjectId, ref: 'Profile' }, // only, if refused or confirmed
-    comment: String // only if refused
+    reason: String, // only if refused, reason for refusing
+    comment: String // initial comment by scheduler
 }, {
     toJSON: {
         transform: function(doc, ret, opt) {
-            ret.timestamp = ret.timestamp.getTime();
+            if (ret.timestamp) ret.timestamp = ret.timestamp.getTime();
             return ret;
         }
     }

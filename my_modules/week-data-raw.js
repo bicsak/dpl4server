@@ -130,6 +130,7 @@ async function createWeekDataRaw (begin /* UNIX ts in Seconds*/, authData, sec) 
                accessAllowed: dplAccess,
                closed: dplDocs[i].closed,
                published: dplDocs[i].published,
+               officeSurvey: dplDocs[i].officeSurvey,
                remark: finalRemark, //scheduler's remark for the whole week
                absent: finalAbsent, // Krankmeldunden, Freiwünsche etc.
                sps: finalSeatings // seating plans for each dienst                                  
@@ -141,7 +142,8 @@ async function createWeekDataRaw (begin /* UNIX ts in Seconds*/, authData, sec) 
                dplRaw[dplDocs[i].s] = {
                   ...dplRaw[dplDocs[i].s],
                   start: dplDocs[i].start.map( (v, ind) => v + dplDocs[i].p.members[ind].start),
-                  correction: dplDocs[i].correction                
+                  correction: dplDocs[i].correction,
+                  survey: dplDocs[i].survey
                };
                
                let lastDplDoc = await Dpl

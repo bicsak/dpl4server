@@ -49,8 +49,8 @@ const weekSchema = new Schema({
                 },
                 officeSurvey: {
                     type: String,
-                    enum: ['inactive', 'pending', 'refused', 'confirmed'],
-                    default: 'inactive'
+                    enum: ['pending', 'refused', 'confirmed'],
+                    default: 'pending'
                 } 
             } )        
         },

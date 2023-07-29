@@ -272,6 +272,54 @@ async function editSchedulersRemark(session, params, createEvent) {
    return params.remark;
 }
 
+async function editDplStatus(session, params, createEvent ) {
+   // edit dpl status, also in weeks collection
+   // delete group survey if new status != closed (dpl is not closed && !public, i.e. draft or public)
+   // create office survey on publishing (changing state to public)
+   // delete office survey on downgrading (state is no more public)
+   let closed = false; let public = params.status == 'public';
+   if ( params.status != 'draft' ) closed = true;
+
+   let updateObj = {}; 
+   updateObj[`dpls.${params.sec}.closed`] = closed;
+   updateObj[`dpls.${params.sec}.published`] = public;
+   await Week.findOneAndUpdate( { 
+      o: params.o,
+      begin: params.begin,      
+   }, updateObj).session(session);
+   let dplDoc = await Dpl.findOneAndUpdate( { 
+      o: params.o,
+      weekBegin: params.begin,
+      s: params.sec
+   }, { closed: closed, published: public }).session(session);
+   if ( params.approve ) {
+      dplDoc.officeSurvey = {
+         timestamp: new Date(),
+         status: 'pending',
+         comment: params.message
+      };
+      await dplDoc.save();
+   }
+   if ( params.status != 'public' ) {
+      dplDoc.officeSurvey = undefined; await dplDoc.save();
+   }
+   if ( params.status != 'closed' ) {
+      dplDoc.survey = undefined; await dplDoc.save();
+   }
+   let orchestraDoc = await Orchestra.findById(params.o).session(session);
+   let lxBegin = DateTime.fromJSDate(dplDoc.weekBegin, {zone: orchestraDoc.timezone});   
+   await createEvent({
+      weekBegin: params.begin, 
+      sec: params.sec, 
+      profiles: [], 
+      entity: 'dpl', 
+      action: 'edit', 
+      extra: `Dienstplan ${orchestraDoc.sections.get(params.sec).name}: Status vom Dienstplan geändert ${lxBegin.toFormat("kkkk 'KW' W")}`,
+      user: params.user
+   });
+   return true;
+}
+
 router.patch('/:mts', async function(req, res) {
    /*jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if (err ) { 
@@ -321,6 +369,43 @@ router.patch('/:mts', async function(req, res) {
          });
          res.json( { correction: req.body.value } ); 
          return;*/
+      } else if (req.body.path == '/status') {         
+         if ( req.authData.r !== 'scheduler' ) { 
+            res.sendStatus(401); 
+            return; 
+         }
+         console.log('Editing dpl status by scheduler')
+
+         try {
+            let result = await writeOperation(req.authData.o, editDplStatus, {
+               ...req.body.value,               
+               o: req.authData.o, sec: req.authData.s, user: req.authData.pid,
+               begin: new Date(req.params.mts * 1000),                              
+            });
+            if ( result === true ) res.json(req.body.value);      // request accepted
+            else res.status(result.statusCode).send( result.body ); 
+         } catch (err) {
+            res.status(400).send(`Problem during changing state`);            
+         }    
+
+         //res.json(req.body.value);
+         // change dpl status; must have scheduler's rights
+      } else if (req.body.path == '/survey') {
+         if ( req.body.op == 'new') {
+            if ( req.authData.r !== 'scheduler' ) { 
+               res.sendStatus(401); 
+               return; 
+            }
+            // new group survery by scheduler
+         } else if ( req.body.op == 'del' ) {
+            if ( req.authData.r !== 'scheduler' ) { 
+               res.sendStatus(401); 
+               return; 
+            }
+            // delete group survey
+         } else {
+            // vote for survey (yes/no+comment). Musician (group survey, needs also row index) or office (approval)
+         }         
       } else if (req.body.op == 'delwish' || req.body.op == 'newwish') {
          if ( req.authData.r !== 'musician' ) { 
             res.sendStatus(401); 
