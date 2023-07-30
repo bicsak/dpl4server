@@ -486,7 +486,7 @@ async function editDpl( session, params, createEvent ) {
    if ( !affectedDpl ) return { 
       success: false, 
       reason: 'Dienstplan existiert nicht / nicht editierbar'
-   };
+   };   
 
    let oldDelta = affectedDpl.delta;
 
@@ -508,9 +508,21 @@ async function editDpl( session, params, createEvent ) {
       '$set': {
          absent: params.absent,
          seatings: affectedDpl.seatings,
-         delta: affectedDpl.delta
+         delta: affectedDpl.delta,
+         survey: undefined,   // delete surveys upon change in seating
+         officeSurvey: undefined
       }
    }, { session: session  } );
+
+   if ( affectedDpl.officeSurvey && affectedDpl.officeSurvey.status != 'confirmed') {
+      // change dpl state back to closed
+      //TODO also in weeks collection!!!
+      await Dpl.updateOne( { 
+         o: params.o,
+         s: params.sec,
+         weekBegin: params.begin         
+      }, { closed: true, published: false }, { session: session  } );
+   }
    /*affectedDpl.absent = params.absent;
    affectedDpl.save();*/
       
