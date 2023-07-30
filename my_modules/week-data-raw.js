@@ -73,7 +73,7 @@ async function createWeekDataRaw (begin /* UNIX ts in Seconds*/, authData, sec) 
             let dplAccess = true;         
             if (  authData.r == 'musician'
                && !dplDocs[i].p.members.find( m =>  m.prof._id == authData.pid ) ||
-               authData.r == 'office' && !dplDocs[i].closed ) dplAccess = false;                
+               authData.r == 'office' && !dplDocs[i].published ) dplAccess = false;                
             
             let finalRemark; let finalAbsent; let finalSeatings;
 

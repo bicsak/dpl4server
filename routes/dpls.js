@@ -283,10 +283,15 @@ async function editDplStatus(session, params, createEvent ) {
    let updateObj = {}; 
    updateObj[`dpls.${params.sec}.closed`] = closed;
    updateObj[`dpls.${params.sec}.published`] = public;
-   await Week.findOneAndUpdate( { 
+   let weekDoc = await Week.findOneAndUpdate( { 
       o: params.o,
       begin: params.begin,      
+      editable: true
    }, updateObj).session(session);
+   if ( !weekDoc ) return {
+      statusCode: 400,
+      body: 'Wochenplan nicht gefunden oder nicht editierbar'
+   }
    let dplDoc = await Dpl.findOneAndUpdate( { 
       o: params.o,
       weekBegin: params.begin,
