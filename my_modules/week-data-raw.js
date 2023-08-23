@@ -143,7 +143,7 @@ async function createWeekDataRaw (begin /* UNIX ts in Seconds*/, authData, sec) 
                   ...dplRaw[dplDocs[i].s],
                   start: dplDocs[i].start.map( (v, ind) => v + dplDocs[i].p.members[ind].start),
                   correction: dplDocs[i].correction,
-                  survey: dplDocs[i].survey
+                  groupSurvey: dplDocs[i].groupSurvey
                };
                
                let lastDplDoc = await Dpl

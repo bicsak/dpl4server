@@ -319,19 +319,13 @@ async function editDplStatus(session, params, createEvent ) {
       profiles: [], 
       entity: 'dpl', 
       action: 'edit', 
-      extra: `Dienstplan ${orchestraDoc.sections.get(params.sec).name}: Status vom Dienstplan geändert ${lxBegin.toFormat("kkkk 'KW' W")}`,
+      extra: `Dienstplan ${orchestraDoc.sections.get(params.sec).name} ${lxBegin.toFormat("kkkk 'KW' W")}: Status geändert`,
       user: params.user
    });
    return true;
 }
 
-router.patch('/:mts', async function(req, res) {
-   /*jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
-      if (err ) { 
-         res.sendStatus(401); 
-         return; 
-      }      */
-      console.log(req.authData);
+router.patch('/:mts', async function(req, res) {        
       if ( req.body.path === '/remark' ) {
          if (req.authData.r !== 'scheduler' ) { 
             res.sendStatus(401); 
@@ -364,16 +358,7 @@ router.patch('/:mts', async function(req, res) {
             {success: false, reason: 'DB error'} ); 
          //TODO push-notifications
          return;                        
-
-         /*await Dpl.findOneAndUpdate( { 
-            o: req.authData.o,
-            weekBegin: new Date(req.params.mts * 1000),
-            s: req.authData.s
-         }, {
-            correction: req.body.value
-         });
-         res.json( { correction: req.body.value } ); 
-         return;*/
+         
       } else if (req.body.path == '/status') {         
          if ( req.authData.r !== 'scheduler' ) { 
             res.sendStatus(401); 
@@ -402,12 +387,38 @@ router.patch('/:mts', async function(req, res) {
                return; 
             }
             // new group survery by scheduler
+            console.log('creating survey...', req.body);            
+            try {      
+               let result = await writeOperation( req.authData.o, createSurvey, {      
+                  o: req.authData.o,       
+                  sec: req.authData.s,
+                  begin: req.params.mts,
+                  message: req.body.message,         
+                  user: req.authData.pid,
+                  userId: req.authData.user         
+               });      
+               console.log(`Survey created, result of write operation: ${result}`);       
+               if ( !result ) res.sendStatus(409); else res.json( result );     
+            }  catch (err) {
+               console.log('some error:', err);
+               res.status(409).send(err);
+            }
          } else if ( req.body.op == 'del' ) {
             if ( req.authData.r !== 'scheduler' ) { 
                res.sendStatus(401); 
                return; 
             }
             // delete group survey
+            console.log( `Deleting group survey ${req.params.mts}...` );   
+            await writeOperation( req.authData.o, deleteSurvey, {        
+               o: req.authData.o, 
+               prof: req.authData.pid,
+               role: req.authData.r,
+               dpl: req.params.mts,       
+               sec: req.authData.s, 
+               user: req.authData.pid       
+            });                
+
          } else {
             // vote for survey (yes/no+comment). Musician (group survey, needs also row index) or office (approval)
          }         
@@ -469,9 +480,44 @@ router.patch('/:mts', async function(req, res) {
                return;
             }
          }         
-      }
-   //});
+      }   
 });
+
+async function createSurvey( session, params, createEvent ) {
+   console.log('transaction fn createSurvey');
+   let affectedDpl = await Dpl.findOne( {
+      o: params.o,
+      s: params.sec,
+      weekBegin: params.begin*1000,      
+   } ).session(session).populate('p').populate('periodMembers');        
+   if ( !affectedDpl ) return false;
+   console.log(affectedDpl.p.members);
+   // create survey doc with fields of period.members (profile, row, inactive/pending, no comment, no  timestamp)
+   affectedDpl.groupSurvey = {
+      comment: params.message,
+      feedbacks: affectedDpl.p.members.map( m => {
+         return {
+            row: m.row,
+            member: m.prof,
+            vote: affectedDpl.periodMembers[m.row].user == params.userId ? 'inactive' : 'pending'
+         };
+      })
+   };
+   console.log(affectedDpl.groupSurvey);
+   await affectedDpl.save();   
+   /*await createEvent({
+      weekBegin: affectedDpl.weekBegin, 
+      sec: params.sec, 
+      profiles: affectedDpl.periodMembers, 
+      public: affectedDpl.published,
+      entity: "survey", action: "new", 
+      extra: `Dienstplan ${orchestraDoc.sections.get(params.sec).name}, ${dtBegin.toFormat("kkkk 'KW' W")}`, 
+      user: params.user
+   });*/
+   return affectedDpl.groupSurvey;   
+}
+
+
 
 async function editDpl( session, params, createEvent ) {
    let returnVal;   
@@ -560,7 +606,7 @@ async function editDpl( session, params, createEvent ) {
  * Edit seatings (incl. absent) for this dpl by scheduler
  */
 router.post('/:mts', async function(req, res) {   
-   console.log(req.body); 
+   console.log('edit seating...', req.body); 
 
    let result = await writeOperation( req.authData.o, editDpl, {
       ...req.body, 
@@ -601,6 +647,25 @@ router.post('/:mts', async function(req, res) {
       profiles: dpl.periodMembers, 
       public: dpl.published,
       entity: "dpl", action: "del", 
+      extra: `Dienstplan ${orchestraDoc.sections.get(params.sec).name}, ${dtBegin.toFormat("kkkk 'KW' W")}`, 
+      user: params.user
+   });
+ }
+
+ async function deleteSurvey( session, params, createEvent ) {      
+   let dpl = await Dpl.findOne( { 
+      o: params.o, _id: params.dpl }).session(session);
+   dpl.groupSurvey = undefined;
+   await dpl.save();            
+
+   let orchestraDoc = await Orchestra.findById(params.o).session(session);                      
+   let dtBegin = DateTime.fromJSDate(dpl.weekBegin, {zone: orchestraDoc.timezone});
+   await createEvent({
+      weekBegin: dpl.weekBegin, 
+      sec: dpl.s, 
+      profiles: dpl.periodMembers, 
+      public: dpl.published,
+      entity: "survey", action: "del", 
       extra: `Dienstplan ${orchestraDoc.sections.get(params.sec).name}, ${dtBegin.toFormat("kkkk 'KW' W")}`, 
       user: params.user
    });
@@ -720,8 +785,7 @@ async function createDpl( session, params, createEvent ) {
 }
 
 router.post('/', async function(req, res) {   
-   console.log(req.body);
-   console.log('Creating DPL');
+   console.log('creating dpl...', req.body);   
    let result = await writeOperation( req.authData.o, createDpl, {      
       authData: req.authData,
       begin: req.body.mts,

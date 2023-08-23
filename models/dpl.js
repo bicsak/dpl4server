@@ -42,7 +42,7 @@ const surveySchema = new Schema({
 }, {
     toJSON: {
         transform: function(doc, ret, opt) {
-            ret.feedbacks.forEach(fb => fb.timestamp = fb.timestamp.getTime());
+            ret.feedbacks.forEach(fb => fb.timestamp = fb.timestamp?.getTime());
             return ret;
         }
     }
