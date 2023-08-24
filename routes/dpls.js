@@ -309,7 +309,7 @@ async function editDplStatus(session, params, createEvent ) {
       dplDoc.officeSurvey = undefined; await dplDoc.save();
    }
    if ( params.status != 'closed' ) {
-      dplDoc.survey = undefined; await dplDoc.save();
+      dplDoc.groupSurvey = undefined; await dplDoc.save();
    }
    let orchestraDoc = await Orchestra.findById(params.o).session(session);
    let lxBegin = DateTime.fromJSDate(dplDoc.weekBegin, {zone: orchestraDoc.timezone});   
@@ -414,7 +414,7 @@ router.patch('/:mts', async function(req, res) {
                o: req.authData.o, 
                prof: req.authData.pid,
                role: req.authData.r,
-               dpl: req.params.mts,       
+               mts: req.params.mts,       
                sec: req.authData.s, 
                user: req.authData.pid       
             });                
@@ -555,7 +555,7 @@ async function editDpl( session, params, createEvent ) {
          absent: params.absent,
          seatings: affectedDpl.seatings,
          delta: affectedDpl.delta,
-         survey: undefined,   // delete surveys upon change in seating
+         groupSurvey: undefined,   // delete surveys upon change in seating
          officeSurvey: undefined
       }
    }, { session: session  } );
@@ -653,18 +653,22 @@ router.post('/:mts', async function(req, res) {
  }
 
  async function deleteSurvey( session, params, createEvent ) {      
-   let dpl = await Dpl.findOne( { 
-      o: params.o, _id: params.dpl }).session(session);
-   dpl.groupSurvey = undefined;
-   await dpl.save();            
+   let affectedDpl = await Dpl.findOne( {
+      o: params.o,
+      s: params.sec,
+      weekBegin: params.mts*1000,      
+   } ).session(session);        
+   if ( !affectedDpl ) return false;   
+   affectedDpl.groupSurvey = undefined;
+   await affectedDpl.save();            
 
    let orchestraDoc = await Orchestra.findById(params.o).session(session);                      
-   let dtBegin = DateTime.fromJSDate(dpl.weekBegin, {zone: orchestraDoc.timezone});
+   let dtBegin = DateTime.fromJSDate(affectedDpl.weekBegin, {zone: orchestraDoc.timezone});
    await createEvent({
-      weekBegin: dpl.weekBegin, 
-      sec: dpl.s, 
-      profiles: dpl.periodMembers, 
-      public: dpl.published,
+      weekBegin: affectedDpl.weekBegin, 
+      sec: affectedDpl.s, 
+      profiles: affectedDpl.periodMembers, 
+      public: affectedDpl.published,
       entity: "survey", action: "del", 
       extra: `Dienstplan ${orchestraDoc.sections.get(params.sec).name}, ${dtBegin.toFormat("kkkk 'KW' W")}`, 
       user: params.user
