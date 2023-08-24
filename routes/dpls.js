@@ -272,6 +272,55 @@ async function editSchedulersRemark(session, params, createEvent) {
    return params.remark;
 }
 
+async function voteSurvey(session, params, createEvent ) {
+   console.log('transaction fn voteSurvey');
+   console.log(params);
+   let affectedDpl = await Dpl.findOne( {
+      o: params.o,
+      s: params.sec,
+      weekBegin: params.begin*1000,      
+   } ).session(session).populate('p').populate('periodMembers');        
+   if ( !affectedDpl ) return false;
+   console.log(affectedDpl.p.members);   
+   if ( params.office ) {
+      // office approval procedure
+      affectedDpl.officeSurvey.status = params.feedback == 'yes' ? 'confirmed' : 'refused';
+      affectedDpl.officeSurvey.comment = params.message;
+      affectedDpl.officeSurvey.timestamp = new Date();
+      affectedDpl.officeSurvey.editedBy = params.user;
+
+      //in weeks collection as well!
+      let updateObj = {}; 
+      updateObj[`dpls.${params.sec}.officeSurvey`] = affectedDpl.officeSurvey.status;      
+      await Week.findOneAndUpdate({
+         o: params.o, begin: params.begin
+      }, updateObj).session(session);
+   } else {
+      // musician survey
+      // get member index, save feedback[index]
+      let memberIndex = affectedDpl.periodMembers.findIndex( m => params.user == m);
+      affectedDpl.groupSurvey.feedbacks[memberIndex].vote = params.feedback;
+      affectedDpl.groupSurvey.feedbacks[memberIndex].comment = params.comment;
+      affectedDpl.groupSurvey.feedbacks[memberIndex].timestamp = new Date();
+   }   
+   await affectedDpl.save();   
+   /*await createEvent({
+      weekBegin: affectedDpl.weekBegin, 
+      sec: params.sec, 
+      profiles: affectedDpl.periodMembers, 
+      public: affectedDpl.published,
+      entity: "survey", action: "edit", 
+      extra: `Dienstplan ${orchestraDoc.sections.get(params.sec).name}, ${dtBegin.toFormat("kkkk 'KW' W")}`, 
+      user: params.user
+   });*/
+   //return affectedDpl.groupSurvey;   
+   return {
+      surveyAnswer: params.feedback,
+      surveyComment: params.message
+   };
+
+}
+
 async function editDplStatus(session, params, createEvent ) {
    // edit dpl status, also in weeks collection
    // delete group survey if new status != closed (dpl is not closed && !public, i.e. draft or public)
@@ -304,9 +353,20 @@ async function editDplStatus(session, params, createEvent ) {
          comment: params.message
       };
       await dplDoc.save();
+      //in weeks collection as well
+      updateObj = {}; 
+      updateObj[`dpls.${params.sec}.officeSurvey`] = 'pending';      
+      await Week.findOneAndUpdate({
+         o: params.o, begin: params.begin
+      }, updateObj).session(session);
    }
    if ( params.status != 'public' ) {
       dplDoc.officeSurvey = undefined; await dplDoc.save();
+      updateObj = {}; 
+      updateObj[`dpls.${params.sec}.officeSurvey`] = undefined;      
+      await Week.findOneAndUpdate({
+         o: params.o, begin: params.begin
+      }, updateObj).session(session);
    }
    if ( params.status != 'closed' ) {
       dplDoc.groupSurvey = undefined; await dplDoc.save();
@@ -386,7 +446,7 @@ router.patch('/:mts', async function(req, res) {
                res.sendStatus(401); 
                return; 
             }
-            // new group survery by scheduler
+            // new group survey by scheduler
             console.log('creating survey...', req.body);            
             try {      
                let result = await writeOperation( req.authData.o, createSurvey, {      
@@ -419,8 +479,30 @@ router.patch('/:mts', async function(req, res) {
                user: req.authData.pid       
             });                
 
-         } else {
-            // vote for survey (yes/no+comment). Musician (group survey, needs also row index) or office (approval)
+         } else if ( req.body.op == 'edit' ) {
+            /* vote for survey (yes/no+comment). 
+            Musician (group survey, needs also row index) or office (approval)
+            req.body.feedback ('yes'|'no'), req.body.message?
+            req.params.mts, req.authData.r ...
+            */
+            console.log('saving feedback to survey...', req.body);            
+            try {      
+               let result = await writeOperation( req.authData.o, voteSurvey, {      
+                  o: req.authData.o,       
+                  sec: req.authData.s,
+                  begin: req.params.mts,
+                  feedback: req.body.feedback,
+                  message: req.body.message,         
+                  user: req.authData.pid,
+                  userId: req.authData.user,
+                  office: req.authData.r == 'office'         
+               });      
+               console.log(`Feedback saved, result of write operation: ${result}`);       
+               if ( !result ) res.sendStatus(409); else res.json( result );     
+            }  catch (err) {
+               console.log('some error:', err);
+               res.status(409).send(err);
+            }           
          }         
       } else if (req.body.op == 'delwish' || req.body.op == 'newwish') {
          if ( req.authData.r !== 'musician' ) { 
@@ -517,8 +599,6 @@ async function createSurvey( session, params, createEvent ) {
    return affectedDpl.groupSurvey;   
 }
 
-
-
 async function editDpl( session, params, createEvent ) {
    let returnVal;   
 
@@ -559,18 +639,27 @@ async function editDpl( session, params, createEvent ) {
          officeSurvey: undefined
       }
    }, { session: session  } );
+   let updateObj = {}; 
+   updateObj[`dpls.${params.sec}.officeSurvey`] = undefined;      
+   await Week.findOneAndUpdate({
+         o: params.o, begin: params.begin
+   }, updateObj).session(session);
 
    if ( affectedDpl.officeSurvey && affectedDpl.officeSurvey.status != 'confirmed') {
-      // change dpl state back to closed
-      //TODO also in weeks collection!!!
+      // change dpl state back to closed      
       await Dpl.updateOne( { 
          o: params.o,
          s: params.sec,
          weekBegin: params.begin         
-      }, { closed: true, published: false }, { session: session  } );
-   }
-   /*affectedDpl.absent = params.absent;
-   affectedDpl.save();*/
+      }, { closed: true, published: false, officeSurvey: undefined }, { session: session  } );
+      //also in weeks collection!!!
+      updateObj = {}; 
+      updateObj[`dpls.${params.sec}.closed`] = true;            
+      updateObj[`dpls.${params.sec}.published`] = false;      
+      await Week.findOneAndUpdate({
+         o: params.o, begin: params.begin
+      }, updateObj).session(session);            
+   }   
       
    /*let row = affectedDpl.p.members.findIndex( mem => mem.prof == params.prof );
    if ( row == -1 || !affectedDpl.p.members[row].canWish ) return { 
