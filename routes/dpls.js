@@ -297,10 +297,10 @@ async function voteSurvey(session, params, createEvent ) {
       }, updateObj).session(session);
    } else {
       // musician survey
-      // get member index, save feedback[index]
-      let memberIndex = affectedDpl.periodMembers.findIndex( m => params.user == m);
+      // get member index, save feedback[index]      
+      let memberIndex = affectedDpl.periodMembers.findIndex( m => params.user == m._id);      
       affectedDpl.groupSurvey.feedbacks[memberIndex].vote = params.feedback;
-      affectedDpl.groupSurvey.feedbacks[memberIndex].comment = params.comment;
+      affectedDpl.groupSurvey.feedbacks[memberIndex].comment = params.message;
       affectedDpl.groupSurvey.feedbacks[memberIndex].timestamp = new Date();
    }   
    await affectedDpl.save();   
@@ -489,7 +489,7 @@ router.patch('/:mts', async function(req, res) {
             try {      
                let result = await writeOperation( req.authData.o, voteSurvey, {      
                   o: req.authData.o,       
-                  sec: req.authData.s,
+                  sec: req.authData.r == 'office' ? req.body.sec : req.authData.s,
                   begin: req.params.mts,
                   feedback: req.body.feedback,
                   message: req.body.message,         

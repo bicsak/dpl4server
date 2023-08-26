@@ -10,7 +10,7 @@ const Dpl = require('../models/dpl');
 const { DateTime } = require("luxon");
 
 router.get('/', async function(req, res) { 
-  console.log(req.authData);
+  //console.log(req.authData);
     try {
       let session = app.get('session');             
       // TODO delete older docs from Events coll
@@ -28,10 +28,10 @@ router.get('/', async function(req, res) {
       if ( req.authData.r == 'office' ) {
         findConfig.$or.push( {public: true} );
       }
-      console.log(findConfig);
+      //console.log(findConfig);
       let eventDocs = await Event.find(findConfig).sort({'created_at': -1}).session(session);
       
-      console.log(eventDocs);
+      //console.log(eventDocs);
       let converted = eventDocs.map( ev => {
         return {
           entity: ev.entity,
@@ -41,7 +41,7 @@ router.get('/', async function(req, res) {
           weekBegin: ev.weekBegin.getTime(),
         }
       });
-      console.log('converted', converted)
+      //console.log('converted', converted)
       res.status(200).json(converted);       
     } catch (err) {
       console.log(err);
