@@ -253,11 +253,19 @@ async function editCorrection( session, params, createEvent) {
 }
 
 async function editSchedulersRemark(session, params, createEvent) {
-   let dplDoc = await Dpl.findOneAndUpdate( { 
+   /*let dplDoc = await Dpl.findOneAndUpdate( { 
       o: params.o,
       weekBegin: params.begin,
       s: params.sec
-   }, { remark: params.remark }).session(session);
+   }, { remark: params.remark }).session(session);*/
+   let dplDoc = await Dpl.findOne( { 
+      o: params.o,
+      weekBegin: params.begin,
+      s: params.sec
+   }).session(session);
+   dplDoc.remark = params.remark;
+   await dplDoc.save();
+
    let orchestraDoc = await Orchestra.findById(params.o).session(session);
    let lxBegin = DateTime.fromJSDate(dplDoc.weekBegin, {zone: orchestraDoc.timezone});   
    await createEvent({
@@ -361,15 +369,15 @@ async function editDplStatus(session, params, createEvent ) {
       }, updateObj).session(session);
    }
    if ( params.status != 'public' ) {
-      dplDoc.officeSurvey = undefined; await dplDoc.save();
+      dplDoc.officeSurvey = null; await dplDoc.save();
       updateObj = {}; 
-      updateObj[`dpls.${params.sec}.officeSurvey`] = undefined;      
+      updateObj[`dpls.${params.sec}.officeSurvey`] = null;      
       await Week.findOneAndUpdate({
          o: params.o, begin: params.begin
       }, updateObj).session(session);
    }
    if ( params.status != 'closed' ) {
-      dplDoc.groupSurvey = undefined; await dplDoc.save();
+      dplDoc.groupSurvey = null; await dplDoc.save();
    }
    let orchestraDoc = await Orchestra.findById(params.o).session(session);
    let lxBegin = DateTime.fromJSDate(dplDoc.weekBegin, {zone: orchestraDoc.timezone});   
@@ -623,7 +631,8 @@ async function editDpl( session, params, createEvent ) {
       affectedDpl.seatings[i].sp = newSeating.sp;
       affectedDpl.seatings[i].available = newSeating.available;
    }
-   await affectedDpl.calcDelta();
+   /*await*/ affectedDpl.calcDelta();
+   await affectedDpl.save();
    let diff = affectedDpl.delta.map( (val, ind) => oldDelta[ind] - val);
 
    await Dpl.updateOne( { 
@@ -635,12 +644,12 @@ async function editDpl( session, params, createEvent ) {
          absent: params.absent,
          seatings: affectedDpl.seatings,
          delta: affectedDpl.delta,
-         groupSurvey: undefined,   // delete surveys upon change in seating
-         officeSurvey: undefined
+         groupSurvey: null,   // delete surveys upon change in seating
+         officeSurvey: null
       }
    }, { session: session  } );
    let updateObj = {}; 
-   updateObj[`dpls.${params.sec}.officeSurvey`] = undefined;      
+   updateObj[`dpls.${params.sec}.officeSurvey`] = null;      
    await Week.findOneAndUpdate({
          o: params.o, begin: params.begin
    }, updateObj).session(session);
@@ -651,7 +660,7 @@ async function editDpl( session, params, createEvent ) {
          o: params.o,
          s: params.sec,
          weekBegin: params.begin         
-      }, { closed: true, published: false, officeSurvey: undefined }, { session: session  } );
+      }, { closed: true, published: false, officeSurvey: null }, { session: session  } );
       //also in weeks collection!!!
       updateObj = {}; 
       updateObj[`dpls.${params.sec}.closed`] = true;            
@@ -748,7 +757,7 @@ router.post('/:mts', async function(req, res) {
       weekBegin: params.mts*1000,      
    } ).session(session);        
    if ( !affectedDpl ) return false;   
-   affectedDpl.groupSurvey = undefined;
+   affectedDpl.groupSurvey = null;
    await affectedDpl.save();            
 
    let orchestraDoc = await Orchestra.findById(params.o).session(session);                      
