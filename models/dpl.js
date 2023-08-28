@@ -87,7 +87,10 @@ const dplSchema = new Schema({
     start: [ Number ],
     seatings: [ seatingSchema ],
     officeSurvey: officeSurveySchema, // can be undefined
-    groupSurvey: surveySchema // can be undefined
+    groupSurvey: surveySchema, // can be undefined
+
+    version: Number,
+    state: Date
 }, { 
     collection: 'dpls', 
     optimisticConcurrency: true, 
@@ -95,6 +98,7 @@ const dplSchema = new Schema({
     toJSON: {
         transform: function(doc, ret, opt) {
             ret.weekBegin = ret.weekBegin.getTime();
+            ret.state = ret.state.getTime();
 
             return ret;
         }

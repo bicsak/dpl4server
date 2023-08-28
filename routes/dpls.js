@@ -49,8 +49,7 @@ async function editFwDw( session, params, createEvent ) {
 
    let orch = await Orchestra.findById(params.o).session(session);
    let tz = orch.timezone;
-   
-   
+      
    // check if dpl's monday is in the future)
    if ( params.begin <= Date.now() ) return { 
       success: false, 
@@ -68,6 +67,11 @@ async function editFwDw( session, params, createEvent ) {
    if ( !affectedDpl ) return { 
       success: false, 
       reason: 'Dienstplan existiert nicht, abgeschlossen oder Woche nicht zum Einteilen freigegeben'
+   };
+
+   if ( affectedDpl.version > params.ver ) return { 
+      success: false, 
+      reason: 'Es gibt eine neuere Fassung vom Dienstplan. Bitte aktualisiere deine Ansicht'
    };
 
    let lxBegin = DateTime.fromJSDate(affectedDpl.weekBegin, {zone: tz});
@@ -89,12 +93,12 @@ async function editFwDw( session, params, createEvent ) {
          "seatings.d": params.did
       }, { $set: updateOpt } , { session: session  } );*/      
       let seatingIndex = affectedDpl.seatings.findIndex( s => s.d == params.did );
-      console.log('dienst begin ts',  affectedDpl.seatings[seatingIndex].dienstBegin.getTime());
+      //console.log('dienst begin ts',  affectedDpl.seatings[seatingIndex].dienstBegin.getTime());
       let dt = DateTime.fromMillis(
          affectedDpl.seatings[seatingIndex].dienstBegin.getTime(), 
          { zone: tz } );            
-      console.log('Ittvagyok', dt);
-      console.log('Ittvagyok', affectedDpl.seatings[seatingIndex].dienstBegin);
+      //console.log('Ittvagyok', dt);
+      //console.log('Ittvagyok', affectedDpl.seatings[seatingIndex].dienstBegin);
       let ind = dt.weekday - 1;
       let pmOffset = dt.hour >= 12 ? 1 : 0;                      
       if ( seatingIndex < 0 || 
@@ -103,8 +107,14 @@ async function editFwDw( session, params, createEvent ) {
          success: false, reason: 'Eintragen nicht möglich'
       }; else {
          affectedDpl.seatings[seatingIndex].available[params.mi] = !params.erase;
+         affectedDpl.version = affectedDpl.version + 1;
+         affected.state = new Date();
          await affectedDpl.save();
-         returnVal = { success: true };
+         returnVal = { 
+            success: true,
+            ver: affectedDpl.version,
+            state: affectedDpl.state.getTime()
+          };
       } 
       await createEvent({
          weekBegin: affectedDpl.weekBegin,
@@ -179,6 +189,8 @@ async function editFwDw( session, params, createEvent ) {
       }
       let updateOpt = {};
       updateOpt[`absent.${params.col}.${params.mi}`] = params.erase ? 0 : 4;
+      updateOpt.version = affectedDpl.version + 1;
+      updateOpt.state = new Date();
       await Dpl.updateOne( { 
          o: params.o,
          s: params.sec,
@@ -191,7 +203,9 @@ async function editFwDw( session, params, createEvent ) {
       returnVal = { 
          success: true, 
          fwCount: params.erase ? undefined : fwCount + 1,
-         maxFw: params.erase ? undefined : numberOfWeeks * maxFW
+         maxFw: params.erase ? undefined : numberOfWeeks * maxFW,
+         ver: updateOpt.version,
+         state: updateOpt.state.getTime()
       };
       const daysAbbr = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
       await createEvent({
@@ -230,9 +244,14 @@ async function editCorrection( session, params, createEvent) {
       //weekEditable: true, // ???
       s: params.sec 
    }).session(session);
+   if ( !dpl || dpl.version > params.ver ) {
+      return false;
+   }
    let oldCorrection = dpl.correction;
    dpl.correction = params.correction;
-   if (dpl) await dpl.save(); else return false;
+   dpl.state = new Date();
+   dpl.version = dpl.version + 1;
+   await dpl.save();
    // update dz begin in all succeeding weeks
    let difference = params.correction.map((val, index) => oldCorrection[index] - val);
    await recalcNumbersAfterEdit(session, 
@@ -249,7 +268,10 @@ async function editCorrection( session, params, createEvent) {
       user: params.user
    });
 
-   return true;
+   return {
+      ver: dpl.version,
+      state: dpl.state
+   };
 }
 
 async function editSchedulersRemark(session, params, createEvent) {
@@ -263,7 +285,11 @@ async function editSchedulersRemark(session, params, createEvent) {
       weekBegin: params.begin,
       s: params.sec
    }).session(session);
+   if ( !dplDoc || dplDoc.version > params.ver ) {
+      return false;
+   }
    dplDoc.remark = params.remark;
+   dplDoc.state = new Date(); dplDoc.version = dplDoc.version + 1;
    await dplDoc.save();
 
    let orchestraDoc = await Orchestra.findById(params.o).session(session);
@@ -277,7 +303,7 @@ async function editSchedulersRemark(session, params, createEvent) {
       extra: `Dienstplan ${orchestraDoc.sections.get(params.sec).name}: Kommentar des Diensteinteilers bearbeitet ${lxBegin.toFormat("kkkk 'KW' W")}`,
       user: params.user
    });
-   return params.remark;
+   return {ver: dplDoc.version, state: dplDoc.state};
 }
 
 async function voteSurvey(session, params, createEvent ) {
@@ -288,7 +314,8 @@ async function voteSurvey(session, params, createEvent ) {
       s: params.sec,
       weekBegin: params.begin*1000,      
    } ).session(session).populate('p').populate('periodMembers');        
-   if ( !affectedDpl ) return false;
+   if ( !affectedDpl || affectedDpl.version > params.ver ) return false;
+   console.log('Test', affectedDpl.version, params.ver);
    console.log(affectedDpl.p.members);   
    if ( params.office ) {
       // office approval procedure
@@ -349,11 +376,17 @@ async function editDplStatus(session, params, createEvent ) {
       statusCode: 400,
       body: 'Wochenplan nicht gefunden oder nicht editierbar'
    }
-   let dplDoc = await Dpl.findOneAndUpdate( { 
+   let dplDoc = await Dpl.findOne( { 
       o: params.o,
       weekBegin: params.begin,
       s: params.sec
-   }, { closed: closed, published: public }).session(session);
+   }).session(session);
+   if ( dplDoc.version > params.ver ) return {
+      statusCode: 409,
+      body: 'Dienstplan nicht mehr aktuell. Aktualisiere bitte deine Ansicht!'
+   }
+   dplDoc.closed = closed; dplDoc.published = public;
+   await dplDoc.save();
    if ( params.approve ) {
       dplDoc.officeSurvey = {
          timestamp: new Date(),
@@ -405,11 +438,21 @@ router.patch('/:mts', async function(req, res) {
                o: req.authData.o, sec: req.authData.s,
                user: req.authData.pid,
                begin: new Date(req.params.mts * 1000),                              
-               remark: req.body.op == 'replace' ? req.body.value : null
+               remark: req.body.op == 'replace' ? req.body.value : null,
+               ver: req.body.ver
          });                
-         
-         if (req.body.op == 'replace') res.json( { remark: result } ); 
-         else  res.sendStatus( 204 ); 
+         if ( result ) {
+            if (req.body.op == 'replace') res.json( { 
+               remark: req.body.value,
+               ver: result.ver,
+               state: result.state.getTime()
+             } ); 
+            else res.json( {                
+               ver: result.ver,
+               state: result.state.getTime()
+             } );  
+         } else res.status(404).send({
+            message: 'DPL nicht gefunden oder neuere Version vorhanden. Bitte aktualisiere deine Seite!'});
          return;
           
       } else if (req.body.path === '/correction') { 
@@ -419,11 +462,13 @@ router.patch('/:mts', async function(req, res) {
                o: req.authData.o, sec: req.authData.s,
                user: req.authData.pid,
                begin: new Date(req.params.mts * 1000),               
-               correction: req.body.value
+               correction: req.body.value,
+               ver: req.body.ver
             });                        
 
-         res.json( result ? {success: true, correction: req.body.value} :
-            {success: false, reason: 'DB error'} ); 
+         if ( result ) res.json( {success: true, correction: req.body.value, ver: result.ver, state: result.state.getTime()} );
+         else res.status(404).send(
+            { message: 'DPL nicht gefunden oder neuere Version vorhanden. Bitte aktualisiere deine Seite!' } );
          //TODO push-notifications
          return;                        
          
@@ -436,18 +481,17 @@ router.patch('/:mts', async function(req, res) {
 
          try {
             let result = await writeOperation(req.authData.o, editDplStatus, {
-               ...req.body.value,               
+               ...req.body.value,
+               ver: req.body.ver,               
                o: req.authData.o, sec: req.authData.s, user: req.authData.pid,
                begin: new Date(req.params.mts * 1000),                              
             });
             if ( result === true ) res.json(req.body.value);      // request accepted
-            else res.status(result.statusCode).send( result.body ); 
+            else res.status(result.statusCode).send( {message: result.body} ); 
          } catch (err) {
-            res.status(400).send(`Problem during changing state`);            
+            res.status(400).send({message: `Problem during changing state`});            
          }    
-
-         //res.json(req.body.value);
-         // change dpl status; must have scheduler's rights
+         
       } else if (req.body.path == '/survey') {
          if ( req.body.op == 'new') {
             if ( req.authData.r !== 'scheduler' ) { 
@@ -461,15 +505,17 @@ router.patch('/:mts', async function(req, res) {
                   o: req.authData.o,       
                   sec: req.authData.s,
                   begin: req.params.mts,
-                  message: req.body.message,         
+                  message: req.body.message,  
+                  ver: req.body.ver,       
                   user: req.authData.pid,
                   userId: req.authData.user         
                });      
                console.log(`Survey created, result of write operation: ${result}`);       
-               if ( !result ) res.sendStatus(409); else res.json( result );     
+               if ( !result ) res.status(409).send({message: 'DPL existiert nicht oder neuere Version vorhanden. Aktualisiere bitte deine Ansicht!'}); 
+               else res.json( result );     
             }  catch (err) {
                console.log('some error:', err);
-               res.status(409).send(err);
+               res.status(409).send({message: err});
             }
          } else if ( req.body.op == 'del' ) {
             if ( req.authData.r !== 'scheduler' ) { 
@@ -501,15 +547,17 @@ router.patch('/:mts', async function(req, res) {
                   begin: req.params.mts,
                   feedback: req.body.feedback,
                   message: req.body.message,         
+                  ver: req.body.ver,
                   user: req.authData.pid,
                   userId: req.authData.user,
                   office: req.authData.r == 'office'         
                });      
                console.log(`Feedback saved, result of write operation: ${result}`);       
-               if ( !result ) res.sendStatus(409); else res.json( result );     
+               if ( !result ) res.status(409).send({message: 'Dienstplan nicht gefunden oder neuere Version vorhanden. Aktualisiere bitte deine Ansicht!'}); 
+               else res.json( result );     
             }  catch (err) {
                console.log('some error:', err);
-               res.status(409).send(err);
+               res.status(409).send( {message: err} );
             }           
          }         
       } else if (req.body.op == 'delwish' || req.body.op == 'newwish') {
@@ -525,7 +573,7 @@ router.patch('/:mts', async function(req, res) {
                      o: req.authData.o, sec: req.authData.s, prof: req.authData.pid,
                      begin: new Date(req.params.mts * 1000),
                      erase: true, dw: true,
-                     did: req.body.did, mi: req.body.mi                     
+                     did: req.body.did, mi: req.body.mi, ver: req.body.ver                     
                   });                        
       
                res.json( result ); //TODO push-notifications
@@ -537,7 +585,7 @@ router.patch('/:mts', async function(req, res) {
                      o: req.authData.o, sec: req.authData.s, prof: req.authData.pid,
                      begin: new Date(req.params.mts * 1000),
                      erase: true, dw: false,
-                     col: req.body.col, mi: req.body.mi                                          
+                     col: req.body.col, mi: req.body.mi, ver: req.body.ver                                          
                   });                        
       
                res.json( result ); //TODO push-notifications
@@ -551,7 +599,7 @@ router.patch('/:mts', async function(req, res) {
                      o: req.authData.o, sec: req.authData.s, prof: req.authData.pid,
                      begin: new Date(req.params.mts * 1000),
                      erase: false, dw: true,
-                     did: req.body.did, mi: req.body.mi                                          
+                     did: req.body.did, mi: req.body.mi, ver: req.body.ver                                          
                   });                        
       
                res.json(  result ); //TODO push-notifications
@@ -563,7 +611,7 @@ router.patch('/:mts', async function(req, res) {
                      o: req.authData.o, sec: req.authData.s, prof: req.authData.pid,
                      begin: new Date(req.params.mts * 1000),
                      erase: false, dw: false,
-                     col: req.body.col, mi: req.body.mi                                          
+                     col: req.body.col, mi: req.body.mi, ver: req.body.ver                                          
                   });                        
       
                res.json( result ); //TODO push-notifications
@@ -580,7 +628,7 @@ async function createSurvey( session, params, createEvent ) {
       s: params.sec,
       weekBegin: params.begin*1000,      
    } ).session(session).populate('p').populate('periodMembers');        
-   if ( !affectedDpl ) return false;
+   if ( !affectedDpl || affectedDpl.version > params.ver ) return false;
    console.log(affectedDpl.p.members);
    // create survey doc with fields of period.members (profile, row, inactive/pending, no comment, no  timestamp)
    affectedDpl.groupSurvey = {
@@ -621,6 +669,10 @@ async function editDpl( session, params, createEvent ) {
       success: false, 
       reason: 'Dienstplan existiert nicht / nicht editierbar'
    };   
+   if ( affectedDpl.version > params.ver ) return { 
+      success: false, 
+      reason: 'Dienstplan ist nicht mehr aktuell. Bitte aktualisiere deine Ansicht'
+   };   
 
    let oldDelta = affectedDpl.delta;
 
@@ -632,6 +684,8 @@ async function editDpl( session, params, createEvent ) {
       affectedDpl.seatings[i].available = newSeating.available;
    }
    /*await*/ affectedDpl.calcDelta();
+   affectedDpl.version = affectedDpl.version + 1;
+   affectedDpl.state = new Date();
    await affectedDpl.save();
    let diff = affectedDpl.delta.map( (val, ind) => oldDelta[ind] - val);
 
@@ -711,7 +765,7 @@ router.post('/:mts', async function(req, res) {
       o: req.authData.o, 
       sec: req.authData.s,
       user: req.authData.pid,
-      begin: new Date(req.params.mts * 1000)          
+      begin: new Date(req.params.mts * 1000)      
    });      
    console.log(`Dpl successfully updated: ${result}`);      
    
@@ -844,7 +898,9 @@ async function createDpl( session, params, createEvent ) {
       correction: Array(groupSize).fill(0),
       delta: Array(groupSize).fill(0),
       start: lastDplDoc[0] ? lastDplDoc[0].end : Array(groupSize).fill(0), // ha van előző hét, annak a vége, egyébként 0,0,0...
-      seatings: seatings
+      seatings: seatings,
+      version: 1,
+      state: new Date()
    }], { session } );
 
    // create dplmeta doc

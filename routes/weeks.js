@@ -75,6 +75,11 @@ async function editManagersRemark( session, params, createEvent ) {
       o: params.o,
       begin: params.begin
    }, { remark: params.remark }).session(session);
+   let ts = new Date();
+   await Dpl.updateMany( { 
+      o: params.o,
+      w: weekDoc._id
+   }, { state: ts, '$inc': { version: 1 }}).session(session);
    let orchestraDoc = await Orchestra.findById(params.o).session(session);
    let lxBegin = DateTime.fromJSDate(weekDoc.begin, {zone: orchestraDoc. timezone});
    await createEvent({
@@ -126,17 +131,27 @@ async function editInstrumentation( session, params, createEvent ) {
    let dienstDoc = await Dienst.findByIdAndUpdate(params.did, {
       '$set': { 'instrumentation': params.instr }               
    }, { session: session } );    
-   
+   let ts = new Date();
    for (const key in params.instr) {
       if (params.instr.hasOwnProperty(key)) {
-         await Dpl.findOneAndUpdate({
+         let oldDoc = await Dpl.findOneAndUpdate({
             o: params.o,
             s: key,
             w: weekDoc._id,
             'seatings.d': params.did
          }, {
-            'seatings.$.dienstInstr': params.instr[key]
+            'seatings.$.dienstInstr': params.instr[key]            
          }, { session: session } );          
+         if ( oldDoc.seatings.find(s => s.d == params.did).dienstInstr != params.instr[key] ) {
+            await Dpl.findOneAndUpdate({
+               o: params.o,
+               s: key,
+               w: weekDoc._id,               
+            }, {               
+               'state': ts,
+               '$inc': { version: 1}
+            }, { session: session } ); 
+         }
       }
    }
    let orchestraDoc = await Orchestra.findById(params.o).session(session);                      
@@ -210,6 +225,7 @@ async function deleteDienst(session, params, createEvent ) {
     }        
     
     // delete seatings subdocs from all dpls
+    let ts = new Date();
     await Dpl.updateMany({
       o: params.o,
       w: dienstDoc.w
@@ -218,7 +234,9 @@ async function deleteDienst(session, params, createEvent ) {
          seatings: {
             d: params.did
          }
-      }
+      },
+      '$inc': { version: 1},
+      '$set': { state: ts}
     } ).session(session);
 
 
@@ -287,7 +305,8 @@ async function cleanWeek(session, params, createEvent) {
       console.log('deleting dienst with id:', weekDoc.dienst[i]._id);
       await Dienst.findByIdAndRemove(weekDoc.dienst[i]._id, {session: session});                 
                  
-      // delete seatings subdocs from all dpls      
+      // delete seatings subdocs from all dpls
+      
       await Dpl.updateMany({
          o: params.o,
          w: weekDoc._id
@@ -296,9 +315,21 @@ async function cleanWeek(session, params, createEvent) {
             seatings: {
                d: weekDoc.dienst[i]._id
             }
-         }
-      } ).session(session);
+         }         
+      } ).session(session);      
    }
+   let ts = new Date();
+   await Dpl.updateMany({
+      o: params.o,
+      w: weekDoc._id
+   }, {
+      '$inc': {
+         version: 1
+      },
+      '$set': {
+         state: ts
+      }
+   }).session(session);
 
    // delete all dienst from weeks coll   
    weekDoc.dienst = [];
@@ -459,6 +490,7 @@ async function createDienst(session, params, createEvent) {
    }
    
    // add seatings subdocs for all dpls
+   let ts = new Date();
    let dplDocs = await Dpl.find({o: params.o, w: weekDoc._id}).session(session);   
     for (let dpl of dplDocs) {
       //console.log(dpl);
@@ -472,6 +504,8 @@ async function createDienst(session, params, createEvent) {
          dienstInstr: dienstDoc.instrumentation.get(dpl.s)
       });
       dpl.seatings.push( seatingDoc );      
+      dpl.version = dpl.version + 1;
+      dpl.state = ts;
       //console.log(seatingDoc);
       await dpl.save();      
     }
@@ -515,7 +549,6 @@ async function editDienst(session, params, createEvent) {
    await recalcNumbersOnWeightChange(session, params.o, dienstDoc.w, params.did,
       params.weight); 
 
-
    let weekDoc = await Week.findOneAndUpdate( { 
       o: params.o,
       /*begin: new Date(params.mts * 1000),*/
@@ -552,6 +585,7 @@ async function editDienst(session, params, createEvent) {
    await renumberProduction(session, dienstDoc.season, dienstDoc.prod);            
    
    //update all seating docs in all 
+   let ts = new Date();
    let dplDocs = await Dpl.find({o: params.o, w: dienstDoc.w}).session(session);   
     for (let dpl of dplDocs) {
       console.log(dpl.seatings);
@@ -573,7 +607,13 @@ async function editDienst(session, params, createEvent) {
          s: dpl.s,
          'seatings.d': dienstDoc._id
       }, {
-         '$set': { 'seatings.$':  seating}               
+         '$set': { 
+            'seatings.$':  seating,
+            state: ts
+         },
+         '$inc': {
+            version: 1
+         }
       }, { session: session } );
 
       //dpl.seatings.forEach(... remove())

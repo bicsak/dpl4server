@@ -126,8 +126,8 @@ async function createWeekDataRaw (begin /* UNIX ts in Seconds*/, authData, sec) 
    
             dplRaw[dplDocs[i].s] = {
                _id: dplDocs[i]._id,
-               updatedAt: dplDocs[i].updatedAt,
-               version: dplDocs[i].__v,
+               state: dplDocs[i].state.getTime(),
+               version: dplDocs[i].version,
                period: dplDocs[i].p,
                accessAllowed: dplAccess,
                closed: dplDocs[i].closed,

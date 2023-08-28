@@ -652,7 +652,9 @@ async function run(hc) {
               start: Array(newFlPeriods[week.fl_p].members.length).fill(0),
               w: week.id,
               p: newFlPeriods[week.fl_p].newId,
-              periodMembers: newFlPeriods[week.fl_p].members.map( m => m.prof )
+              periodMembers: newFlPeriods[week.fl_p].members.map( m => m.prof ),
+              version: 1,
+              state: new Date()
             } );
             await dpl.save(); 
             week.fl_newid = dpl._id;         
@@ -723,7 +725,9 @@ async function run(hc) {
               start: Array(newFgPeriods[week.fg_p].members.length).fill(0),            
               w: week.id,
               p: newFgPeriods[week.fg_p].newId,
-              periodMembers: newFgPeriods[week.fg_p].members.map( m => m.prof )
+              periodMembers: newFgPeriods[week.fg_p].members.map( m => m.prof ),
+              version: 1,
+              state: new Date()
             } );
             await dpl.save();
             week.fg_newid = dpl._id;         
