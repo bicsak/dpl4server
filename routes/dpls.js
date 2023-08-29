@@ -320,7 +320,7 @@ async function voteSurvey(session, params, createEvent ) {
    if ( params.office ) {
       // office approval procedure
       affectedDpl.officeSurvey.status = params.feedback == 'yes' ? 'confirmed' : 'refused';
-      affectedDpl.officeSurvey.comment = params.message;
+      affectedDpl.officeSurvey.reason = params.message;
       affectedDpl.officeSurvey.timestamp = new Date();
       affectedDpl.officeSurvey.editedBy = params.user;
 
