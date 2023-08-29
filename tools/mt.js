@@ -238,7 +238,8 @@ async function run(hc) {
 
           confirmed: true,
           
-          user: userManager._id,        
+          user: userManager._id,   
+          lastVisitedHome: new Date(0),
 
           email: 'bicsak@gmx.net',
           notifications: n,        
@@ -304,6 +305,7 @@ async function run(hc) {
             confirmed: true,
 
             user: newUser._id,
+            lastVisitedHome: new Date(0),
 
             userFn: currentUser.first_name,
             userSn: currentUser.surname,
@@ -342,6 +344,7 @@ async function run(hc) {
               confirmed: true,
     
               user: newUser._id,
+              lastVisitedHome: new Date(0),
     
               userFn: currentUser.first_name,
               userSn: currentUser.surname,
@@ -411,6 +414,7 @@ async function run(hc) {
             confirmed: true,
 
             user: newUser._id,
+            lastVisitedHome: new Date(0),
 
             userFn: currentUser.first_name,
             userSn: currentUser.surname,
@@ -449,6 +453,7 @@ async function run(hc) {
               confirmed: true,
     
               user: newUser._id,
+              lastVisitedHome: new Date(0),
     
               userFn: currentUser.first_name,
               userSn: currentUser.surname,

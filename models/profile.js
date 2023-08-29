@@ -19,6 +19,8 @@ const profileSchema = new Schema({
 
     user: { type: Schema.Types.ObjectId, ref: 'User' },                    
 
+    lastVisitedHome: Date, // ts for last call for events from this profile
+
     email: String, // only for this profile; can be different from user's email; for notifications (PDF with new DPL etc.)
     notifications: { type: Map, of: Boolean},
     /*possible notification keys:         

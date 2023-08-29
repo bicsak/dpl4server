@@ -1,11 +1,9 @@
 let express = require('express');
 let router = express.Router();
-const mongoose = require( 'mongoose' );
 const app = require('../server');
 
-const DienstExtRef = require('../models/dienst');
 const Event = require('../models/event');
-const Dpl = require('../models/dpl');
+const Profile = require('../models/profile');
 
 const { DateTime } = require("luxon");
 
@@ -41,8 +39,15 @@ router.get('/', async function(req, res) {
           weekBegin: ev.weekBegin.getTime(),
         }
       });
+
+      let profDoc = await Profile.findById(req.authData.pid).session(session);
       //console.log('converted', converted)
-      res.status(200).json(converted);       
+      res.status(200).json({
+        events: converted, 
+        lastVisit: profDoc.lastVisitedHome.getTime()
+      });       
+      profDoc.lastVisitedHome = new Date();
+      await profDoc.save();
     } catch (err) {
       console.log(err);
        res.status(500).send(err.message);
