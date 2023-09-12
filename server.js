@@ -25,6 +25,7 @@ const seasons = require('./routes/seasons.js');
 const profiles = require('./routes/profiles.js');      
 const periods = require('./routes/periods.js');      
 const productions = require('./routes/productions.js');      
+const settings = require('./routes/settings.js');      
 const dienste = require('./routes/dienste.js');      
 const users = require('./routes/users.js');      
 const next = require('./routes/next.js');      
@@ -69,7 +70,8 @@ async function run() {
       app.use('/api/seasons', verifyToken, seasons);            
       app.use('/api/profiles', verifyToken, profiles);            
       app.use('/api/periods', verifyToken, checkPeriodPermission, periods);            
-      app.use('/api/productions', verifyToken, productions);            
+      app.use('/api/productions', verifyToken, productions);    
+      app.use('/api/settings', verifyToken, settings);                    
       app.use('/api/dienste', verifyToken, dienste);            
       app.use('/api/next', verifyToken, next);            
       app.use('/api/events', verifyToken, events);            

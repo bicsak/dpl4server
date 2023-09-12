@@ -201,7 +201,7 @@ async function run(hc) {
         await hsw.save();              
         
         //*********** USERS && PROFILES ******************           
-        let n = {
+        /*let n = {
           comment: false,
           dplNew: false,
           dplFinal: false,
@@ -209,7 +209,7 @@ async function run(hc) {
           dplRejected: false,        
           surveyComplete: false,
           surveyFailed: false
-        };            
+        };            */
 
         let userManager = await User.findOneAndUpdate(
           { email: 'bicsak@gmx.net' },
@@ -242,7 +242,14 @@ async function run(hc) {
           lastVisitedHome: new Date(0),
 
           email: 'bicsak@gmx.net',
-          notifications: n,        
+          notifications: {
+            'commentNew': false,
+            'dplChanged': false,
+            'dplFinal': false
+          },          
+
+          /*email: 'bicsak@gmx.net',
+          notifications: n,        */
 
           userFn: 'Ilya',
           userSn: 'Jossifov',
@@ -307,6 +314,13 @@ async function run(hc) {
             user: newUser._id,
             lastVisitedHome: new Date(0),
 
+            email: currentUser.email,
+            notifications: {
+              'commentNew': false,
+              'dplChanged': false,
+              'dplFinal': false
+            },
+
             userFn: currentUser.first_name,
             userSn: currentUser.surname,
             userBirthday: bd
@@ -345,6 +359,13 @@ async function run(hc) {
     
               user: newUser._id,
               lastVisitedHome: new Date(0),
+
+              email: currentUser.email,
+              notifications: {
+                'commentNew': false,
+                'dplChanged': false,
+                'dplFinal': false
+              },                            
     
               userFn: currentUser.first_name,
               userSn: currentUser.surname,
@@ -416,6 +437,13 @@ async function run(hc) {
             user: newUser._id,
             lastVisitedHome: new Date(0),
 
+            email: currentUser.email,
+            notifications: {
+              'commentNew': false,
+              'dplChanged': false,
+              'dplFinal': false
+            },            
+
             userFn: currentUser.first_name,
             userSn: currentUser.surname,
             userBirthday: bd
@@ -454,6 +482,13 @@ async function run(hc) {
     
               user: newUser._id,
               lastVisitedHome: new Date(0),
+
+              email: currentUser.email,
+              notifications: {
+                'commentNew': false,
+                'dplChanged': false,
+                'dplFinal': false
+              },              
     
               userFn: currentUser.first_name,
               userSn: currentUser.surname,
