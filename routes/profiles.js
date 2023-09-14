@@ -6,6 +6,7 @@ const User = require('../models/user');
 const Period = require('../models/period');
 
 const { writeOperation } = require('../my_modules/orch-lock');
+const { notificationDefaults } = require('../my_modules/notifications');
 
 router.get('/', async function(req, res) { 
     if ( req.query.pending ) {      
@@ -114,6 +115,7 @@ router.get('/', async function(req, res) {
     position: params.position,
     section: params.section,
     role: params.role,    
+    notifications: notificationDefaults[params.role],
     userFn: user.fn,
     userSn: user.sn,
     userBirthday: user.birthday,

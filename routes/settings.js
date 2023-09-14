@@ -1,25 +1,20 @@
 let express = require('express');
 let router = express.Router();
-
+const Profile = require('../models/profile');
+const Orchestra = require('../models/orchestra');
 
 router.get('/', async function(req, res) { 
     try {
-       /*let response = await Profile.find( { o: req.authData.o } );         
-       if ( req.query.full == 'true' ) {      
-          for ( let i = 0; i < response.length; i++ ){        
-             response[i] = await addStat(response[i]);
-          }      
-       } */     
-       //TODO
+       let profDoc = await Profile.findById( req.authData.pid );                            
        response = {
-        fw: 1,
-        email: 'valami',
-        notifications: {
-            commentNew: false,
-            dplChanged: false,
-            dplFinal: false
-        }
+        fw: null,
+        email: profDoc.email,
+        notifications: profDoc.notifications
        };
+       if ( req.authData.r == 'scheduler' ) {
+         let orchDoc = await Orchestra.findById( req.authData.o );                            
+         response.fw = orchDoc.sections.get(req.authData.s).maxFW;
+       }
        res.status(200).json( response );   
     } catch (err) {
        res.status(500).json( { message: err.message } );
@@ -27,7 +22,7 @@ router.get('/', async function(req, res) {
  });
 
 router.patch('/notification', async function(req, res) { 
-   //TODO body: path: 'commentNew' | 'DPLChanged' | 'DPLNew', value: true/false
+   //TODO body: path: 'commentNew' | 'dplChanged' | 'dplNew', value: true/false
    try {
       /*let response = await Season.find( { o: req.authData.o } );         
       if ( req.query.full == 'true' ) {      

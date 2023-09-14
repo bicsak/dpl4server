@@ -12,6 +12,7 @@ const mysql = require( 'mysql' );
 const { MongoClient } = require( 'mongodb' );
 
 const mongoose = require('mongoose');
+const { notificationDefaults } = require('../my_modules/notifications');
 
 //const mongoUri = "mongodb://myUserAdmin:csakMalajDB@127.0.0.1:27017";
 const mongoUri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.js8ztlf.mongodb.net/test`;
@@ -242,11 +243,12 @@ async function run(hc) {
           lastVisitedHome: new Date(0),
 
           email: 'bicsak@gmx.net',
-          notifications: {
+          /*notifications: {
             'commentNew': false,
             'dplChanged': false,
             'dplFinal': false
-          },          
+          },*/
+          notifications: notificationDefaults['office'],
 
           /*email: 'bicsak@gmx.net',
           notifications: n,        */
@@ -315,11 +317,12 @@ async function run(hc) {
             lastVisitedHome: new Date(0),
 
             email: currentUser.email,
-            notifications: {
+            /*notifications: {
               'commentNew': false,
               'dplChanged': false,
               'dplFinal': false
-            },
+            },*/
+            notifications: notificationDefaults[r],
 
             userFn: currentUser.first_name,
             userSn: currentUser.surname,
@@ -361,11 +364,12 @@ async function run(hc) {
               lastVisitedHome: new Date(0),
 
               email: currentUser.email,
-              notifications: {
+              /*notifications: {
                 'commentNew': false,
                 'dplChanged': false,
                 'dplFinal': false
-              },                            
+              },*/
+              notifications: notificationDefaults['scheduler'],                            
     
               userFn: currentUser.first_name,
               userSn: currentUser.surname,
@@ -438,11 +442,12 @@ async function run(hc) {
             lastVisitedHome: new Date(0),
 
             email: currentUser.email,
-            notifications: {
+            /*notifications: {
               'commentNew': false,
               'dplChanged': false,
               'dplFinal': false
-            },            
+            },*/
+            notifications: notificationDefaults['musician'],            
 
             userFn: currentUser.first_name,
             userSn: currentUser.surname,
@@ -484,11 +489,12 @@ async function run(hc) {
               lastVisitedHome: new Date(0),
 
               email: currentUser.email,
-              notifications: {
+              /*notifications: {
                 'commentNew': false,
                 'dplChanged': false,
                 'dplFinal': false
-              },              
+              },*/
+              notifications: notificationDefaults['scheduler'],              
     
               userFn: currentUser.first_name,
               userSn: currentUser.surname,
