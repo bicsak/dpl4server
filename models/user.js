@@ -85,7 +85,8 @@ userSchema.virtual('isLocked').get(function() {
 
 userSchema.methods.comparePassword = function(candidatePassword, cb) { 
     bcrypt.compare(candidatePassword, this.pw, function(err, isMatch) { 
-        if (err) return cb(err); cb(null, isMatch); });
+        if (err) return cb(err); cb(null, isMatch); 
+    });
 };
 
 userSchema.methods.incLoginAttempts = function(cb) { 

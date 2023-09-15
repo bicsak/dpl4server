@@ -2,6 +2,8 @@ let express = require('express');
 let router = express.Router();
 const Profile = require('../models/profile');
 const Orchestra = require('../models/orchestra');
+const User = require('../models/user');
+const bcrypt = require('bcryptjs');
 
 router.get('/', async function(req, res) { 
     try {
@@ -22,17 +24,17 @@ router.get('/', async function(req, res) {
  });
 
 router.patch('/notification', async function(req, res) { 
-   //TODO body: path: 'commentNew' | 'dplChanged' | 'dplNew', value: true/false
+   // body: path: 'commentNew' | 'dplChanged' | 'dplNew' etc. value: true/false
    try {
-      /*let response = await Season.find( { o: req.authData.o } );         
-      if ( req.query.full == 'true' ) {      
-         for ( let i = 0; i < response.length; i++ ){        
-            response[i] = await addStat(response[i]);
-         }      
-      } */     
+      let path = 'notifications.'+req.body.path;
+      let updateObj = {};
+      updateObj[path] = req.body.value;
+      await Profile.findByIdAndUpdate( req.authData.pid, {
+         $set: updateObj
+      } );               
       console.log('patch request notifications', req.body.path, req.body.value);
       response = {
-       value: req.body.value // TODO save it really into Db
+       value: req.body.value 
       };
       res.status(200).json( response );   
    } catch (err) {
@@ -41,15 +43,13 @@ router.patch('/notification', async function(req, res) {
 });
 
 router.patch('/email', async function(req, res) {    
-   try {
-      /*let response = await Season.find( { o: req.authData.o } );         
-      if ( req.query.full == 'true' ) {      
-         for ( let i = 0; i < response.length; i++ ){        
-            response[i] = await addStat(response[i]);
-         }      
-      } */     
+   try {      
+      console.log(req.body);
+      await Profile.findByIdAndUpdate( req.authData.pid, {
+         email: req.body.email
+      } );      
       response = {
-       email: '' // TODO
+       email: req.body.email
       };
       res.status(200).json( response );   
    } catch (err) {
@@ -58,14 +58,27 @@ router.patch('/email', async function(req, res) {
 });
 
 router.patch('/pw', async function(req, res) {    
-   try {
-      /*let response = await Season.find( { o: req.authData.o } );         
-      if ( req.query.full == 'true' ) {      
-         for ( let i = 0; i < response.length; i++ ){        
-            response[i] = await addStat(response[i]);
-         }      
-      } */           
-      res.status(200)/*.json( response )*/;   
+   try {      
+      let userDoc = await User.findById(req.authData.user);      
+      userDoc.comparePassword(req.body.oldPassword, (err, isMatch) => {         
+         if ( !err && isMatch ) {
+            // old password was correct            
+            bcrypt.hash(req.body.password, 10, async (err, hash) => {
+               if (err) {
+                 console.log("bcrypt error");
+               } else {            
+                 await User.findByIdAndUpdate(req.authData.user, {
+                  pw: hash
+                 });
+               }
+             });    
+             res.status(200).json({});   
+         } else {            
+            // old password is wrong
+            res.status(403).json( { message: 'Not authenticated' } );
+         }
+      } );        
+      
    } catch (err) {
       res.status(500).json( { message: err.message } );
    }
@@ -73,14 +86,14 @@ router.patch('/pw', async function(req, res) {
 
 router.patch('/fw', async function(req, res) {    
    try {
-      /*let response = await Season.find( { o: req.authData.o } );         
-      if ( req.query.full == 'true' ) {      
-         for ( let i = 0; i < response.length; i++ ){        
-            response[i] = await addStat(response[i]);
-         }      
-      } */     
+      let path = 'sections.'+req.authData.s+'.maxFW';
+      let updateObj = {};
+      updateObj[path] = req.body.fw;
+      await Orchestra.findByIdAndUpdate( req.authData.o, {
+         $set: updateObj
+      } );          
       response = {
-       fw: 0 // TODO
+       fw: req.body.fw
       };
       res.status(200).json( response );   
    } catch (err) {
