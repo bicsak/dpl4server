@@ -1,10 +1,14 @@
 let express = require('express');
 let router = express.Router();
 
+const nodemailer = require('nodemailer');
+const Email = require('email-templates');
+
 const { writeOperation } = require('../my_modules/orch-lock');
 const mongoose = require('mongoose');
 const Orchestra = require('../models/orchestra');
 const Dpl = require('../models/dpl');
+const Profile = require('../models/profile');
 const User = require('../models/user');
 const DplMeta = require('../models/dplmeta');
 
@@ -14,6 +18,28 @@ function abbrev(message, length) {
     return message.substring(0, Math.min(length,message.length))
     + (message.length > length ? '...' : '');
 }
+
+const transporter = nodemailer.createTransport({                
+    host: process.env.MAIL_HOST,                        
+    port: process.env.MAIL_PORT,
+
+    secure: false, // upgrade later with STARTTLS
+    auth: {                          
+      user: process.env.MAIL_USER,                          
+      pass: process.env.MAIL_PASS
+    },
+    tls:{
+        rejectUnauthorized:false  // if on local
+    }
+});
+
+const email = new Email({
+    message: { from: '"Orchesterdienstplan" no-reply@odp.bicsak.net' },
+    // uncomment below to send emails in development/test env:
+    //send: true,
+    transport: transporter                
+});     
+
 
 /***********
  * Handles following cases
@@ -149,8 +175,99 @@ router.get('/:dplId', async function(req, res) {
     };
     meta.comments.push( comment )
     await meta.save();
-    comment.timestamp = comment.timestamp.getTime();    
+
     let dtBegin = DateTime.fromJSDate(meta.dpl.weekBegin, {zone: orchestraDoc.timezone});
+
+    // Send emails
+    // Step 1: get scheduler's profile id (from profiles collection)
+    let schedulerProfDoc = await Profile.findOne({
+        o: params.o,
+        sec: params.sec,
+        role: 'scheduler'
+    }).session(session);
+    // Step 2: get all profile docs whith ids for the group (dplMeta's periodmembers array) and scheduler where userId field not equal to comment's author's userId and commentnotification is true
+    let profiles = await Profile.find({
+        o: params.o,
+        sec: params.sec,
+        _id: { $in: meta.periodMembers.map( m => m.prof).concat(schedulerProfDoc._id) },
+        user: { $ne: params.user },
+        'notification.commentNew' : true
+    }).session(session);        
+
+    //Step 3: send emails in loop for all profiles in the list
+    for ( let i = 0; i < profiles.length; i++ ) {
+        email.send({
+            template: 'commentnew',
+            message: { to: `"${profiles[i].userFn} ${profiles[i].userSn}" ${profiles[i].email}` },
+            locals: {
+                name: profiles[i].userFn, // recipient of e-mail ('Cornelia')
+                link: `${req.get('origin')}/${profiles[i].role == 'scheduler' ? 'scheduler' : 'musician'}/week?profId=${profiles[i]._id}&mts=${dtBegin.toSeconds()}`,                                
+                author: params.role == 'scheduler' ? 'Diensteinteiler' : `${userDoc.fn} ${userDoc.sn}`,
+                instrument: orchestraDoc.sections.get(params.sec).name,
+                kw: dtBegin.toFormat("kkkk 'KW' W"),
+                period: '01.01.01-07.01.01', //TODO
+                comment: params.message, 
+                orchestra: orchestraDoc.code, // abbrev for orch ('HSW')
+                scheduler: profiles[i].role == 'scheduler'
+            }
+        }).then(console.log).catch(console.error);
+    }    
+
+/*
+Render a template for a single email or render multiple (having only loaded the template once) using Promises
+
+var path           = require('path');
+var templateDir   = path.join(__dirname, 'emails', 'commentnew');
+var EmailTemplate = require('email-templates').EmailTemplate
+//var EmailTemplate = Email.EmailTemplate;
+
+var template = new EmailTemplate(templateDir);
+let users = profiles.map( p => {
+    return {
+        name: p.userFn, // recipient of e-mail ('Cornelia')
+        link: 'valami', // TODO `${req.get('origin')}/resetpw?id=${userDoc.id}&token=${token}`,
+        author: params.role == 'scheduler' ? 'Diensteinteiler' : `${userDoc.fn} ${userDoc.sn}`,
+        instrument: orchestraDoc.sections.get(params.sec).name,
+        kw: dtBegin.toFormat("kkkk 'KW' W"),
+        period: '01.01.01-07.01.01', //TODO
+        comment: params.message, 
+        orchestra: orchestraDoc.code, // abbrev for orch ('HSW')
+        scheduler: profDoc.role == 'scheduler'
+    }
+});
+
+let users = [
+  {
+    email: 'pappa.pizza@spaghetti.com',
+    name: {
+      first: 'Pappa',
+      last: 'Pizza'
+    }
+  },
+  {
+    email: 'mister.geppetto@spaghetti.com',
+    name: {
+      first: 'Mister',
+      last: 'Geppetto'
+    }
+  }
+]
+
+let templates = users.map(user => {
+  return template.render(user)
+});
+
+Promise.all(templates)
+  .then(function (results) {
+    console.log(results[0].html)
+    console.log(results[0].text)
+    console.log(results[0].subject)
+    console.log(results[1].html)
+    console.log(results[1].text)
+    console.log(results[1].subject)
+  });*/
+
+    comment.timestamp = comment.timestamp.getTime();        
     await createEvent({
         weekBegin: meta.dpl.weekBegin, 
         sec: meta.dpl.s, profiles: meta.dpl.periodMembers, entity: "comment", action: "new", 

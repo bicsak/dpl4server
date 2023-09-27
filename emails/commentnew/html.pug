@@ -1,5 +1,24 @@
-p Hallo #{name},
-p Du hast dich eben für die Benutzung 
-| der ODP App registriert. Um den Vorgang abzuschließen, bestätige bitte deine Email-adresse 
-| unter folgendem Link: #{link}
-p Falls du dich nicht registriert hast, betrachte diese E-Mail als gegenstandlos.
+if  scheduler
+  p Liebe/r Diensteinteiler/in,
+else
+  p Hallo #{name},
+p 
+  strong Es gibt einen neuen Komentar von #{author} im Dienstplan (#{orchestra}) für #{instrument}.
+p #{author} hat zum Diensplan für die Kalenderwoche #{kw} (#{period}) folgenden Kommentar hinzugefügt:
+div
+  i
+    strong #{comment}
+div(style='text-align: center;') Hier geht es zum Dienstplan mit allen Informationen: 
+  table
+    tr
+      td
+        a(href=link) Zum Dienstplan
+hr
+table 
+  tr 
+    td
+      img(src="cid:logo", alt="ODP")
+    td Das ist eine automatisch generierte Nachricht. 
+| Wenn du in der Zukunft keine E-Mails von der ODP App erhalten wills...
+p 
+  a(href="https://odp.bicsak.net") &#9838; odp.&#8492;icsak.net &#9836;

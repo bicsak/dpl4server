@@ -201,16 +201,7 @@ async function run(hc) {
         const hsw = new Orchestra( orchConfig );
         await hsw.save();              
         
-        //*********** USERS && PROFILES ******************           
-        /*let n = {
-          comment: false,
-          dplNew: false,
-          dplFinal: false,
-          dplChanged: false,
-          dplRejected: false,        
-          surveyComplete: false,
-          surveyFailed: false
-        };            */
+        //*********** USERS && PROFILES ******************                   
 
         let userManager = await User.findOneAndUpdate(
           { email: 'bicsak@gmx.net' },
@@ -242,16 +233,8 @@ async function run(hc) {
           user: userManager._id,   
           lastVisitedHome: new Date(0),
 
-          email: 'bicsak@gmx.net',
-          /*notifications: {
-            'commentNew': false,
-            'dplChanged': false,
-            'dplFinal': false
-          },*/
-          notifications: notificationDefaults['office'],
-
-          /*email: 'bicsak@gmx.net',
-          notifications: n,        */
+          email: 'bicsak@gmx.net',          
+          notifications: notificationDefaults['office'],         
 
           userFn: 'Ilya',
           userSn: 'Jossifov',
@@ -316,12 +299,7 @@ async function run(hc) {
             user: newUser._id,
             lastVisitedHome: new Date(0),
 
-            email: currentUser.email,
-            /*notifications: {
-              'commentNew': false,
-              'dplChanged': false,
-              'dplFinal': false
-            },*/
+            email: /*currentUser.email*/ 'bicsak@gmx.net',            
             notifications: notificationDefaults[r],
 
             userFn: currentUser.first_name,
@@ -363,12 +341,7 @@ async function run(hc) {
               user: newUser._id,
               lastVisitedHome: new Date(0),
 
-              email: currentUser.email,
-              /*notifications: {
-                'commentNew': false,
-                'dplChanged': false,
-                'dplFinal': false
-              },*/
+              email: /*currentUser.email*/ 'bicsak@gmx.net',              
               notifications: notificationDefaults['scheduler'],                            
     
               userFn: currentUser.first_name,
@@ -441,12 +414,7 @@ async function run(hc) {
             user: newUser._id,
             lastVisitedHome: new Date(0),
 
-            email: currentUser.email,
-            /*notifications: {
-              'commentNew': false,
-              'dplChanged': false,
-              'dplFinal': false
-            },*/
+            email: /*currentUser.email*/ 'bicsak@gmx.net',            
             notifications: notificationDefaults['musician'],            
 
             userFn: currentUser.first_name,
@@ -488,12 +456,7 @@ async function run(hc) {
               user: newUser._id,
               lastVisitedHome: new Date(0),
 
-              email: currentUser.email,
-              /*notifications: {
-                'commentNew': false,
-                'dplChanged': false,
-                'dplFinal': false
-              },*/
+              email: /*currentUser.email*/ 'bicsak@gmx.net',              
               notifications: notificationDefaults['scheduler'],              
     
               userFn: currentUser.first_name,
