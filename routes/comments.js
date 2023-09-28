@@ -37,7 +37,12 @@ const email = new Email({
     message: { from: '"Orchesterdienstplan" no-reply@odp.bicsak.net' },
     // uncomment below to send emails in development/test env:
     //send: true,
-    transport: transporter                
+    transport: transporter,
+    /*attachments: [{
+        filename: 'favicon-32x32.png',
+        path: '../img/favicon-32x32.png',
+        cid: 'logo' //same cid value as in the html img src
+    }]*/                
 });     
 
 
@@ -177,6 +182,7 @@ router.get('/:dplId', async function(req, res) {
     await meta.save();
 
     let dtBegin = DateTime.fromJSDate(meta.dpl.weekBegin, {zone: orchestraDoc.timezone});
+    let dtEnd = dtBegin.plus({day: 7});
 
     // Send emails
     // Step 1: get scheduler's profile id (from profiles collection)
@@ -194,21 +200,38 @@ router.get('/:dplId', async function(req, res) {
         'notification.commentNew' : true
     }).session(session);        
 
+    /*
+    $dplColor = "#e3f2fd";    
+    $themeColours = array(
+      '#ffc266', 
+      '#ffb3ff', 
+      '#ff9999', 
+      '#53c68c',
+      '#66ccff',
+      '#9966ff',
+      '#666699',
+      '#a3a3c2',
+      '#00ffff'
+    );*/
+
+    // TODO embedded image attachment (logo)
+
     //Step 3: send emails in loop for all profiles in the list
-    for ( let i = 0; i < profiles.length; i++ ) {
+    for ( let i = 0; i < profiles.length; i++ ) {                
         email.send({
             template: 'commentnew',
             message: { to: `"${profiles[i].userFn} ${profiles[i].userSn}" ${profiles[i].email}` },
             locals: {
                 name: profiles[i].userFn, // recipient of e-mail ('Cornelia')
-                link: `${req.get('origin')}/${profiles[i].role == 'scheduler' ? 'scheduler' : 'musician'}/week?profId=${profiles[i]._id}&mts=${dtBegin.toSeconds()}`,                                
-                author: params.role == 'scheduler' ? 'Diensteinteiler' : `${userDoc.fn} ${userDoc.sn}`,
+                link: `${params.origin}/${profiles[i].role == 'scheduler' ? 'scheduler' : 'musician'}/week?profId=${profiles[i]._id}&mts=${dtBegin.toSeconds()}`,                                
+                author: params.role == 'scheduler' ? 'Dein/e DiensteinteilerIn' : `${userDoc.fn} ${userDoc.sn}`,
                 instrument: orchestraDoc.sections.get(params.sec).name,
                 kw: dtBegin.toFormat("kkkk 'KW' W"),
-                period: '01.01.01-07.01.01', //TODO
+                period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`, //TODO        
                 comment: params.message, 
                 orchestra: orchestraDoc.code, // abbrev for orch ('HSW')
-                scheduler: profiles[i].role == 'scheduler'
+                scheduler: profiles[i].role == 'scheduler',
+                rowAuthor: row                
             }
         }).then(console.log).catch(console.error);
     }    
@@ -282,6 +305,7 @@ Promise.all(templates)
 
  router.post('/:dplId', async function(req, res) {      
     let result = await writeOperation( req.authData.o, createComment, {
+        origin: req.get('origin'),
         message: req.body.message, 
         o: req.authData.o, 
         prof: req.authData.pid,
