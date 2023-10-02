@@ -1,3 +1,4 @@
+const path = require('node:path');
 let express = require('express');
 let router = express.Router();
 
@@ -38,11 +39,12 @@ const email = new Email({
     // uncomment below to send emails in development/test env:
     //send: true,
     transport: transporter,
+    /* attachment for every e-mail globally */
     /*attachments: [{
         filename: 'favicon-32x32.png',
-        path: '../img/favicon-32x32.png',
+        path: '../favicon-32x32.png',
         cid: 'logo' //same cid value as in the html img src
-    }]*/                
+    }]*/
 });     
 
 
@@ -220,7 +222,14 @@ router.get('/:dplId', async function(req, res) {
     for ( let i = 0; i < profiles.length; i++ ) {                
         email.send({
             template: 'commentnew',
-            message: { to: `"${profiles[i].userFn} ${profiles[i].userSn}" ${profiles[i].email}` },
+            message: { 
+                to: `"${profiles[i].userFn} ${profiles[i].userSn}" ${profiles[i].email}`, 
+                attachments: [{
+                    filename: 'favicon-32x32.png',
+                    path: path.join(__dirname, '..') + '/favicon-32x32.png',
+                    cid: 'logo' //same cid value as in the html img src
+                }]
+            },
             locals: {
                 name: profiles[i].userFn, // recipient of e-mail ('Cornelia')
                 link: `${params.origin}/${profiles[i].role == 'scheduler' ? 'scheduler' : 'musician'}/week?profId=${profiles[i]._id}&mts=${dtBegin.toSeconds()}`,                                
@@ -233,7 +242,7 @@ router.get('/:dplId', async function(req, res) {
                 scheduler: profiles[i].role == 'scheduler',
                 rowAuthor: row                
             }
-        }).then(console.log).catch(console.error);
+        })/*.then(console.log)*/.catch(console.error);
     }    
 
 /*
