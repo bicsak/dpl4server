@@ -14,6 +14,7 @@ const productionSchema = new Schema({
             extra: String // "3. auch Picc." / "E.H" etc.
         })
     }, // template instrumentation. Dienst-Besetzung kann abweichen!
+    // TODO weight: Number, // template weight. only for generating new "dienst". Each Dienst can separately overwrite weight
     firstDienst: { type: Schema.Types.ObjectId, ref: 'DienstExtRef' },
     lastDienst: { type: Schema.Types.ObjectId, ref: 'DienstExtRef' },    
     duration: Number // optional, only if duration is specified for this prod

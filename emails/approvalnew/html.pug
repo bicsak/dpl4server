@@ -6,7 +6,8 @@ html
     title Genehmigungsantrag
   body(bgcolor=dplColor style=`background-color: ${dplColor}; font-size: 12px;`)
     p Hallo #{name},
-    p Ein abgeschlossener Dienstplanentwurf von der Fachgruppe #{section} im #{orchestra} für die Woche #{kw} (#{period}) ist vom Diensteinteiler veröffentlicht und zur Genehmigung vom Büro eingereicht worden.
+    p 
+      strong Ein abgeschlossener Dienstplanentwurf der Fachgruppe #{instrument} für die Kalenderwoche #{kw} (#{period}) ist vom Diensteinteiler veröffentlicht und zur Genehmigung vom Büro eingereicht worden.
     p Bitte stimme mit Ja oder Nein (inkl. Begründung) über den Vorschlag ab. 
         span Bei positiver Rückmeldung werden die fertigen Dienstpläne automatisch rausgeschickt
     div(style='text-align: center;') Hier geht es zum Dienstplan mit allen Informationen: 
@@ -15,6 +16,7 @@ html
           td(bgcolor=colorPrimary style=`background-color: ${colorPrimary}; border-color: #4c5764;border: 2px solid #ffffff;padding: 10px;text-align: center;`)
             a(href=link style='display: block; color: #000000; font-size: 12px; text-decoration: none; text-transform: uppercase;') Zum Dienstplan
     hr
+    p(style='text-align: center;font-weight: bold') #{orchestraFull}    
     table 
       tr 
         td(style='padding: 10px;')

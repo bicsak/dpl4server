@@ -1,15 +1,48 @@
+const path = require('node:path');
 let express = require('express');
 let router = express.Router();
 const mongoose = require( 'mongoose' );
+
+const nodemailer = require('nodemailer');
+const Email = require('email-templates');
 
 const { writeOperation } = require('../my_modules/orch-lock');
 const { createWeekDataRaw } = require('../my_modules/week-data-raw');
 
 const Orchestra = require('../models/orchestra');
+const Profile = require('../models/profile');
 const Week = require('../models/week');
 const Dpl = require('../models/dpl');
 const Dplmeta = require('../models/dplmeta');
 const { DateTime } = require('luxon');
+
+const transporter = nodemailer.createTransport({                
+   host: process.env.MAIL_HOST,                        
+   port: process.env.MAIL_PORT,
+
+   secure: false, // upgrade later with STARTTLS
+   auth: {                          
+     user: process.env.MAIL_USER,                          
+     pass: process.env.MAIL_PASS
+   },
+   tls:{
+       rejectUnauthorized:false  // if on local
+   }
+});
+
+const email = new Email({
+   message: { from: '"Orchesterdienstplan" no-reply@odp.bicsak.net' },
+   // uncomment below to send emails in development/test env:
+   //send: true,
+   transport: transporter,
+   /* attachment for every e-mail globally */
+   /*attachments: [{
+       filename: 'favicon-32x32.png',
+       path: '../favicon-32x32.png',
+       cid: 'logo' //same cid value as in the html img src
+   }]*/
+});     
+
 
 /***********
  * Handles following cases
@@ -307,16 +340,18 @@ async function editSchedulersRemark(session, params, createEvent) {
 }
 
 async function voteSurvey(session, params, createEvent ) {
-   console.log('transaction fn voteSurvey');
-   console.log(params);
+   //console.log('transaction fn voteSurvey');
+   //console.log(params);
+   let orchestraDoc = await Orchestra.findById(params.o).session(session);                      
    let affectedDpl = await Dpl.findOne( {
       o: params.o,
       s: params.sec,
       weekBegin: params.begin*1000,      
    } ).session(session).populate('p').populate('periodMembers');        
    if ( !affectedDpl || affectedDpl.version > params.ver ) return false;
-   console.log('Test', affectedDpl.version, params.ver);
-   console.log(affectedDpl.p.members);   
+   //console.log('Test', affectedDpl.version, params.ver);
+   //console.log(affectedDpl.p.members);   
+   console.log(affectedDpl);
    if ( params.office ) {
       // office approval procedure
       affectedDpl.officeSurvey.status = params.feedback == 'yes' ? 'confirmed' : 'refused';
@@ -349,6 +384,77 @@ async function voteSurvey(session, params, createEvent ) {
       user: params.user
    });*/
    //return affectedDpl.groupSurvey;   
+
+   let dtBegin = DateTime.fromMillis(params.begin*1000, {zone: orchestraDoc.timezone});
+   let dtEnd = dtBegin.plus({day: 7});
+   if ( params.office && params.feedback != 'yes' ) {
+      console.log('send email to scheduler...');
+      let schedulerProfile = await Profile.findOne({
+         o: params.o,
+         role: 'scheduler',
+         section: params.sec,
+         'notifications.dplRejected': true
+      }).session(session);
+      if ( schedulerProfile ) {      
+         email.send({
+            template: 'dplrejected',
+            message: { 
+               to: `"${schedulerProfile.userFn} ${schedulerProfile.userSn}" ${schedulerProfile.email}`, 
+               attachments: [{
+                  filename: 'favicon-32x32.png',
+                  path: path.join(__dirname, '..') + '/favicon-32x32.png',
+                  cid: 'logo'
+               }]
+            },
+            locals: {
+               link: `${params.origin}/scheduler/week?profId=${schedulerProfile._id}&mts=${params.begin}`,                                               
+               instrument: orchestraDoc.sections.get(params.sec).name,
+               kw: dtBegin.toFormat("W"),
+               period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,        
+               reason: params.message, 
+               orchestra: orchestraDoc.code,
+               orchestraFull: orchestraDoc.fullName,                              
+            }
+         }).catch(console.error);
+      }
+   }
+   if ( !params.office && params.feedback != 'yes' ) {
+      console.log('send email to scheduler...');
+      let schedulerProfile = await Profile.findOne({
+         o: params.o,
+         role: 'scheduler',
+         section: params.sec,
+         'notifications.surveyFailed': true
+      }).session(session);
+      if ( schedulerProfile ) { 
+         let memberSubdoc = affectedDpl.periodMembers.find( p => p._id == params.user);
+         let memberRow = affectedDpl.periodMembers.findIndex( p => p._id == params.user);
+         email.send({
+            template: 'surveydenied',
+            message: { 
+               to: `"${schedulerProfile.userFn} ${schedulerProfile.userSn}" ${schedulerProfile.email}`, 
+               attachments: [{
+                  filename: 'favicon-32x32.png',
+                  path: path.join(__dirname, '..') + '/favicon-32x32.png',
+                  cid: 'logo'
+               }]
+            },
+            locals: {
+               link: `${params.origin}/scheduler/week?profId=${schedulerProfile._id}&mts=${params.begin}`,                                               
+               instrument: orchestraDoc.sections.get(params.sec).name,
+               kw: dtBegin.toFormat("W"),
+               period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,
+               member: `${memberSubdoc.userFn} ${memberSubdoc.userSn}`,
+               rowMember: memberRow,
+               reason: params.message, 
+               orchestra: orchestraDoc.code,
+               orchestraFull: orchestraDoc.fullName,                              
+            }
+         }).catch(console.error);
+      }
+
+   }
+
    return {
       surveyAnswer: params.feedback,
       surveyComment: params.message
@@ -387,6 +493,9 @@ async function editDplStatus(session, params, createEvent ) {
    }
    dplDoc.closed = closed; dplDoc.published = public;
    await dplDoc.save();
+   let orchestraDoc = await Orchestra.findById(params.o).session(session);
+   let lxBegin = DateTime.fromJSDate(dplDoc.weekBegin, {zone: orchestraDoc.timezone});   
+   let lxEnd = lxBegin.plus({day: 7});
    if ( params.approve ) {
       dplDoc.officeSurvey = {
          timestamp: new Date(),
@@ -400,6 +509,35 @@ async function editDplStatus(session, params, createEvent ) {
       await Week.findOneAndUpdate({
          o: params.o, begin: params.begin
       }, updateObj).session(session);
+      /* send emails for all office users */ 
+      let officeProfiles = await Profile.find( {
+         o: params.o,
+         role: 'office',
+         'notifications.approvalNew': true
+      }).session(session);
+      for ( let i = 0; i < officeProfiles.length; i++ ) {
+         email.send({
+            template: 'approvalnew',
+            message: { 
+               to: `"${officeProfiles[i].userFn} ${officeProfiles[i].userSn}" ${officeProfiles[i].email}`, 
+               attachments: [{
+                  filename: 'favicon-32x32.png',
+                  path: path.join(__dirname, '..') + '/favicon-32x32.png',
+                  cid: 'logo'
+               }]
+            },
+            locals: {
+               name: officeProfiles[i].userFn,
+               link: `${params.origin}/office/week?profId=${officeProfiles[i]._id}&mts=${params.begin}`,                                               
+               instrument: orchestraDoc.sections.get(params.sec).name,
+               kw: lxBegin.toFormat("W"),
+               period: `${lxBegin.toFormat('dd.MM.yyyy')}-${lxEnd.toFormat('dd.MM.yyyy')}`,                              
+               orchestra: orchestraDoc.code,
+               orchestraFull: orchestraDoc.fullName,                              
+            }
+         }).catch(console.error);
+
+      }
    }
    if ( params.status != 'public' ) {
       dplDoc.officeSurvey = null; await dplDoc.save();
@@ -412,8 +550,7 @@ async function editDplStatus(session, params, createEvent ) {
    if ( params.status != 'closed' ) {
       dplDoc.groupSurvey = null; await dplDoc.save();
    }
-   let orchestraDoc = await Orchestra.findById(params.o).session(session);
-   let lxBegin = DateTime.fromJSDate(dplDoc.weekBegin, {zone: orchestraDoc.timezone});   
+   
    await createEvent({
       weekBegin: params.begin, 
       sec: params.sec, 
@@ -550,7 +687,8 @@ router.patch('/:mts', async function(req, res) {
                   ver: req.body.ver,
                   user: req.authData.pid,
                   userId: req.authData.user,
-                  office: req.authData.r == 'office'         
+                  office: req.authData.r == 'office',
+                  origin: req.get('origin')       
                });      
                console.log(`Feedback saved, result of write operation: ${result}`);       
                if ( !result ) res.status(409).send({message: 'Dienstplan nicht gefunden oder neuere Version vorhanden. Aktualisiere bitte deine Ansicht!'}); 

@@ -191,15 +191,16 @@ router.get('/:dplId', async function(req, res) {
     let schedulerProfDoc = await Profile.findOne({
         o: params.o,
         sec: params.sec,
-        role: 'scheduler'
+        role: 'scheduler',
+        'notifications.commentNew': true
     }).session(session);
     // Step 2: get all profile docs whith ids for the group (dplMeta's periodmembers array) and scheduler where userId field not equal to comment's author's userId and commentnotification is true
     let profiles = await Profile.find({
         o: params.o,
         sec: params.sec,
-        _id: { $in: meta.periodMembers.map( m => m.prof).concat(schedulerProfDoc._id) },
+        _id: { $in: meta.periodMembers.map( m => m.prof).concat(schedulerProfDoc?._id) },
         user: { $ne: params.user },
-        'notification.commentNew' : true
+        'notifications.commentNew' : true
     }).session(session);        
 
     /*
@@ -235,10 +236,11 @@ router.get('/:dplId', async function(req, res) {
                 link: `${params.origin}/${profiles[i].role == 'scheduler' ? 'scheduler' : 'musician'}/week?profId=${profiles[i]._id}&mts=${dtBegin.toSeconds()}`,                                
                 author: params.role == 'scheduler' ? 'Dein/e DiensteinteilerIn' : `${userDoc.fn} ${userDoc.sn}`,
                 instrument: orchestraDoc.sections.get(params.sec).name,
-                kw: dtBegin.toFormat("kkkk 'KW' W"),
+                kw: dtBegin.toFormat("W"),
                 period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`, //TODO        
                 comment: params.message, 
-                orchestra: orchestraDoc.code, // abbrev for orch ('HSW')
+                orchestra: orchestraDoc.code,
+                orchestraFull: orchestraDoc.fullName,
                 scheduler: profiles[i].role == 'scheduler',
                 rowAuthor: row                
             }

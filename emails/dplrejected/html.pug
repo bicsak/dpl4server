@@ -6,11 +6,18 @@ html
     title Dienstplanvorschlag abgelehnt
   body(bgcolor=dplColor style=`background-color: ${dplColor}; font-size: 12px;`)
     p Liebe/r DiensteinteilerIn,
-    p Das Orchesterbüro hat den eingereichten Dienstplan von #{instrument} im #{orchestra} für die Woche #{kw} (#{period}) mit folgender Begründung abgelehnt:
-    p #{reason}
-    p Um alle Infos zu sehen und den DPL zu korrigieren, klicke hier:
-        a(href=link) Zum Dienstplan
+    p 
+      strong Das Orchesterbüro hat den eingereichten Dienstplan der Fachgruppe #{instrument} für die Kalenderwoche #{kw} (#{period}) mit folgender Begründung abgelehnt:
+    div(bgcolor='#ffffff' style=`border: 2px solid red; margin: 12px 12px; padding: 10px; background-color: #ffffff`)
+      i
+        strong #{reason}    
+    div(style='text-align: center;') Um alle Infos zu sehen und den DPL zu korrigieren, klicke hier:
+      table(align='center' style='margin-top: 12px')
+        tr
+          td(bgcolor=colorPrimary style=`background-color: ${colorPrimary}; border-color: #4c5764;border: 2px solid #ffffff;padding: 10px;text-align: center;`)
+            a(href=link style='display: block; color: #000000; font-size: 12px; text-decoration: none; text-transform: uppercase;') Zum Dienstplan    
     hr
+    p(style='text-align: center;font-weight: bold') #{orchestraFull}    
     table 
       tr 
         td(style='padding: 10px;')
