@@ -8,11 +8,7 @@ const Week = require('../models/week');
 
 const { writeOperation } = require('../my_modules/orch-lock');
 
-router.get('/', async function(req, res) {
-   /*jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
-      if (err) 
-         res.sendStatus(401);
-      else {*/
+router.get('/', async function(req, res) {   
         console.log(`loading Productions for ${req.query.q}...`);
         let sanitized = req.query.q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         console.log(sanitized);
@@ -28,17 +24,10 @@ router.get('/', async function(req, res) {
                }
             });                
          console.log(resp);
-        res.json( resp ); 
-
-      /*}
-   });*/
+        res.json( resp );       
 });
 
-router.get('/:season', async function(req, res) {
-   /*jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
-      if (err) 
-         res.sendStatus(401);
-      else {*/
+router.get('/:season', async function(req, res) {   
         console.log("loading Productions...");                 
         console.log(req.params.season)         ;
 
@@ -61,7 +50,7 @@ router.get('/:season', async function(req, res) {
             _id: {
                 "$in": aggregatedDienst.map( x => x._id )
             } } )
-        .select('name comment duration firstDienst lastDienst instrumentation extra')
+        .select('name comment weight duration firstDienst lastDienst instrumentation extra')
         .populate( { 
            path: 'firstDienst', 
            select: 'begin -_id', 
@@ -77,14 +66,7 @@ router.get('/:season', async function(req, res) {
              }
           });        
         console.log(resp);
-         res.json( resp );
-
-      /*}
-   });*/
-});
-
-router.post('/', function(req, res){
-   res.send('POST route on weeks.');
+        res.json( resp );      
 });
 
 async function editProdName(session, params ) {
@@ -107,9 +89,8 @@ async function editProdName(session, params ) {
    return true;
 }
 
-router.patch('/:id', async function(req, res) { 
-   //jwt.verify(req.token, process.env.JWT_PASS, async function (err, authData) {
-      if (/*err ||*/ ! req.authData.m ) 
+router.patch('/:id', async function(req, res) {    
+      if ( ! req.authData.m ) 
          res.sendStatus(401);
       else {  
          const changes = req.body;

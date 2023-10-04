@@ -1,3 +1,26 @@
-p Hallo #{name},
-p Dein/e DiensteinteilerIn hat eine Umfrage zum Dienstplanentwurf ... erstellt
-p Bitte stimme mit Ja oder Nein über diesen Entwurf ab.
+- var dplColor = "#e3f2fd";    
+- var colorPrimary = '#007bff';
+html
+  head
+    meta(charset='UTF-8')
+    title Neue Umfrage
+  body(bgcolor=dplColor style=`background-color: ${dplColor}; font-size: 12px;`)
+    p Hallo #{name},
+    p 
+      strong Dein/e DiensteinteilerIn in der Fachgruppe #{instrument} hat über den Dienstplanentwurf für die Kalenderwoche #{kw} (#{period}) eine Umfrage gestartet.
+    p Bitte stimme mit Ja oder Nein (inkl. Begründung) über den Entwurf ab.         
+    div(style='text-align: center;') Hier geht es zum Dienstplan mit allen Informationen: 
+      table(align='center' style='margin-top: 12px')
+        tr
+          td(bgcolor=colorPrimary style=`background-color: ${colorPrimary}; border-color: #4c5764;border: 2px solid #ffffff;padding: 10px;text-align: center;`)
+            a(href=link style='display: block; color: #000000; font-size: 12px; text-decoration: none; text-transform: uppercase;') Zum Dienstplan
+    hr
+    p(style='text-align: center;font-weight: bold') #{orchestraFull}    
+    table 
+      tr 
+        td(style='padding: 10px;')
+          img(style='height: auto;' height='32' width='32' src="cid:logo" alt="ODP")
+        td(style='font-size: 10px;') Das ist eine automatisch generierte Nachricht. 
+          | Wenn du in der Zukunft keine E-Mails von der ODP App erhalten willst, kannst du deine Einstellungen in der App ändern.
+    p(style='text-align: center') 
+      a(href="https://odp.bicsak.net") &#9838; odp.&#8492;icsak.net &#9836;

@@ -387,71 +387,137 @@ async function voteSurvey(session, params, createEvent ) {
 
    let dtBegin = DateTime.fromMillis(params.begin*1000, {zone: orchestraDoc.timezone});
    let dtEnd = dtBegin.plus({day: 7});
-   if ( params.office && params.feedback != 'yes' ) {
+   if ( params.office ) {      
       console.log('send email to scheduler...');
-      let schedulerProfile = await Profile.findOne({
-         o: params.o,
-         role: 'scheduler',
-         section: params.sec,
-         'notifications.dplRejected': true
-      }).session(session);
-      if ( schedulerProfile ) {      
+      if ( params.feedback != 'yes' ) {
+         // send email to scheduler about rejected dpl
+         let schedulerProfile = await Profile.findOne({
+            o: params.o,
+            role: 'scheduler',
+            section: params.sec,
+            'notifications.dplRejected': true
+         }).session(session);
+         if ( schedulerProfile ) {      
+            email.send({
+               template: 'dplrejected',
+               message: { 
+                  to: `"${schedulerProfile.userFn} ${schedulerProfile.userSn}" ${schedulerProfile.email}`, 
+                  attachments: [{
+                     filename: 'favicon-32x32.png',
+                     path: path.join(__dirname, '..') + '/favicon-32x32.png',
+                     cid: 'logo'
+                  }]
+               },
+               locals: {
+                  link: `${params.origin}/scheduler/week?profId=${schedulerProfile._id}&mts=${params.begin}`,                                               
+                  instrument: orchestraDoc.sections.get(params.sec).name,
+                  kw: dtBegin.toFormat("W"),
+                  period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,        
+                  reason: params.message, 
+                  orchestra: orchestraDoc.code,
+                  orchestraFull: orchestraDoc.fullName,                              
+               }
+            }).catch(console.error);
+         }
+      } else {
+         // TODO send email for all (scheduler, office, groupe members) with the final DPL incl. PDF
+         // user template dplfinal
+/*
          email.send({
-            template: 'dplrejected',
-            message: { 
-               to: `"${schedulerProfile.userFn} ${schedulerProfile.userSn}" ${schedulerProfile.email}`, 
-               attachments: [{
-                  filename: 'favicon-32x32.png',
-                  path: path.join(__dirname, '..') + '/favicon-32x32.png',
-                  cid: 'logo'
-               }]
-            },
-            locals: {
-               link: `${params.origin}/scheduler/week?profId=${schedulerProfile._id}&mts=${params.begin}`,                                               
-               instrument: orchestraDoc.sections.get(params.sec).name,
-               kw: dtBegin.toFormat("W"),
-               period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,        
-               reason: params.message, 
-               orchestra: orchestraDoc.code,
-               orchestraFull: orchestraDoc.fullName,                              
-            }
-         }).catch(console.error);
+               template: 'dplfinal',
+               message: { 
+                  to: `"${profiles[i].userFn} ${profiles[i].userSn}" ${profiles[i].email}`, 
+                  attachments: [{
+                     filename: 'favicon-32x32.png',
+                     path: path.join(__dirname, '..') + '/favicon-32x32.png',
+                     cid: 'logo'
+                  }]
+               },
+               locals: {
+                  // link TODO musician, scheduler, office
+                  link: `${params.origin}/scheduler/week?profId=${profiles[i]._id}&mts=${params.begin}`,                                               
+                  instrument: orchestraDoc.sections.get(params.sec).name,
+                  kw: dtBegin.toFormat("W"),
+                  period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,        
+                  scheduler: false, // TODO
+                  approved: true,
+                  orchestra: orchestraDoc.code,
+                  orchestraFull: orchestraDoc.fullName,                              
+               }
+            }).catch(console.error);*/
       }
    }
-   if ( !params.office && params.feedback != 'yes' ) {
+   if ( !params.office ) {      
       console.log('send email to scheduler...');
-      let schedulerProfile = await Profile.findOne({
-         o: params.o,
-         role: 'scheduler',
-         section: params.sec,
-         'notifications.surveyFailed': true
-      }).session(session);
-      if ( schedulerProfile ) { 
-         let memberSubdoc = affectedDpl.periodMembers.find( p => p._id == params.user);
-         let memberRow = affectedDpl.periodMembers.findIndex( p => p._id == params.user);
-         email.send({
-            template: 'surveydenied',
-            message: { 
-               to: `"${schedulerProfile.userFn} ${schedulerProfile.userSn}" ${schedulerProfile.email}`, 
-               attachments: [{
-                  filename: 'favicon-32x32.png',
-                  path: path.join(__dirname, '..') + '/favicon-32x32.png',
-                  cid: 'logo'
-               }]
-            },
-            locals: {
-               link: `${params.origin}/scheduler/week?profId=${schedulerProfile._id}&mts=${params.begin}`,                                               
-               instrument: orchestraDoc.sections.get(params.sec).name,
-               kw: dtBegin.toFormat("W"),
-               period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,
-               member: `${memberSubdoc.userFn} ${memberSubdoc.userSn}`,
-               rowMember: memberRow,
-               reason: params.message, 
-               orchestra: orchestraDoc.code,
-               orchestraFull: orchestraDoc.fullName,                              
-            }
-         }).catch(console.error);
+      if ( params.feedback != 'yes' ) {
+         // send email to scheduler about rejected survey
+         let schedulerProfile = await Profile.findOne({
+            o: params.o,
+            role: 'scheduler',
+            section: params.sec,
+            'notifications.surveyFailed': true
+         }).session(session);
+         if ( schedulerProfile ) { 
+            let memberSubdoc = affectedDpl.periodMembers.find( p => p._id == params.user);
+            let memberRow = affectedDpl.periodMembers.findIndex( p => p._id == params.user);
+            email.send({
+               template: 'surveydenied',
+               message: { 
+                  to: `"${schedulerProfile.userFn} ${schedulerProfile.userSn}" ${schedulerProfile.email}`, 
+                  attachments: [{
+                     filename: 'favicon-32x32.png',
+                     path: path.join(__dirname, '..') + '/favicon-32x32.png',
+                     cid: 'logo'
+                  }]
+               },
+               locals: {
+                  link: `${params.origin}/scheduler/week?profId=${schedulerProfile._id}&mts=${params.begin}`,                                               
+                  instrument: orchestraDoc.sections.get(params.sec).name,
+                  kw: dtBegin.toFormat("W"),
+                  period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,
+                  member: `${memberSubdoc.userFn} ${memberSubdoc.userSn}`,
+                  rowMember: memberRow,
+                  reason: params.message, 
+                  orchestra: orchestraDoc.code,
+                  orchestraFull: orchestraDoc.fullName,                              
+               }
+            }).catch(console.error);
+         }
       }
+      // check if survey is complete
+      let count = affectedDpl.groupSurvey.feedbacks.filter( fb => fb.vote == 'pending').length;
+      if ( !count ) {
+         // if complete, send email to scheduler with template surveycomplete
+         let schedulerProfile = await Profile.findOne({
+            o: params.o,
+            role: 'scheduler',
+            section: params.sec,
+            'notifications.surveyComplete': true
+         }).session(session);
+         if ( schedulerProfile ) {             
+            email.send({
+               template: 'surveycomplete',
+               message: { 
+                  to: `"${schedulerProfile.userFn} ${schedulerProfile.userSn}" ${schedulerProfile.email}`, 
+                  attachments: [{
+                     filename: 'favicon-32x32.png',
+                     path: path.join(__dirname, '..') + '/favicon-32x32.png',
+                     cid: 'logo'
+                  }]
+               },
+               locals: {
+                  link: `${params.origin}/scheduler/week?profId=${schedulerProfile._id}&mts=${params.begin}`,                                               
+                  instrument: orchestraDoc.sections.get(params.sec).name,
+                  kw: dtBegin.toFormat("W"),
+                  period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,                  
+                  orchestra: orchestraDoc.code,
+                  orchestraFull: orchestraDoc.fullName,                              
+               }
+            }).catch(console.error);
+         }
+
+      }
+      
 
    }
 
@@ -549,6 +615,35 @@ async function editDplStatus(session, params, createEvent ) {
    }
    if ( params.status != 'closed' ) {
       dplDoc.groupSurvey = null; await dplDoc.save();
+   }
+
+   if ( params.status == 'public' && !params.approve) {
+       // TODO send email for all (scheduler, office, groupe members) with the final DPL incl. PDF
+      // user template dplfinal
+/*
+         email.send({
+               template: 'dplfinal',
+               message: { 
+                  to: `"${profiles[i].userFn} ${profiles[i].userSn}" ${profiles[i].email}`, 
+                  attachments: [{
+                     filename: 'favicon-32x32.png',
+                     path: path.join(__dirname, '..') + '/favicon-32x32.png',
+                     cid: 'logo'
+                  }]
+               },
+               locals: {
+                  // link TODO musician, scheduler, office
+                  link: `${params.origin}/scheduler/week?profId=${profiles[i]._id}&mts=${params.begin}`,                                               
+                  instrument: orchestraDoc.sections.get(params.sec).name,
+                  kw: dtBegin.toFormat("W"),
+                  period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,        
+                  scheduler: false, // TODO
+                  approved: false,
+                  orchestra: orchestraDoc.code,
+                  orchestraFull: orchestraDoc.fullName,                              
+               }
+            }).catch(console.error);*/
+
    }
    
    await createEvent({
@@ -780,7 +875,44 @@ async function createSurvey( session, params, createEvent ) {
       })
    };
    console.log(affectedDpl.groupSurvey);
-   await affectedDpl.save();   
+   await affectedDpl.save(); 
+
+   let orchestraDoc = await Orchestra.findById(params.o).session(session);
+   let lxBegin = DateTime.fromJSDate(affectedDpl.weekBegin, {zone: orchestraDoc.timezone});   
+   let lxEnd = lxBegin.plus({day: 7});
+   /* send emails for all members of the group except scheduler (if member) */ 
+   let memberProfiles = await Profile.find( {
+      o: params.o,
+      role: 'musician',
+      section: params.sec,
+      'notifications.surveyNew': true,
+      _id: {
+         $in: affectedDpl.groupSurvey.feedbacks.filter(fb => fb.vote == 'pending').map( fb => fb.member)
+      }
+   }).session(session);
+   for ( let i = 0; i < memberProfiles.length; i++ ) {
+      email.send({
+         template: 'surveynew',
+         message: { 
+            to: `"${memberProfiles[i].userFn} ${memberProfiles[i].userSn}" ${memberProfiles[i].email}`, 
+            attachments: [{
+               filename: 'favicon-32x32.png',
+               path: path.join(__dirname, '..') + '/favicon-32x32.png',
+               cid: 'logo'
+            }]
+         },
+         locals: {
+            name: memberProfiles[i].userFn,
+            link: `${params.origin}/musician/week?profId=${memberProfiles[i]._id}&mts=${params.begin}`,                                               
+            instrument: orchestraDoc.sections.get(params.sec).name,
+            kw: lxBegin.toFormat("W"),
+            period: `${lxBegin.toFormat('dd.MM.yyyy')}-${lxEnd.toFormat('dd.MM.yyyy')}`,                              
+            orchestra: orchestraDoc.code,
+            orchestraFull: orchestraDoc.fullName,                              
+         }
+      }).catch(console.error);
+   }
+
    /*await createEvent({
       weekBegin: affectedDpl.weekBegin, 
       sec: params.sec, 

@@ -888,6 +888,7 @@ async function run(hc) {
                   lastDienst: dienst_id,
                   firstDienst: dienst_id,
                   duration: dur,
+                  weight: result[i].weight,
                   instrumentation: prodInstr
                 });
                 await prodDoc.save();            
