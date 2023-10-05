@@ -879,7 +879,11 @@ async function run(hc) {
                 let prodInstr = {};
                 for ( const key in instr ) {
                   prodInstr[key] = { count: instr[key], extra: '' };
-                }              
+                }   
+                 // find one performance for this production and take its weight for template weight for the production
+                let onePerformance;
+                if ( result[i].flutetable ) onePerformance = await mysqlDb.query(`SELECT weight FROM fl3_dienst WHERE production='${result[i].production}' AND subtype>0 LIMIT 1`);           
+                else onePerformance = await mysqlDb.query(`SELECT weight FROM fg3_dienst WHERE production='${result[i].production}' AND subtype>0 LIMIT 1`);           
                 
                 let prodDoc = new Production( {
                   o: hsw._id,
@@ -888,7 +892,7 @@ async function run(hc) {
                   lastDienst: dienst_id,
                   firstDienst: dienst_id,
                   duration: dur,
-                  weight: result[i].weight,
+                  weight: onePerformance[0] ? onePerformance[0].weight : 1,
                   instrumentation: prodInstr
                 });
                 await prodDoc.save();            
