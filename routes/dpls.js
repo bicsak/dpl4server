@@ -6,6 +6,9 @@ const mongoose = require( 'mongoose' );
 const nodemailer = require('nodemailer');
 const Email = require('email-templates');
 
+const PDFDocument = require('pdfkit');
+const fs = require('fs');
+
 const { writeOperation } = require('../my_modules/orch-lock');
 const { createWeekDataRaw } = require('../my_modules/week-data-raw');
 
@@ -639,7 +642,24 @@ async function editDplStatus(session, params, createEvent ) {
 
    if ( params.status == 'public' && !params.approve && !params.noEmail) {
        // send email for all (scheduler, office, groupe members with notifications.dplFinal) with the final DPL incl. PDF      
+       
        // TODO create PDF version of DPL with pdfKit
+       // Create a document
+         const doc = new PDFDocument();
+
+         // Pipe its output somewhere, like to a file or HTTP response
+         // See below for browser usage
+         doc.pipe(fs.createWriteStream(path.join(__dirname, '..', 'output') + '/dpl.pdf'));
+
+         // Add some text with annotations
+         doc/*.addPage()*/.fillColor('blue')
+         .text('Here is a link to ODP!', 100, 100)
+         .underline(100, 100, 160, 27, { color: '#0000FF' })
+         .link(100, 100, 160, 27, 'http://odp.bicsak.net/');
+
+         // Finalize PDF file
+         doc.end();
+
        let profiles = await Profile.find({
          o: params.o,
          role: 'office',
@@ -668,6 +688,9 @@ async function editDplStatus(session, params, createEvent ) {
                   filename: 'favicon-32x32.png',
                   path: path.join(__dirname, '..') + '/favicon-32x32.png',
                   cid: 'logo'
+               }, {
+                  filename: 'dpl.pdf',
+                  path: path.join(__dirname, '..', 'output') + '/dpl.pdf'                  
                }]
             },
             locals: { 
