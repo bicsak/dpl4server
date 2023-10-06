@@ -3,26 +3,18 @@
 html
   head
     meta(charset='UTF-8')
-    title Dienstplan veröffentlicht
+    title Änderungen in der Wochendisposition
   body(bgcolor=dplColor style=`background-color: ${dplColor}; font-size: 12px;`)
-    if  scheduler
-      p Liebe/r Diensteinteiler/in,
-    else
-      p Hallo #{name},
+    p Liebe/r DiensteinteilerIn,
     p 
-      strong Der Dienstplan der Fachgruppe #{instrument} für die Kalenderwoche #{kw} (#{period}) ist 
-        if !approved 
-          span vom Diensteinteiler veröffentlicht worden. 
-        if approved 
-          span veröffentlicht worden, eine Genehmigung vom Orchesterbüro liegt vor.
-    | Damit sind die im Dienstplan enthaltenen Angaben offiziell und verbindlich. Über eventuelle Änderungen wirst du über die App informiert.
-    | Im Anhang findest du den aktuellen Dienstplan als PDF Dokument.
+      strong Es gibt Änderungen in der Wochendisposition für die Kalenderwoche #{kw} (#{period}), die den veröffentlichten Dienstplan der Fachgruppe #{instrument} betreffen können.
+    p Bitte überprüfe den Dienstplan zeitnah auf Richtigkeit.    
     div(style='text-align: center;') 
-      p Hier geht es zum Dienstplan mit allen Informationen: 
+      p Hier geht es zum aktuellen Dienstplan:
       table(align='center' style='margin-top: 12px')
         tr
           td(bgcolor=colorPrimary style=`background-color: ${colorPrimary}; border-color: #4c5764;border: 2px solid #ffffff;padding: 10px;text-align: center;`)
-            a(href=link style='display: block; color: #000000; font-size: 12px; text-decoration: none; text-transform: uppercase;') Zum Dienstplan     
+            a(href=link style='display: block; color: #000000; font-size: 12px; text-decoration: none; text-transform: uppercase;') Zum Dienstplan    
     hr
     p(style='text-align: center;font-weight: bold') #{orchestraFull}    
     table 
