@@ -697,6 +697,7 @@ async function run(hc) {
                 userSn: flUsersDictionary[comments[i].id_user].userSn,
                 feedback: [0, 0, 0, 0],
                 deleted: false,
+                noEmail: false,
                 timestamp: comments[i].posted,
                 row: //comments[i].id_user > 4 ? 1 : comments[i].id_user - 1
                 newFlPeriods[week.fl_p].members.findIndex(

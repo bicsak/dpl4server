@@ -21,6 +21,7 @@ const dplMetaSchema = new Schema({
         // 0: not yet answered, 1: smile, 2: ok, 3: not agree etc.
         timestamp: Date,
         deleted: Boolean, 
+        noEmail: Boolean,
         row: Number // row index of member in group if comment is written by scheduler, -1
         /* Schedulers that are part of the group can choose which profile they use for commenting */
     } ]

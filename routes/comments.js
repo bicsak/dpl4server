@@ -178,6 +178,7 @@ router.get('/:dplId', async function(req, res) {
         feedback: Array(meta.periodMembers.length).fill(0),
         timestamp: new Date(),
         deleted: false,
+        noEmail: params.noEmail,
         row: row
     };
     meta.comments.push( comment )
@@ -186,120 +187,53 @@ router.get('/:dplId', async function(req, res) {
     let dtBegin = DateTime.fromJSDate(meta.dpl.weekBegin, {zone: orchestraDoc.timezone});
     let dtEnd = dtBegin.plus({day: 7});
 
-    // Send emails
-    // Step 1: get scheduler's profile id (from profiles collection)
-    let schedulerProfDoc = await Profile.findOne({
-        o: params.o,
-        sec: params.sec,
-        role: 'scheduler',
-        'notifications.commentNew': true
-    }).session(session);
-    // Step 2: get all profile docs whith ids for the group (dplMeta's periodmembers array) and scheduler where userId field not equal to comment's author's userId and commentnotification is true
-    let profiles = await Profile.find({
-        o: params.o,
-        sec: params.sec,
-        _id: { $in: meta.periodMembers.map( m => m.prof).concat(schedulerProfDoc?._id) },
-        user: { $ne: params.user },
-        'notifications.commentNew' : true
-    }).session(session);        
+    if ( !params.noEmail ) {
+        // Send emails
+        // Step 1: get scheduler's profile id (from profiles collection)
+        let schedulerProfDoc = await Profile.findOne({
+            o: params.o,
+            sec: params.sec,
+            role: 'scheduler',
+            'notifications.commentNew': true
+        }).session(session);
+        // Step 2: get all profile docs whith ids for the group (dplMeta's periodmembers array) and scheduler where userId field not equal to comment's author's userId and commentnotification is true
+        let profiles = await Profile.find({
+            o: params.o,
+            sec: params.sec,
+            _id: { $in: meta.periodMembers.map( m => m.prof).concat(schedulerProfDoc?._id) },
+            user: { $ne: params.user },
+            'notifications.commentNew' : true
+        }).session(session);        
+        
+        //Step 3: send emails in loop for all profiles in the list
+        for ( let i = 0; i < profiles.length; i++ ) {                
+            email.send({
+                template: 'commentnew',
+                message: { 
+                    to: `"${profiles[i].userFn} ${profiles[i].userSn}" ${profiles[i].email}`, 
+                    attachments: [{
+                        filename: 'favicon-32x32.png',
+                        path: path.join(__dirname, '..') + '/favicon-32x32.png',
+                        cid: 'logo' //same cid value as in the html img src
+                    }]
+                },
+                locals: {
+                    name: profiles[i].userFn, // recipient of e-mail ('Cornelia')
+                    link: `${params.origin}/${profiles[i].role == 'scheduler' ? 'scheduler' : 'musician'}/week?profId=${profiles[i]._id}&mts=${dtBegin.toSeconds()}`,                                
+                    author: params.role == 'scheduler' ? 'Dein/e DiensteinteilerIn' : `${userDoc.fn} ${userDoc.sn}`,
+                    instrument: orchestraDoc.sections.get(params.sec).name,
+                    kw: dtBegin.toFormat("W"),
+                    period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`, //TODO        
+                    comment: params.message, 
+                    orchestra: orchestraDoc.code,
+                    orchestraFull: orchestraDoc.fullName,
+                    scheduler: profiles[i].role == 'scheduler',
+                    rowAuthor: row                
+                }
+            })/*.then(console.log)*/.catch(console.error);
+        }   
+    } 
 
-    /*
-    $dplColor = "#e3f2fd";    
-    $themeColours = array(
-      '#ffc266', 
-      '#ffb3ff', 
-      '#ff9999', 
-      '#53c68c',
-      '#66ccff',
-      '#9966ff',
-      '#666699',
-      '#a3a3c2',
-      '#00ffff'
-    );*/
-
-    // TODO embedded image attachment (logo)
-
-    //Step 3: send emails in loop for all profiles in the list
-    for ( let i = 0; i < profiles.length; i++ ) {                
-        email.send({
-            template: 'commentnew',
-            message: { 
-                to: `"${profiles[i].userFn} ${profiles[i].userSn}" ${profiles[i].email}`, 
-                attachments: [{
-                    filename: 'favicon-32x32.png',
-                    path: path.join(__dirname, '..') + '/favicon-32x32.png',
-                    cid: 'logo' //same cid value as in the html img src
-                }]
-            },
-            locals: {
-                name: profiles[i].userFn, // recipient of e-mail ('Cornelia')
-                link: `${params.origin}/${profiles[i].role == 'scheduler' ? 'scheduler' : 'musician'}/week?profId=${profiles[i]._id}&mts=${dtBegin.toSeconds()}`,                                
-                author: params.role == 'scheduler' ? 'Dein/e DiensteinteilerIn' : `${userDoc.fn} ${userDoc.sn}`,
-                instrument: orchestraDoc.sections.get(params.sec).name,
-                kw: dtBegin.toFormat("W"),
-                period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`, //TODO        
-                comment: params.message, 
-                orchestra: orchestraDoc.code,
-                orchestraFull: orchestraDoc.fullName,
-                scheduler: profiles[i].role == 'scheduler',
-                rowAuthor: row                
-            }
-        })/*.then(console.log)*/.catch(console.error);
-    }    
-
-/*
-Render a template for a single email or render multiple (having only loaded the template once) using Promises
-
-var path           = require('path');
-var templateDir   = path.join(__dirname, 'emails', 'commentnew');
-var EmailTemplate = require('email-templates').EmailTemplate
-//var EmailTemplate = Email.EmailTemplate;
-
-var template = new EmailTemplate(templateDir);
-let users = profiles.map( p => {
-    return {
-        name: p.userFn, // recipient of e-mail ('Cornelia')
-        link: 'valami', // TODO `${req.get('origin')}/resetpw?id=${userDoc.id}&token=${token}`,
-        author: params.role == 'scheduler' ? 'Diensteinteiler' : `${userDoc.fn} ${userDoc.sn}`,
-        instrument: orchestraDoc.sections.get(params.sec).name,
-        kw: dtBegin.toFormat("kkkk 'KW' W"),
-        period: '01.01.01-07.01.01', //TODO
-        comment: params.message, 
-        orchestra: orchestraDoc.code, // abbrev for orch ('HSW')
-        scheduler: profDoc.role == 'scheduler'
-    }
-});
-
-let users = [
-  {
-    email: 'pappa.pizza@spaghetti.com',
-    name: {
-      first: 'Pappa',
-      last: 'Pizza'
-    }
-  },
-  {
-    email: 'mister.geppetto@spaghetti.com',
-    name: {
-      first: 'Mister',
-      last: 'Geppetto'
-    }
-  }
-]
-
-let templates = users.map(user => {
-  return template.render(user)
-});
-
-Promise.all(templates)
-  .then(function (results) {
-    console.log(results[0].html)
-    console.log(results[0].text)
-    console.log(results[0].subject)
-    console.log(results[1].html)
-    console.log(results[1].text)
-    console.log(results[1].subject)
-  });*/
 
     comment.timestamp = comment.timestamp.getTime();        
     await createEvent({
@@ -318,6 +252,7 @@ Promise.all(templates)
     let result = await writeOperation( req.authData.o, createComment, {
         origin: req.get('origin'),
         message: req.body.message, 
+        noEmail: req.body.noEmail,
         o: req.authData.o, 
         prof: req.authData.pid,
         user: req.authData.user,
