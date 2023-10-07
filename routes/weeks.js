@@ -1,12 +1,18 @@
+const path = require('node:path');
 let express = require('express');
 let router = express.Router();
 const mongoose = require('mongoose');
+
+const nodemailer = require('nodemailer');
+const Email = require('email-templates');
+
 
 const Orchestra = require('../models/orchestra');
 const Dpl = require('../models/dpl');
 const Week = require('../models/week');
 const Dienst = require('../models/dienst');
 const Production = require('../models/production');
+const Profile = require('../models/profile');
 
 const { DateTime } = require("luxon");
 
@@ -18,6 +24,33 @@ const {
    renumberProduction   
  } = require('../my_modules/week-data-raw');
 
+
+const transporter = nodemailer.createTransport({                
+   host: process.env.MAIL_HOST,                        
+   port: process.env.MAIL_PORT,
+
+   secure: false, // upgrade later with STARTTLS
+   auth: {                          
+     user: process.env.MAIL_USER,                          
+     pass: process.env.MAIL_PASS
+   },
+   tls:{
+       rejectUnauthorized:false  // if on local
+   }
+});
+
+const email = new Email({
+   message: { from: '"Orchesterdienstplan" no-reply@odp.bicsak.net' },
+   // uncomment below to send emails in development/test env:
+   //send: true,
+   transport: transporter,
+   /* attachment for every e-mail globally */
+   /*attachments: [{
+       filename: 'favicon-32x32.png',
+       path: '../favicon-32x32.png',
+       cid: 'logo' //same cid value as in the html img src
+   }]*/
+});     
 
 /***********
  * Handles following use cases
@@ -131,7 +164,10 @@ async function editInstrumentation( session, params, createEvent ) {
    let dienstDoc = await Dienst.findByIdAndUpdate(params.did, {
       '$set': { 'instrumentation': params.instr }               
    }, { session: session } );    
-   let ts = new Date();
+   let ts = new Date();  
+   let orchestraDoc = await Orchestra.findById(params.o).session(session);                       
+   let lxBegin = DateTime.fromJSDate(weekDoc.begin, {zone: orchestraDoc.timezone});   
+   let lxEnd = lxBegin.plus({day: 7});
    for (const key in params.instr) {
       if (params.instr.hasOwnProperty(key)) {
          let oldDoc = await Dpl.findOneAndUpdate({
@@ -151,10 +187,40 @@ async function editInstrumentation( session, params, createEvent ) {
                'state': ts,
                '$inc': { version: 1}
             }, { session: session } ); 
+            if ( oldDoc.published ) {
+               // send emails with template wplchanged for oldDoc.s section's scheduler if he has notifications.wplChanged
+               let profile = await Profile.findOne({
+                  o: params.o,
+                  section: oldDoc.s,
+                  role: 'scheduler',
+                  'notifications.wplChanged': true
+               }).session(session);
+               if ( profile ) {
+                  email.send({
+                     template: 'wplchanged',
+                     message: { 
+                        to: `"${profile.userFn} ${profile.userSn}" ${profile.email}`, 
+                        attachments: [{
+                           filename: 'favicon-32x32.png',
+                           path: path.join(__dirname, '..') + '/favicon-32x32.png',
+                           cid: 'logo'
+                        }]
+                     },
+                     locals: {                      
+                        link: `${params.origin}/scheduler/week?profId=${profile._id}&mts=${params.begin}`,                                               
+                        instrument: orchestraDoc.sections.get(oldDoc.s).name,
+                        kw: lxBegin.toFormat("W"),
+                        period: `${lxBegin.toFormat('dd.MM.yyyy')}-${lxEnd.toFormat('dd.MM.yyyy')}`,                             
+                        orchestra: orchestraDoc.code,
+                        orchestraFull: orchestraDoc.fullName,                              
+                     }
+                  }).catch(console.error);
+               }
+            }
          }
       }
    }
-   let orchestraDoc = await Orchestra.findById(params.o).session(session);                      
+      
    let dtDienstBegin = DateTime.fromJSDate(dienstDoc.begin, {zone: orchestraDoc.timezone});
    await createEvent({
       weekBegin: weekDoc.begin,
@@ -183,7 +249,8 @@ router.patch('/:mts/:did', async function(req, res) {
                o: req.authData.o,
                did: req.params.did,               
                instr: req.body.value,
-               user: req.authData.pid
+               user: req.authData.pid,
+               origin: req.get('origin')                               
             });                        
             res.json( { instrumentation: result } );            
             return;
@@ -491,6 +558,8 @@ async function createDienst(session, params, createEvent) {
    
    // add seatings subdocs for all dpls
    let ts = new Date();
+   let lxBegin = DateTime.fromJSDate(weekDoc.begin, {zone: orchestraDoc.timezone});   
+   let lxEnd = lxBegin.plus({day: 7});
    let dplDocs = await Dpl.find({o: params.o, w: weekDoc._id}).session(session);   
     for (let dpl of dplDocs) {
       //console.log(dpl);
@@ -507,7 +576,37 @@ async function createDienst(session, params, createEvent) {
       dpl.version = dpl.version + 1;
       dpl.state = ts;
       //console.log(seatingDoc);
-      await dpl.save();      
+      await dpl.save();
+      if ( dpl.published && dienstDoc.instrumentation.get(dpl.s) != 0 ) {
+         // send email (template wplchanged) to scheduler of the group if notifications.wplChanged and isntrumentation of new dienst for this group <> 0
+         let profile = await Profile.findOne({
+            o: params.o,
+            section: dpl.s,
+            role: 'scheduler',
+            'notifications.wplChanged': true
+         }).session(session);
+         if ( profile ) {
+            email.send({
+               template: 'wplchanged',
+               message: { 
+                  to: `"${profile.userFn} ${profile.userSn}" ${profile.email}`, 
+                  attachments: [{
+                     filename: 'favicon-32x32.png',
+                     path: path.join(__dirname, '..') + '/favicon-32x32.png',
+                     cid: 'logo'
+                  }]
+               },
+               locals: {                      
+                  link: `${params.origin}/scheduler/week?profId=${profile._id}&mts=${params.begin}`,                                               
+                  instrument: orchestraDoc.sections.get(dpl.s).name,
+                  kw: lxBegin.toFormat("W"),
+                  period: `${lxBegin.toFormat('dd.MM.yyyy')}-${lxEnd.toFormat('dd.MM.yyyy')}`,                             
+                  orchestra: orchestraDoc.code,
+                  orchestraFull: orchestraDoc.fullName,                              
+               }
+            }).catch(console.error);
+         }            
+      }
     }
     let dtDienstBegin = DateTime.fromMillis(params.begin, {zone: orchestraDoc.timezone});
     await createEvent({
@@ -530,7 +629,8 @@ router.post('/:mts', async function(req, res) {
          ...req.body, 
          o: req.authData.o, 
          user: req.authData.pid,
-         mts: req.params.mts
+         mts: req.params.mts,
+         origin: req.get('origin')
       });      
       console.log(`Dienst successfully created: ${result}`);      
       
