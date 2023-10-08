@@ -237,10 +237,8 @@ async function editInstrumentation( session, params, createEvent ) {
 }
 
 router.patch('/:mts/:did', async function(req, res) {
-//   jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
       if ( req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }
-
-      // TODO req.body is an array of {op:..., path: ..., value: ...}
+      
       if ( req.body.path === '/instr' ) {
          if ( req.body.op === 'replace' ) { 
 
@@ -256,7 +254,6 @@ router.patch('/:mts/:did', async function(req, res) {
             return;
          } 
       }
-  // });
 });
 
 // deletes 1 dienst from DB in a transaction
@@ -291,6 +288,20 @@ async function deleteDienst(session, params, createEvent ) {
       await renumberProduction(session, dienstDoc.season, dienstDoc.prod);            
     }        
     
+
+    // find dpls where change could have happened in seating
+    let touchedDpls = await Dpl.find({
+      o: params.o,
+      published: true,
+      'seatings.d': params.did
+    }).session(session);
+    /*
+    let touchedSeatings = [];
+    // save seating plans before removing them from collection's doc
+    for ( let i = 0; i < touchedDpls.length; i++ ) {
+      touchedSeatings[i] = touchedDpls[i].seatings.find( s => s.d == params.did );            
+    }*/
+
     // delete seatings subdocs from all dpls
     let ts = new Date();
     await Dpl.updateMany({
@@ -317,6 +328,66 @@ async function deleteDienst(session, params, createEvent ) {
       extra: `${dienstDoc.name} ${dtDienstBegin.toFormat('dd.MM.yyyy HH:mm')}`,
       user: params.user
    } );
+
+   let dtBegin = DateTime.fromJSDate(params.mts, {zone: orchestraDoc.timezone});
+   let dtEnd = dtBegin.plus({day: 7});
+   /* Send emails */
+   // get all office profiles
+   let officeProfiles = await Profile.find({
+      o: params.o,
+      role: 'office',
+      'notifications.dplChanged': true
+    }).session(session);
+   for ( let i = 0; i < touchedDpls.length; i++ ) {      
+      // current section: touchedDpls[i].s
+      // TODO generate PDF for this section's current dpl (new version)
+      // get scheduler profile for section     
+      let schedulerProfile = await Profile.find({
+         o: params.o,
+         section: touchedDpls[i].s,
+         role: 'scheduler',
+         'notifications.dplChanged': true
+       }).session(session);
+      // get involved members' profiles: touchedSeatings[i].sp.find( code > 0)
+      let seatingIndex = touchedDpls[i].seatings.findIndex( s => s.d == params.did );
+      let memberProfiles = await Profile.find({
+         o: params.o,
+         section: touchedDpls[i].s,
+         role: 'musician',
+         _id: {
+            $in: touchedDpls[i].periodMembers.map( (id, index) => touchedSeatings[i].seatings[seatingIndex].sp[index] > 0 ? id : null )
+         },
+         'notifications.dplChanged': true
+       }).session(session);
+       let allProfiles = officeProfiles.concat(memberProfiles, schedulerProfile);
+      // send "dplchanged" email for all officeProfiles, scheduler of section and members where      
+      for ( let j = 0; j < allProfiles.length; j++ ) {
+         email.send({
+            template: 'dplchanged',
+            message: { 
+               to: `"${allProfiles[j].userFn} ${allProfiles[j].userSn}" ${allProfiles[j].email}`, 
+               attachments: [{
+                  filename: 'favicon-32x32.png',
+                  path: path.join(__dirname, '..') + '/favicon-32x32.png',
+                  cid: 'logo'
+               }/*, {
+                  filename: 'dpl.pdf',
+                  path: path.join(__dirname, '..') + '/dpl.pdf',
+               }*/]
+            },
+            locals: { 
+               name: allProfiles[j].userFn,               
+               link: `${params.origin}/${allProfiles[j].role}/week?profId=${allProfiles[j]._id}&mts=${params.begin}`,                                               
+               instrument: orchestraDoc.sections.get(touchedDpls[i].s).name,
+               kw: dtBegin.toFormat("W"),
+               period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,        
+               scheduler: allProfiles[j].role == 'scheduler',               
+               orchestra: orchestraDoc.code,
+               orchestraFull: orchestraDoc.fullName,                              
+            }
+         }).catch(console.error);
+      }
+    }
     
     return true;
 }
@@ -325,7 +396,7 @@ router.delete('/:mts/:did', async function(req, res) {
       if ( req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }
       console.log(`Deleting Dienst req ${req.params.mts}, ${req.params.did}`);
       let result = await writeOperation( req.authData.o, deleteDienst, {
-         o: req.authData.o, suer: req.authData.pid, did: req.params.did, mts: req.params.mts });      
+         o: req.authData.o, suer: req.authData.pid, did: req.params.did, mts: req.params.mts, origin: req.get('origin') });      
       console.log(`Dienst successfully deleted: ${result}`);
       
       // return new week plan            
@@ -622,8 +693,7 @@ async function createDienst(session, params, createEvent) {
    return true;
 }
 
-router.post('/:mts', async function(req, res) {
-   //jwt.verify(req.token, process.env.JWT_PASS, async function (err,authData) {
+router.post('/:mts', async function(req, res) {   
       if (req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }      
       let result = await writeOperation( req.authData.o, createDienst, {
          ...req.body, 
@@ -636,8 +706,7 @@ router.post('/:mts', async function(req, res) {
       
       // return new week plan            
       let resp = await createWeekDataRaw(req.params.mts, req.authData);
-      res.json( resp );            
-  // });
+      res.json( resp );              
 });
 
 async function editDienst(session, params, createEvent) {
