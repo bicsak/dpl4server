@@ -329,10 +329,11 @@ async function deleteDienst(session, params, createEvent ) {
       user: params.user
    } );
 
-   let dtBegin = DateTime.fromJSDate(params.mts, {zone: orchestraDoc.timezone});
+   let dtBegin = DateTime.fromMillis(params.mts * 1000, {zone: orchestraDoc.timezone});
    let dtEnd = dtBegin.plus({day: 7});
    /* Send emails */
-   // get all office profiles
+   if ( !params.noEmails ) {
+      // get all office profiles
    let officeProfiles = await Profile.find({
       o: params.o,
       role: 'office',
@@ -355,7 +356,7 @@ async function deleteDienst(session, params, createEvent ) {
          section: touchedDpls[i].s,
          role: 'musician',
          _id: {
-            $in: touchedDpls[i].periodMembers.map( (id, index) => touchedSeatings[i].seatings[seatingIndex].sp[index] > 0 ? id : null )
+            $in: touchedDpls[i].periodMembers.map( (id, index) => touchedDpls[i].seatings[seatingIndex].sp[index] > 0 ? id : null )
          },
          'notifications.dplChanged': true
        }).session(session);
@@ -388,7 +389,9 @@ async function deleteDienst(session, params, createEvent ) {
          }).catch(console.error);
       }
     }
-    
+
+   }
+       
     return true;
 }
 
@@ -396,7 +399,7 @@ router.delete('/:mts/:did', async function(req, res) {
       if ( req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }
       console.log(`Deleting Dienst req ${req.params.mts}, ${req.params.did}`);
       let result = await writeOperation( req.authData.o, deleteDienst, {
-         o: req.authData.o, suer: req.authData.pid, did: req.params.did, mts: req.params.mts, origin: req.get('origin') });      
+         o: req.authData.o, user: req.authData.pid, did: req.params.did, mts: req.params.mts, noEmails: req.body.noEmails, origin: req.get('origin') });      
       console.log(`Dienst successfully deleted: ${result}`);
       
       // return new week plan            
@@ -507,7 +510,7 @@ router.delete('/:mts', async function(req, res) {
       if ( req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }
       console.log(`Erasing week req ${req.params.mts}`);
       let result = await writeOperation( req.authData.o, cleanWeek, {
-         o: req.authData.o, user: req.authData.pid, w: req.params.mts*1000 });      
+         o: req.authData.o, user: req.authData.pid, w: req.params.mts*1000, noEmails: req.body.noEmails });      
       console.log(`Week is clean, result: ${result}`);
       console.log(result);
       
