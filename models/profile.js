@@ -22,19 +22,7 @@ const profileSchema = new Schema({
     lastVisitedHome: Date, // ts for last call for events from this profile
 
     email: String, // only for this profile; can be different from user's email; for notifications (PDF with new DPL etc.)
-    notifications: { type: Map, of: Boolean},
-    /*possible notification keys:         
-                enum: [
-                    'comment', 
-                    'dplNew', 
-                    'dplFinal', 
-                    'dplChanged', 
-                    'dplRejected', 
-                    'surveyFailed', 
-                    'surveyComplete'
-                ]         
-    */
-    // activePeriods: [ { type: Schema.Types.ObjectId, ref: 'Period' } ]
+    notifications: { type: Map, of: Boolean},    
 
     userFn: String,
     userSn: String,

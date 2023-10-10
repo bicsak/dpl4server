@@ -207,8 +207,8 @@ async function run(hc) {
           { email: 'bicsak@gmx.net' },
           { $set: { 
             pw: hc,
-            fn: 'Ilya',
-            sn: 'Yossifov',
+            fn: 'Alexandra',
+            sn: 'Koch',
             birthday: new Date(Date.UTC(1970,0,1)),
               //'1970-01-01T00:00:00.000Z'),
             status: 'active',            
@@ -236,8 +236,8 @@ async function run(hc) {
           email: 'bicsak@gmx.net',          
           notifications: notificationDefaults['office'],         
 
-          userFn: 'Ilya',
-          userSn: 'Jossifov',
+          userFn: 'Alexandra',
+          userSn: 'Koch',
           userBirthday: new Date(Date.UTC(1970,0,1)),
         } );
         await profileManager.save();
@@ -260,7 +260,7 @@ async function run(hc) {
 
         let userRows = await mysqlDb.query(
           `SELECT id_user,login_name,pw,first_name,surname,usergroup,email,birthday 
-          FROM fl3_user WHERE usergroup<>'20'`);       
+          FROM fl3_user WHERE usergroup<>'20' AND login_name<>'Holzapfel'`);       
         for ( let currentUser of userRows ) {        
           let bd = new Date(Date.UTC(currentUser.birthday.getFullYear(),
             currentUser.birthday.getMonth(),
@@ -611,7 +611,8 @@ async function run(hc) {
               o: hsw._id,
               begin: weekBegin,
               editable: true,
-              season: season.id
+              season: season.id,
+              dpls: {}
             } );
             await newWeek.save();
             weeks.push( { 
