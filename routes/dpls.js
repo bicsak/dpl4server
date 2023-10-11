@@ -538,17 +538,13 @@ async function voteSurvey(session, params, createEvent ) {
                }
             }).catch(console.error);
          }
-
-      }
-      
-
+      }      
    }
 
    return {
       surveyAnswer: params.feedback,
       surveyComment: params.message
    };
-
 }
 
 async function editDplStatus(session, params, createEvent ) {
@@ -1007,15 +1003,19 @@ async function editDpl( session, params, createEvent ) {
       reason: 'Dienstplan ist nicht mehr aktuell. Bitte aktualisiere deine Ansicht'
    };   
 
-   let oldDelta = affectedDpl.delta;
-
-   for ( let i = 0; i < affectedDpl.seatings.length; i++ ) {
-      let newSeating = params.sps.find( dienst => dienst.d == affectedDpl.seatings[i].d );
+   let oldDelta = affectedDpl.delta;   
+   let seatingChanged = []; // for each dienst an array of size groupsize with info if their seating code has changed. for PDF generation's future red markings   
+   for ( let i = 0; i < affectedDpl.seatings.length; i++ ) {      
+      let newSeating = params.sps.find( dienst => dienst.d == affectedDpl.seatings[i].d );      
+      seatingChanged.push(
+         affectedDpl.seatings[i].sp.map( (code, index) => code != newSeating.sp[index])
+      );
       affectedDpl.seatings[i].ext = newSeating.ext;
       affectedDpl.seatings[i].comment = newSeating.comment;
       affectedDpl.seatings[i].sp = newSeating.sp;
+
       affectedDpl.seatings[i].available = newSeating.available;
-   }
+   }      
    /*await*/ affectedDpl.calcDelta();
    affectedDpl.version = affectedDpl.version + 1;
    affectedDpl.state = new Date();
@@ -1072,6 +1072,7 @@ async function editDpl( session, params, createEvent ) {
    console.log(affectedDpl);*/
    let orchestraDoc = await Orchestra.findById(params.o).session(session);                      
    let dtBegin = DateTime.fromJSDate(affectedDpl.weekBegin, {zone: orchestraDoc.timezone});
+   let dtEnd = dtBegin.plus({day: 7});
    await createEvent({
       weekBegin: affectedDpl.weekBegin, 
       sec: params.sec, 
@@ -1081,9 +1082,62 @@ async function editDpl( session, params, createEvent ) {
       extra: `Dienstplan ${orchestraDoc.sections.get(params.sec).name}, ${dtBegin.toFormat("kkkk 'KW' W")}`, 
       user: params.user
    });
+   if ( affectedDpl.published && !affectedDpl.officeSurvey ) {
+      // get all office profiles
+      let officeProfiles = await Profile.find({
+         o: params.o,
+         role: 'office',
+         'notifications.dplChanged': true
+      }).session(session);      
+      // TODO generate PDF for this section's current dpl (new version)
+      // get scheduler profile for section     
+      let schedulerProfile = await Profile.find({
+         o: params.o,
+         section: params.sec,
+         role: 'scheduler',
+         'notifications.dplChanged': true
+      }).session(session);          
+      let memberProfiles = await Profile.find({
+         o: params.o,
+         section: params.sec,
+         role: 'musician',
+         _id: {
+            $in: affectedDpl.periodMembers.map( 
+               (id, index) => seatingChanged.some( s => s[index] ) ? id : null )
+         },
+         'notifications.dplChanged': true
+      }).session(session);
+      let allProfiles = officeProfiles.concat(memberProfiles, schedulerProfile);
+      // send "dplchanged" email for all officeProfiles, scheduler of section and members where      
+      for ( let j = 0; j < allProfiles.length; j++ ) {
+         email.send({
+            template: 'dplchanged',
+            message: { 
+               to: `"${allProfiles[j].userFn} ${allProfiles[j].userSn}" ${allProfiles[j].email}`, 
+               attachments: [{
+                  filename: 'favicon-32x32.png',
+                  path: path.join(__dirname, '..') + '/favicon-32x32.png',
+                  cid: 'logo'
+               }/*, {
+                  filename: 'dpl.pdf',
+                  path: path.join(__dirname, '..') + '/dpl.pdf',
+               }*/]
+            },
+            locals: { 
+               name: allProfiles[j].userFn,               
+               link: `${params.origin}/${allProfiles[j].role}/week?profId=${allProfiles[j]._id}&mts=${params.begin}`,                                               
+               instrument: orchestraDoc.sections.get(params.sec).name,
+               kw: dtBegin.toFormat("W"),
+               period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,        
+               scheduler: allProfiles[j].role == 'scheduler',               
+               orchestra: orchestraDoc.code,
+               orchestraFull: orchestraDoc.fullName,                              
+            }
+         }).catch(console.error);
+      }      
+   }       
 
-   returnVal = true;
-   
+   returnVal = true;   
    return returnVal;
 }
 
@@ -1098,7 +1152,8 @@ router.post('/:mts', async function(req, res) {
       o: req.authData.o, 
       sec: req.authData.s,
       user: req.authData.pid,
-      begin: new Date(req.params.mts * 1000)      
+      begin: new Date(req.params.mts * 1000),
+      origin: req.get('origin')      
    });      
    console.log(`Dpl successfully updated: ${result}`);      
    
@@ -1226,6 +1281,7 @@ async function createDpl( session, params, createEvent ) {
       weekSeason: week.wpl.season._id,
       closed: false,
       published: false,
+      officeSurvey: null, groupSurvey: null,
       remark: params.remark,
       absent: absent, 
       correction: Array(groupSize).fill(0),

@@ -286,21 +286,16 @@ async function deleteDienst(session, params, createEvent ) {
       
       // recalc OA1, etc. for season and production (if not sonst. dienst):     
       await renumberProduction(session, dienstDoc.season, dienstDoc.prod);            
-    }        
-    
+    }            
 
-    // find dpls where change could have happened in seating
+    // find dpls (and save the docs) where change could have happened in seating
+    // we need the original seatings from these dpls to find out which group members are involved
     let touchedDpls = await Dpl.find({
       o: params.o,
       published: true,
+      officeSurvey: null,
       'seatings.d': params.did
-    }).session(session);
-    /*
-    let touchedSeatings = [];
-    // save seating plans before removing them from collection's doc
-    for ( let i = 0; i < touchedDpls.length; i++ ) {
-      touchedSeatings[i] = touchedDpls[i].seatings.find( s => s.d == params.did );            
-    }*/
+    }).session(session);    
 
     // delete seatings subdocs from all dpls
     let ts = new Date();
@@ -334,65 +329,63 @@ async function deleteDienst(session, params, createEvent ) {
    /* Send emails */
    if ( !params.noEmails ) {
       // get all office profiles
-   let officeProfiles = await Profile.find({
-      o: params.o,
-      role: 'office',
-      'notifications.dplChanged': true
-    }).session(session);
-   for ( let i = 0; i < touchedDpls.length; i++ ) {      
-      // current section: touchedDpls[i].s
-      // TODO generate PDF for this section's current dpl (new version)
-      // get scheduler profile for section     
-      let schedulerProfile = await Profile.find({
+      let officeProfiles = await Profile.find({
          o: params.o,
-         section: touchedDpls[i].s,
-         role: 'scheduler',
+         role: 'office',
          'notifications.dplChanged': true
-       }).session(session);
-      // get involved members' profiles: touchedSeatings[i].sp.find( code > 0)
-      let seatingIndex = touchedDpls[i].seatings.findIndex( s => s.d == params.did );
-      let memberProfiles = await Profile.find({
-         o: params.o,
-         section: touchedDpls[i].s,
-         role: 'musician',
-         _id: {
-            $in: touchedDpls[i].periodMembers.map( (id, index) => touchedDpls[i].seatings[seatingIndex].sp[index] > 0 ? id : null )
-         },
-         'notifications.dplChanged': true
-       }).session(session);
-       let allProfiles = officeProfiles.concat(memberProfiles, schedulerProfile);
-      // send "dplchanged" email for all officeProfiles, scheduler of section and members where      
-      for ( let j = 0; j < allProfiles.length; j++ ) {
-         email.send({
-            template: 'dplchanged',
-            message: { 
-               to: `"${allProfiles[j].userFn} ${allProfiles[j].userSn}" ${allProfiles[j].email}`, 
-               attachments: [{
-                  filename: 'favicon-32x32.png',
-                  path: path.join(__dirname, '..') + '/favicon-32x32.png',
-                  cid: 'logo'
-               }/*, {
-                  filename: 'dpl.pdf',
-                  path: path.join(__dirname, '..') + '/dpl.pdf',
-               }*/]
+      }).session(session);
+      for ( let i = 0; i < touchedDpls.length; i++ ) {      
+         // current section: touchedDpls[i].s
+         // TODO generate PDF for this section's current dpl (new version)
+         // get scheduler profile for section     
+         let schedulerProfile = await Profile.find({
+            o: params.o,
+            section: touchedDpls[i].s,
+            role: 'scheduler',
+            'notifications.dplChanged': true
+         }).session(session);
+         // get involved members' profiles: touchedSeatings[i].sp.find( code > 0)
+         let seatingIndex = touchedDpls[i].seatings.findIndex( s => s.d == params.did );
+         let memberProfiles = await Profile.find({
+            o: params.o,
+            section: touchedDpls[i].s,
+            role: 'musician',
+            _id: {
+               $in: touchedDpls[i].periodMembers.map( (id, index) => touchedDpls[i].seatings[seatingIndex].sp[index] > 0 ? id : null )
             },
-            locals: { 
-               name: allProfiles[j].userFn,               
-               link: `${params.origin}/${allProfiles[j].role}/week?profId=${allProfiles[j]._id}&mts=${params.begin}`,                                               
-               instrument: orchestraDoc.sections.get(touchedDpls[i].s).name,
-               kw: dtBegin.toFormat("W"),
-               period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,        
-               scheduler: allProfiles[j].role == 'scheduler',               
-               orchestra: orchestraDoc.code,
-               orchestraFull: orchestraDoc.fullName,                              
-            }
-         }).catch(console.error);
+            'notifications.dplChanged': true
+         }).session(session);
+         let allProfiles = officeProfiles.concat(memberProfiles, schedulerProfile);
+         // send "dplchanged" email for all officeProfiles, scheduler of section and members where      
+         for ( let j = 0; j < allProfiles.length; j++ ) {
+            email.send({
+               template: 'dplchanged',
+               message: { 
+                  to: `"${allProfiles[j].userFn} ${allProfiles[j].userSn}" ${allProfiles[j].email}`, 
+                  attachments: [{
+                     filename: 'favicon-32x32.png',
+                     path: path.join(__dirname, '..') + '/favicon-32x32.png',
+                     cid: 'logo'
+                  }/*, {
+                     filename: 'dpl.pdf',
+                     path: path.join(__dirname, '..') + '/dpl.pdf',
+                  }*/]
+               },
+               locals: { 
+                  name: allProfiles[j].userFn,               
+                  link: `${params.origin}/${allProfiles[j].role}/week?profId=${allProfiles[j]._id}&mts=${params.begin}`,                                               
+                  instrument: orchestraDoc.sections.get(touchedDpls[i].s).name,
+                  kw: dtBegin.toFormat("W"),
+                  period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,        
+                  scheduler: allProfiles[j].role == 'scheduler',               
+                  orchestra: orchestraDoc.code,
+                  orchestraFull: orchestraDoc.fullName,                              
+               }
+            }).catch(console.error);
+         }
       }
-    }
-
-   }
-       
-    return true;
+   }       
+   return true;
 }
 
 router.delete('/:mts/:did', async function(req, res) {   
@@ -436,6 +429,15 @@ async function cleanWeek(session, params, createEvent) {
       begin: begin
    }).session(session);
    //console.log('weekDoc', weekDoc);
+
+   // find dpls (and save the docs for later) where change could have happened in seating
+   // we need the original seatings from these dpls to find out which group members are involved
+   let touchedDpls = await Dpl.find({
+      o: params.o,
+      published: true,
+      officeSurvey: null,
+      weekBegin: begin      
+    }).session(session);
    
    // create array of distinct productions  
    const productions = [...new Set(weekDoc.dienst.map( d => d.prod).filter(val => Boolean(val)))];     
@@ -490,6 +492,7 @@ async function cleanWeek(session, params, createEvent) {
    // Update all DPLs' counting (delta), for succeeding weeks (start), too
    await resetDelta(session, params.o, params.w );   
    let dtBegin = DateTime.fromMillis(params.w, {zone: orchestraDoc.timezone});
+   let dtEnd = dtBegin.plus({day: 7});
    await createEvent({
       weekBegin: weekDoc.begin,
       sec: '', 
@@ -498,10 +501,68 @@ async function cleanWeek(session, params, createEvent) {
       action: 'del', 
       extra: `Alle Dienste der Woche ${dtBegin.toFormat("kkkk 'KW' W")} gelöscht`,
       user: params.user
-   } )
+   } );
+
+   /* Send emails */
+   if ( !params.noEmails ) {
+      // get all office profiles
+      let officeProfiles = await Profile.find({
+         o: params.o,
+         role: 'office',
+         'notifications.dplChanged': true
+      }).session(session);
+      for ( let i = 0; i < touchedDpls.length; i++ ) {      
+         // current section: touchedDpls[i].s
+         // TODO generate PDF for this section's current dpl (new version)
+         // get scheduler profile for section     
+         let schedulerProfile = await Profile.find({
+            o: params.o,
+            section: touchedDpls[i].s,
+            role: 'scheduler',
+            'notifications.dplChanged': true
+         }).session(session);               
+         let memberProfiles = await Profile.find({
+            o: params.o,
+            section: touchedDpls[i].s,
+            role: 'musician',
+            _id: {
+               $in: touchedDpls[i].periodMembers.map( (id, index) => touchedDpls[i].seatings.some(s => s.sp[index] > 0) ? id : null )
+            },
+            'notifications.dplChanged': true
+         }).session(session);
+         let allProfiles = officeProfiles.concat(memberProfiles, schedulerProfile);
+         // send "dplchanged" email for all officeProfiles, scheduler of section and members where      
+         for ( let j = 0; j < allProfiles.length; j++ ) {
+            email.send({
+               template: 'dplchanged',
+               message: { 
+                  to: `"${allProfiles[j].userFn} ${allProfiles[j].userSn}" ${allProfiles[j].email}`, 
+                  attachments: [{
+                     filename: 'favicon-32x32.png',
+                     path: path.join(__dirname, '..') + '/favicon-32x32.png',
+                     cid: 'logo'
+                  }/*, {
+                     filename: 'dpl.pdf',
+                     path: path.join(__dirname, '..') + '/dpl.pdf',
+                  }*/]
+               },
+               locals: { 
+                  name: allProfiles[j].userFn,               
+                  link: `${params.origin}/${allProfiles[j].role}/week?profId=${allProfiles[j]._id}&mts=${params.begin}`,                                               
+                  instrument: orchestraDoc.sections.get(touchedDpls[i].s).name,
+                  kw: dtBegin.toFormat("W"),
+                  period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,        
+                  scheduler: allProfiles[j].role == 'scheduler',               
+                  orchestra: orchestraDoc.code,
+                  orchestraFull: orchestraDoc.fullName,                              
+               }
+            }).catch(console.error);
+         }
+      }
+   }       
+
    return true;    
 }
-
 
 /**********
  * clears this week (deletes all dienst)
@@ -510,7 +571,7 @@ router.delete('/:mts', async function(req, res) {
       if ( req.authData.r !== 'office' || !req.authData.m ) { res.sendStatus(401); return; }
       console.log(`Erasing week req ${req.params.mts}`);
       let result = await writeOperation( req.authData.o, cleanWeek, {
-         o: req.authData.o, user: req.authData.pid, w: req.params.mts*1000, noEmails: req.body.noEmails });      
+         o: req.authData.o, user: req.authData.pid, w: req.params.mts*1000, noEmails: req.body.noEmails, origin: req.get('origin') });      
       console.log(`Week is clean, result: ${result}`);
       console.log(result);
       

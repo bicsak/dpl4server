@@ -2,17 +2,23 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 
 export default class PDFCreator{
-    constructor(orch, wpl, dpl) {
-        this.parseRawData(orch, wpl, dpl);
+    
+    constructor(orch, wpl) {
+        this.parseRawData(orch, wpl);
     }
     
-    parseRawData(orch, wpl, dpl) {
+    parseRawData(orch, wpl) {
         //TODO
+        // get timezone, orchestra full, abbr etc.
+    }
+
+    parseDpl(dpl, sec) {
 
     }
 
-    createPDF(filename) {
+    createPDF(filename, dpl, sec, opt /* changes for the future red markings*/) {
         // TODO
+        this.parseDpl(dpl, sec);
         // Create a document
         const doc = new PDFDocument();
 
@@ -23,6 +29,16 @@ export default class PDFCreator{
         // Add some text with annotations
         doc/*.addPage()*/.fillColor('blue')
         .text('Here is a link to ODP!', 100, 100)
+        /* Write rotated text with pdfKit:
+        doc.save(); 
+        doc.rotate(90).text('rotated text', ...); 
+        doc.restore();
+         
+        OR:
+        doc.rotate(angle, { origin: [x, y]});
+        doc.test( 'TEST', x, y);
+        doc.rotate(angle * (-1), {origin: [x, y]});        
+        */
         .underline(100, 100, 160, 27, { color: '#0000FF' })
         .link(100, 100, 160, 27, 'http://odp.bicsak.net/');
 
