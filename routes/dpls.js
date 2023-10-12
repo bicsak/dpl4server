@@ -11,6 +11,7 @@ const fs = require('fs');
 
 const { writeOperation } = require('../my_modules/orch-lock');
 const { createWeekDataRaw } = require('../my_modules/week-data-raw');
+const PDFCreator = require('../my_modules/pdfcreator');
 
 const Orchestra = require('../models/orchestra');
 const Profile = require('../models/profile');
@@ -1089,7 +1090,13 @@ async function editDpl( session, params, createEvent ) {
          role: 'office',
          'notifications.dplChanged': true
       }).session(session);      
-      // TODO generate PDF for this section's current dpl (new version)
+      // generate PDF for this section's current dpl (new version)
+      let weekDoc = await Week.findById(affectedDpl.w).session(session);
+      let sectionName = orchestraDoc.sections.get(params.sec).name;
+      let sectionAbbr = orchestraDoc.sections.get(params.sec).abbr;      
+      PDFCreator.parseWeekData(orchestraDoc, weekDoc);
+      PDFCreator.parseDpl(affectedDpl, sectionName, /*params.sec? */);
+      let filename = PDFCreator.createPDF();
       // get scheduler profile for section     
       let schedulerProfile = await Profile.find({
          o: params.o,
@@ -1110,7 +1117,7 @@ async function editDpl( session, params, createEvent ) {
       let allProfiles = officeProfiles.concat(memberProfiles, schedulerProfile);
       // send "dplchanged" email for all officeProfiles, scheduler of section and members where      
       for ( let j = 0; j < allProfiles.length; j++ ) {
-         email.send({
+         /*email.send({
             template: 'dplchanged',
             message: { 
                to: `"${allProfiles[j].userFn} ${allProfiles[j].userSn}" ${allProfiles[j].email}`, 
@@ -1118,23 +1125,24 @@ async function editDpl( session, params, createEvent ) {
                   filename: 'favicon-32x32.png',
                   path: path.join(__dirname, '..') + '/favicon-32x32.png',
                   cid: 'logo'
-               }/*, {
-                  filename: 'dpl.pdf',
-                  path: path.join(__dirname, '..') + '/dpl.pdf',
-               }*/]
+               }, {
+                  filename: `dpl_${orchestraDoc.code}_${sectionAbbr}_${dtBegin.toFormat("yyyy_W")}.pdf`,
+                  path: path.join(__dirname, '..', 'output') + `/${filename}`,
+               }]
             },
             locals: { 
                name: allProfiles[j].userFn,               
                link: `${params.origin}/${allProfiles[j].role}/week?profId=${allProfiles[j]._id}&mts=${params.begin}`,                                               
-               instrument: orchestraDoc.sections.get(params.sec).name,
+               instrument: sectionName,
                kw: dtBegin.toFormat("W"),
                period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,        
                scheduler: allProfiles[j].role == 'scheduler',               
                orchestra: orchestraDoc.code,
                orchestraFull: orchestraDoc.fullName,                              
             }
-         }).catch(console.error);
-      }      
+         }).catch(console.error);*/
+      }   
+      //PDFCreator.deleteOutputFiles();
    }       
 
    returnVal = true;   
