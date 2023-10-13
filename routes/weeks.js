@@ -200,7 +200,7 @@ async function editInstrumentation( session, params, createEvent ) {
                      message: { 
                         to: `"${profile.userFn} ${profile.userSn}" ${profile.email}`, 
                         attachments: [{
-                           filename: 'favicon-32x32.png',
+                           filename: 'logo.png',
                            path: path.join(__dirname, '..') + '/favicon-32x32.png',
                            cid: 'logo'
                         }]
@@ -362,7 +362,7 @@ async function deleteDienst(session, params, createEvent ) {
                message: { 
                   to: `"${allProfiles[j].userFn} ${allProfiles[j].userSn}" ${allProfiles[j].email}`, 
                   attachments: [{
-                     filename: 'favicon-32x32.png',
+                     filename: 'logo.png',
                      path: path.join(__dirname, '..') + '/favicon-32x32.png',
                      cid: 'logo'
                   }/*, {
@@ -537,7 +537,7 @@ async function cleanWeek(session, params, createEvent) {
                message: { 
                   to: `"${allProfiles[j].userFn} ${allProfiles[j].userSn}" ${allProfiles[j].email}`, 
                   attachments: [{
-                     filename: 'favicon-32x32.png',
+                     filename: 'logo.png',
                      path: path.join(__dirname, '..') + '/favicon-32x32.png',
                      cid: 'logo'
                   }/*, {
@@ -725,7 +725,7 @@ async function createDienst(session, params, createEvent) {
                message: { 
                   to: `"${profile.userFn} ${profile.userSn}" ${profile.email}`, 
                   attachments: [{
-                     filename: 'favicon-32x32.png',
+                     filename: 'logo.png',
                      path: path.join(__dirname, '..') + '/favicon-32x32.png',
                      cid: 'logo'
                   }]

@@ -395,25 +395,35 @@ async function voteSurvey(session, params, createEvent ) {
       console.log('send email to scheduler...');
       if ( params.feedback != 'yes' ) {
          // send email to scheduler about rejected dpl
-         let schedulerProfile = await Profile.findOne({
+         let profiles = await Profile.find({
+            o: params.o,
+            role: 'office',
+            _id: {
+               $ne: params.pid //??
+            },
+            'notifications.dplRejected': true
+          }).session(session);
+         profiles = profiles.concat(await Profile.findOne({
             o: params.o,
             role: 'scheduler',
             section: params.sec,
             'notifications.dplRejected': true
-         }).session(session);
-         if ( schedulerProfile ) {      
+         }).session(session));
+         for ( let i = 0; i < profiles.length; i++ ) {      
             email.send({
                template: 'dplrejected',
                message: { 
-                  to: `"${schedulerProfile.userFn} ${schedulerProfile.userSn}" ${schedulerProfile.email}`, 
+                  to: `"${profiles[i].userFn} ${profiles[i].userSn}" ${profiles[i].email}`, 
                   attachments: [{
-                     filename: 'favicon-32x32.png',
+                     filename: 'logo.png',
                      path: path.join(__dirname, '..') + '/favicon-32x32.png',
                      cid: 'logo'
                   }]
                },
                locals: {
-                  link: `${params.origin}/scheduler/week?profId=${schedulerProfile._id}&mts=${params.begin}`,                                               
+                  scheduler: profiles[i].role == 'scheduler',
+                  name: profiles[i].userFn,
+                  link: `${params.origin}/${profiles[i].role}/week?profId=${profiles[i]._id}&mts=${params.begin}`,                                               
                   instrument: orchestraDoc.sections.get(params.sec).name,
                   kw: dtBegin.toFormat("W"),
                   period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,        
@@ -451,7 +461,7 @@ async function voteSurvey(session, params, createEvent ) {
             message: { 
                to: `"${profiles[i].userFn} ${profiles[i].userSn}" ${profiles[i].email}`, 
                attachments: [{
-                  filename: 'favicon-32x32.png',
+                  filename: 'logo.png',
                   path: path.join(__dirname, '..') + '/favicon-32x32.png',
                   cid: 'logo'
                }]
@@ -489,7 +499,7 @@ async function voteSurvey(session, params, createEvent ) {
                message: { 
                   to: `"${schedulerProfile.userFn} ${schedulerProfile.userSn}" ${schedulerProfile.email}`, 
                   attachments: [{
-                     filename: 'favicon-32x32.png',
+                     filename: 'logo.png',
                      path: path.join(__dirname, '..') + '/favicon-32x32.png',
                      cid: 'logo'
                   }]
@@ -524,7 +534,7 @@ async function voteSurvey(session, params, createEvent ) {
                message: { 
                   to: `"${schedulerProfile.userFn} ${schedulerProfile.userSn}" ${schedulerProfile.email}`, 
                   attachments: [{
-                     filename: 'favicon-32x32.png',
+                     filename: 'logo.png',
                      path: path.join(__dirname, '..') + '/favicon-32x32.png',
                      cid: 'logo'
                   }]
@@ -607,7 +617,7 @@ async function editDplStatus(session, params, createEvent ) {
             message: { 
                to: `"${officeProfiles[i].userFn} ${officeProfiles[i].userSn}" ${officeProfiles[i].email}`, 
                attachments: [{
-                  filename: 'favicon-32x32.png',
+                  filename: 'logo.png',
                   path: path.join(__dirname, '..') + '/favicon-32x32.png',
                   cid: 'logo'
                }]
@@ -682,7 +692,7 @@ async function editDplStatus(session, params, createEvent ) {
             message: { 
                to: `"${profiles[i].userFn} ${profiles[i].userSn}" ${profiles[i].email}`, 
                attachments: [{
-                  filename: 'favicon-32x32.png',
+                  filename: 'logo.png',
                   path: path.join(__dirname, '..') + '/favicon-32x32.png',
                   cid: 'logo'
                }, {
@@ -956,7 +966,7 @@ async function createSurvey( session, params, createEvent ) {
          message: { 
             to: `"${memberProfiles[i].userFn} ${memberProfiles[i].userSn}" ${memberProfiles[i].email}`, 
             attachments: [{
-               filename: 'favicon-32x32.png',
+               filename: 'logo.png',
                path: path.join(__dirname, '..') + '/favicon-32x32.png',
                cid: 'logo'
             }]

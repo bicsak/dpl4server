@@ -5,7 +5,10 @@ html
     meta(charset='UTF-8')
     title Dienstplanvorschlag abgelehnt
   body(bgcolor=dplColor style=`background-color: ${dplColor}; font-size: 12px;`)
-    p Liebe/r DiensteinteilerIn,
+    if  scheduler
+      p Liebe/r Diensteinteiler/in,
+    else
+      p Hallo #{name},    
     p 
       strong Das Orchesterbüro hat den eingereichten Dienstplan der Fachgruppe #{instrument} für die Kalenderwoche #{kw} (#{period}) mit folgender Begründung abgelehnt:
     div(bgcolor='#ffffff' style=`border: 2px solid red; margin: 12px 12px; padding: 10px; background-color: #ffffff`)

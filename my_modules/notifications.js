@@ -12,6 +12,7 @@ exports.notificationDefaults = {
     'office': {
         dplChanged: true,
         dplFinal: true,
+        dplRejected: true, // DPL zurückgewiesen von einer anderen Mitarbeiterin des OB
         approvalNew: true // Genehmigung angefragt
     },
     'musician': {
