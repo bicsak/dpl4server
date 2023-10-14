@@ -1,7 +1,7 @@
 const path = require('node:path');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
-const { DateTime } = require('luxon');
+const { DateTime, Info } = require('luxon');
 
 class PDFCreator {
     outputFiles = []; // name list for generated PDF files
@@ -34,10 +34,27 @@ class PDFCreator {
                 name: dienstLabel,
                 category: category, // italic if category == 2                
                 begin: lxBegin, // for deciding, if am or pm
+                position: {},
                 nBegin: begin.getTime()
             } );
-        }        
-        this.dienste.sort( (a, b) => a.nBegin - b.nbegin );
+        }          
+        this.dienste.sort( (a, b) => a.nBegin - b.nBegin );        
+        this.columns = [];
+        for ( let i = 0; i < 14; i++ ) {
+            this.columns[i] = [];
+            let dayIndex = Math.floor(i/2);
+            let pmShift = i % 2;
+            this.dienste.forEach( (d, index, dArr) => {
+                if ( d.begin.day == this.days[dayIndex].day && (!pmShift && d.begin.hour < 12 || pmShift && d.begin.hour >= 12) ) {
+                    this.columns[i].push(index);
+                    dArr.position = { 
+                        col: i,
+                        dInd: this.columns[i].length - 1,
+                        pmShift: pmShift
+                    };
+                }
+            });
+        }
     }
 
     parseDpl(dpl, sectionName) {
@@ -57,6 +74,11 @@ class PDFCreator {
             layout: 'landscape',
             size: 'A4'
         });
+        let maxLabelLength = 0;
+        for ( let i = 0; i < this.dienste.length; i++ ) {
+            maxLabelLength = Math.max(maxLabelLength, doc.widthOfString(this.dienste[i].name));
+        }
+        let heightRotatedHeaders = maxLabelLength / 2;
 
         // Pipe its output somewhere, like to a file or HTTP response
         // See below for browser usage
@@ -76,7 +98,7 @@ class PDFCreator {
         });
         // Add some text with annotations
         doc.addPage({layout: 'landscape', size: 'A4', margin: margin})/*.fillColor('blue')*/.lineWidth(2).fillAndStroke("black", "#000")
-        .text(this.orchFull, 100, 300);
+        .text(this.orchFull, 100, 300).lineWidth(1);
         /*.underline(100, 100, 160, 27, { color: '#0000FF' })
         .link(100, 100, 160, 27, 'http://odp.bicsak.net/');*/
         /* Write rotated text with pdfKit: */ 
@@ -88,19 +110,41 @@ class PDFCreator {
         doc.rotate(angle, { origin: [x, y]});
         doc.test( 'TEST', x, y);
         doc.rotate(angle * (-1), {origin: [x, y]});        
-        */               
+        */   
+       
+        let aX = 100; let aY = margin+heightRotatedHeaders+20;
         doc.save(); 
-        doc.rotate(-60, { origin: [100, 200]}); 
+        doc.rotate(-60, { origin: [aX, aY]}); 
         
-        let hText = 20; let dx = hText/2; let dy = Math.sqrt(0.75)*hText;
-        for ( let i = 0; i < this.dienste.length; i++) {                    
-            doc.text(`${this.dienste[i].name}`, 100, 200).moveUp().translate(dx, dy);
+        let hText = 20; 
+        let dx = hText/2; /* sinus 30 grad  == 0.5 */ 
+        let dy = Math.sqrt(0.75)*hText;  // sinus 60 grad == sqrt 0.75        
+        
+        for ( let i = 0; i < 14; i++) {
+            for ( let j = 0; j < this.columns[i].length; j++ ) {                
+        
+                let text = this.dienste[this.columns[i][j]].name;
+                let currHeaderLength = doc.widthOfString(text);
+                doc.text(text, aX, aY).moveUp().translate(dx, dy);
+                doc.moveTo(aX, aY).lineTo(aX + Math.sqrt(0.75)*currHeaderLength*hText/100, aY - currHeaderLength / 2 / 100).stroke();
+                //doc.moveTo(aX + dx*columnCount, aY).lineTo(aX + dx*columnCount + Math.sqrt(0.75)*currHeaderLength, aY - dy*columnCount - currHeaderLength / 2).stroke();
+            }
+            if ( !this.columns[i].length ) {
+        
+                let currHeaderLength = doc.widthOfString('frei');
+                doc.text(`frei`, aX, aY).moveUp().translate(dx, dy);            
+                doc.moveTo(aX, aY).lineTo(aX + Math.sqrt(0.75)*currHeaderLength * hText, aY - currHeaderLength / 2).stroke();
+            }
         }
         doc.restore();
-        doc.text('start', 100, 400);
-        for ( let i = 0; i < this.dienste.length; i++) {
-            doc.text(`${this.dienste[i].name}`);                        
-        }
+        //doc.text('start', 100, 400);        
+        let tX = 0;
+        for ( let i = 0; i < 7; i++ ) {
+            let colSpan = Math.max(1, this.columns[i*2].length)+Math.max(1, this.columns[i*2+1].length);
+            doc.rect(aX + tX, aY+10, colSpan*20, 20).stroke(); //x, y, w, h            
+            doc.text(Info.weekdays('short')[i], aX + tX, aY+10);                        
+            tX += colSpan*20;
+        }        
 
         // Finalize PDF file
         doc.end();

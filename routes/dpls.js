@@ -398,9 +398,7 @@ async function voteSurvey(session, params, createEvent ) {
          let profiles = await Profile.find({
             o: params.o,
             role: 'office',
-            _id: {
-               $ne: params.pid //??
-            },
+            _id: { $ne: params.user  },
             'notifications.dplRejected': true
           }).session(session);
          profiles = profiles.concat(await Profile.findOne({
