@@ -1001,7 +1001,7 @@ async function editDpl( session, params, createEvent ) {
       s: params.sec,
       weekBegin: params.begin,
       weekEditable: true
-   } ).session(session)/*.populate('p').populate('weekSeason')*/;   
+   } ).session(session).populate('periodMembers')/*.populate('p').populate('weekSeason')*/;   
      
    if ( !affectedDpl ) return { 
       success: false, 
@@ -1085,7 +1085,7 @@ async function editDpl( session, params, createEvent ) {
    await createEvent({
       weekBegin: affectedDpl.weekBegin, 
       sec: params.sec, 
-      profiles: affectedDpl.periodMembers, 
+      profiles: affectedDpl.periodMembers.map( pm => pm._id ), 
       public: affectedDpl.published,
       entity: "dpl", action: "edit", 
       extra: `Dienstplan ${orchestraDoc.sections.get(params.sec).name}, ${dtBegin.toFormat("kkkk 'KW' W")}`, 
@@ -1101,10 +1101,17 @@ async function editDpl( session, params, createEvent ) {
       // generate PDF for this section's current dpl (new version)
       let weekDoc = await Week.findById(affectedDpl.w).session(session);
       let sectionName = orchestraDoc.sections.get(params.sec).name;
-      let sectionAbbr = orchestraDoc.sections.get(params.sec).abbr;      
+      let sectionAbbr = orchestraDoc.sections.get(params.sec).abbr;            
       PDFCreator.parseWeekData(orchestraDoc, weekDoc);
-      PDFCreator.parseDpl(affectedDpl, sectionName, /*params.sec? */);
-      let filename = PDFCreator.createPDF();
+      PDFCreator.parseDpl(affectedDpl, sectionName, affectedDpl.periodMembers.map(
+         pm => {
+            return {
+               fn: pm.userFn,
+               sn: pm.userSn
+            }
+         }
+      ) );
+      let filename = PDFCreator.createPDF( /* seatingChanged */ );
       // get scheduler profile for section     
       let schedulerProfile = await Profile.find({
          o: params.o,
@@ -1118,7 +1125,7 @@ async function editDpl( session, params, createEvent ) {
          role: 'musician',
          _id: {
             $in: affectedDpl.periodMembers.map( 
-               (id, index) => seatingChanged.some( s => s[index] ) ? id : null )
+               (pm, index) => seatingChanged.some( s => s[index] ) ? pm._id : null )
          },
          'notifications.dplChanged': true
       }).session(session);

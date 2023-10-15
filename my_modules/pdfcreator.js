@@ -57,16 +57,19 @@ class PDFCreator {
         }
     }
 
-    parseDpl(dpl, sectionName) {
+    parseDpl(dpl, sectionName, members) {
         /* sp, ext, (comment), dienstWeight, (dienstBegin) from seating for each dienst*/ 
         this.sectionName = sectionName; // 'Flöte'
         this.tsVersion = DateTime.fromMillis(dpl.state.getTime(), {zone: this.timezone});
+        this.members = members;
     }
 
     createPDF( opt /* changes for the future red markings*/) {        
         const pageWidth = 841.89; // in PS points; 72 points per inch
         const pageHeight = 595.28; // A4, 297x210 mm
         const margin = 36; // half inch
+        const tableFontSize = 12;
+        const hCell = 30; 
         let filename = 'dploutput.pdf'; // TODO unique arbitrary name        
         // Create a document
         const doc = new PDFDocument({
@@ -74,11 +77,14 @@ class PDFCreator {
             layout: 'landscape',
             size: 'A4'
         });
+        doc.font('Times-Roman', tableFontSize);
         let maxLabelLength = 0;
         for ( let i = 0; i < this.dienste.length; i++ ) {
+            
             maxLabelLength = Math.max(maxLabelLength, doc.widthOfString(this.dienste[i].name));
+            console.log(maxLabelLength);
         }
-        let heightRotatedHeaders = maxLabelLength / 2;
+        let heightRotatedHeaders = /*maxLabelLength / 2*/ maxLabelLength * Math.sqrt(0.75);
 
         // Pipe its output somewhere, like to a file or HTTP response
         // See below for browser usage
@@ -87,6 +93,7 @@ class PDFCreator {
             let w = doc.widthOfString(this.orchFull);
             let h = doc.heightOfString(this.orchFull);
 
+            // TODO for client-side rendered PDF: Dienstplan 'Entwurf'
             doc.text(`Dienstplan ${this.sectionName}`).moveUp()
             .text(`Stand: ${this.tsVersion.toFormat('dd.MM.yyyy hh:mm')}`, {align: 'right'}).moveUp()
             .text(`Vom ${this.days[0].toFormat('dd.MM.yyyy')} bis ${this.days[6].toFormat('dd.MM.yyyy')} (KW ${this.days[0].toFormat('W')})`, {align: 'center'});
@@ -97,8 +104,8 @@ class PDFCreator {
 
         });
         // Add some text with annotations
-        doc.addPage({layout: 'landscape', size: 'A4', margin: margin})/*.fillColor('blue')*/.lineWidth(2).fillAndStroke("black", "#000")
-        .text(this.orchFull, 100, 300).lineWidth(1);
+        doc.addPage({layout: 'landscape', size: 'A4', margin: margin})/*.fillColor('blue')*/
+        .lineWidth(2).fillAndStroke("black", "#000").lineWidth(1);
         /*.underline(100, 100, 160, 27, { color: '#0000FF' })
         .link(100, 100, 160, 27, 'http://odp.bicsak.net/');*/
         /* Write rotated text with pdfKit: */ 
@@ -112,39 +119,69 @@ class PDFCreator {
         doc.rotate(angle * (-1), {origin: [x, y]});        
         */   
        
-        let aX = 100; let aY = margin+heightRotatedHeaders+20;
+        let maxSurnameWidth = doc.widthOfString('Aushilfe');
+        for ( let i = 0; i < this.members.length; i++ ) {
+            let w = doc.widthOfString(`${i+1} ${this.members[i].sn}`);
+            maxSurnameWidth = Math.max(maxSurnameWidth, w);            
+        }        
+
+        let aX = margin + maxSurnameWidth; 
+        let aY = margin+heightRotatedHeaders+20;
+
+        doc.rect(aX - maxSurnameWidth, aY+tableFontSize, maxSurnameWidth, hCell*2).stroke(); //x, y, w, h            
+        doc.font('Times-Bold').text(`KW ${this.days[0].toFormat('W')}`, 
+        aX - maxSurnameWidth, aY+hCell, {
+                width: maxSurnameWidth,
+                height: hCell*2,
+                align: 'center',
+                baseline: 'top'                
+        });                        
+        doc.font('Times-Roman');
+        for ( let i = 0; i < this.members.length; i++ ) {         
+            doc.text(`${i+1} ${this.members[i].sn}`, aX - maxSurnameWidth, aY+i*tableFontSize+3*hCell);
+        }
+        doc.font('Times-Italic').text(`Aushilfe`, aX - maxSurnameWidth, aY + hCell*3+this.members.length*tableFontSize);
+
         doc.save(); 
-        doc.rotate(-60, { origin: [aX, aY]}); 
+        doc.rotate(-60, { origin: [aX, aY]}).font('Times-Roman');         
         
-        let hText = 20; 
-        let dx = hText/2; /* sinus 30 grad  == 0.5 */ 
-        let dy = Math.sqrt(0.75)*hText;  // sinus 60 grad == sqrt 0.75        
+        let dx = hCell/2; /* sinus 30 grad  == 0.5 */ 
+        let dy = Math.sqrt(0.75)*hCell;  // sinus 60 grad == sqrt 0.75        
         
         for ( let i = 0; i < 14; i++) {
             for ( let j = 0; j < this.columns[i].length; j++ ) {                
-        
                 let text = this.dienste[this.columns[i][j]].name;
                 let currHeaderLength = doc.widthOfString(text);
-                doc.text(text, aX, aY).moveUp().translate(dx, dy);
-                doc.moveTo(aX, aY).lineTo(aX + Math.sqrt(0.75)*currHeaderLength*hText/100, aY - currHeaderLength / 2 / 100).stroke();
-                //doc.moveTo(aX + dx*columnCount, aY).lineTo(aX + dx*columnCount + Math.sqrt(0.75)*currHeaderLength, aY - dy*columnCount - currHeaderLength / 2).stroke();
+                if ( this.dienste[this.columns[i][j]].category == 2 ) doc.font('Times-Italic');
+                else doc.font('Times-Roman');
+                doc.fillAndStroke("black", "#000").text(text, aX, aY+hCell/2).translate(dx, dy);
+                doc.fillAndStroke("grey", "#999").moveTo(aX-tableFontSize+4, aY+4).lineTo(aX + currHeaderLength, aY+4).stroke();                
             }
-            if ( !this.columns[i].length ) {
-        
+            if ( !this.columns[i].length ) {        
                 let currHeaderLength = doc.widthOfString('frei');
-                doc.text(`frei`, aX, aY).moveUp().translate(dx, dy);            
-                doc.moveTo(aX, aY).lineTo(aX + Math.sqrt(0.75)*currHeaderLength * hText, aY - currHeaderLength / 2).stroke();
+                doc.fillAndStroke("grey", "#999").text(`frei`, aX, aY+hCell/2).fillAndStroke("black", "#000").translate(dx, dy);            
+                doc.fillAndStroke("grey", "#999").moveTo(aX-tableFontSize+4, aY+4).lineTo(aX + currHeaderLength, aY+4).stroke();
             }
         }
         doc.restore();
-        //doc.text('start', 100, 400);        
+        
         let tX = 0;
         for ( let i = 0; i < 7; i++ ) {
             let colSpan = Math.max(1, this.columns[i*2].length)+Math.max(1, this.columns[i*2+1].length);
-            doc.rect(aX + tX, aY+10, colSpan*20, 20).stroke(); //x, y, w, h            
-            doc.text(Info.weekdays('short')[i], aX + tX, aY+10);                        
-            tX += colSpan*20;
-        }        
+            doc.rect(aX + tX, aY+tableFontSize, colSpan*hCell, hCell*2).stroke(); //x, y, w, h            
+            doc.font('Times-Bold').text(Info.weekdays('long')[i], aX + tX, aY+hCell, {
+                width: colSpan*hCell,
+                height: hCell,
+                align: 'center'                
+            });                        
+            //doc.rect(aX + tX, aY+20, colSpan*20, 20).stroke(); //x, y, w, h            
+            doc.font('Times-Roman').text(this.days[i].toFormat('dd.MM'), aX + tX, aY+hCell+tableFontSize, {
+                width: colSpan*hCell,
+                height: hCell,
+                align: 'center'                
+            });                        
+            tX += colSpan*hCell;
+        }                                
 
         // Finalize PDF file
         doc.end();
