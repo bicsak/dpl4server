@@ -63,8 +63,18 @@ class PDFCreator {
         }
     }
 
-    parseDpl(dpl, sectionName, members) {
-        /* sp, ext, (comment), dienstWeight, (dienstBegin) from seating for each dienst*/ 
+    subIndex( sp /*: number[]*/ )/*: number[]*/ {    
+        return sp.map(
+          (code, ind, arr) => {
+            if ( code >= 64 ) /* P/V line-through */
+              return arr.slice(0, ind).filter(v=>v>=64).length+1;
+            if ( code == 1 ) /* X */ return arr.slice(0, arr.indexOf(64+ind)).filter(v=>v>=64).length+1;        
+            return 0;
+          }
+        );
+    }
+
+    parseDpl(dpl, sectionName, members) {        
         this.sectionName = sectionName; // 'Flöte'
         this.tsVersion = DateTime.fromMillis(dpl.state.getTime(), {zone: this.timezone});
         this.members = members;
@@ -75,6 +85,7 @@ class PDFCreator {
         for ( let i = 0; i < dpl.seatings.length; i++ ) {
             let dInd = this.dienste.findIndex( d => d.id.toString() == dpl.seatings[i].d.toString() );            
             this.dienste[dInd].sp = dpl.seatings[i].sp;
+            this.dienste[dInd].sub = this.subIndex(dpl.seatings[i].sp);
             this.dienste[dInd].ext = dpl.seatings[i].ext;
             this.dienste[dInd].commentScheduler = dpl.seatings[i].comment;
         }
@@ -95,6 +106,7 @@ class PDFCreator {
             case 4: letter = '*'; break;
             case 16: letter = (category == 0 ? 'P' : (category > 1 ? 'S' : 'V')); break;
             case 32: letter = 'A'; break;
+            default: letter = (category == 0 ? 'P' : (category > 1 ? 'S' : 'V'));
         }
         if ( weight > 1 && code >= 16 ) letter += letter;
         return letter;
@@ -105,6 +117,8 @@ class PDFCreator {
         const pageHeight = 595.28; // A4, 297x210 mm
         const margin = 36; // half inch
         const tableFontSize = 12;
+        //const remarkFontSize = 10;
+        const headerFontSize = 16;
         const fontSizeSub = 8;
         const wCell = 35;
         const tableRowHeight = tableFontSize * 1.7;
@@ -134,7 +148,7 @@ class PDFCreator {
 
             // TODO for client-side rendered PDF: Dienstplan 'Entwurf'
             doc.text(`Dienstplan ${this.sectionName}`).moveUp()
-            .text(`Stand: ${this.tsVersion.toFormat('dd.MM.yyyy hh:mm')} (V ${this.nVersion})`, {align: 'right'}).moveUp()
+            .text(`Stand: ${this.tsVersion.toFormat('dd.MM.yyyy hh:mm')} Version: ${this.nVersion}`, { align: 'right' }).moveUp()
             .text(`Vom ${this.days[0].toFormat('dd.MM.yyyy')} bis ${this.days[6].toFormat('dd.MM.yyyy')} (KW ${this.days[0].toFormat('W')})`, {align: 'center'});
             doc.moveTo(margin, margin + h).lineTo(pageWidth - margin, margin + h);            
             
@@ -184,23 +198,38 @@ class PDFCreator {
                 for ( let m = 0; m < this.members.length; m++ ) {
                     if ( this.absent[i][m] ) {
                         doc.text(
-                            this.dienste[this.columns[i][j]].sp[m] > 0 ? 
+                            this.dienste[this.columns[i][j]].sp[m] ? 
                             ( this.dienste[this.columns[i][j]].weight > 1 ? 'KK' : 'K') : absentCode[this.absent[i][m]],
                             aX + colCount * wCell, aY+(m + 3.25)*tableRowHeight, {
                                 width: wCell,
                                 align: 'center'
                         });
                     } else 
-                    if ( this.dienste[this.columns[i][j]].sp[m] > 0) {   
-                        // TODO P/V/S/A/X/P-/ *                       
-                        doc.text(this.seatingLetter(
+                    if ( this.dienste[this.columns[i][j]].sp[m] ) {                           
+                        let letter = this.seatingLetter(
                             this.dienste[this.columns[i][j]].sp[m],
                             this.dienste[this.columns[i][j]].category,
                             this.dienste[this.columns[i][j]].weight
-                        ), aX + colCount * wCell, aY+(m + 3.25)*tableRowHeight, {
+                        );
+                        let wLetter = doc.widthOfString(letter);
+                        doc.text(letter, aX + colCount * wCell, aY+(m + 3.25)*tableRowHeight, {
                             width: wCell,
                             align: 'center'
                         });
+                        // Sub-Index (Diensttausch: P-, V- and X)
+                        if ( this.dienste[this.columns[i][j]].sub[m] ) {
+                            let xPos = aX + (colCount+.5) * wCell+wLetter/2;                                
+                            doc.fontSize(fontSizeSub).text(this.dienste[this.columns[i][j]].sub[m],                              
+                            xPos, aY+(m + 3.55)*tableRowHeight).fontSize(tableFontSize);
+                        }
+                        // Line-through for P-, V- (Diensttausch)
+                        let wLineThrough = Math.min(wLetter, wCell*.75);
+                        if ( this.dienste[this.columns[i][j]].sp[m] >= 64 ) {                            
+                            doc.moveTo(aX + (colCount+.5) * wCell-wLineThrough/2, 
+                                aY+(m + 3.5)*tableRowHeight)
+                            .lineTo(aX + (colCount+.5) * wCell+wLineThrough/2, 
+                                aY+(m + 3.5)*tableRowHeight).stroke();
+                        }
                     }
                 }
                 if ( this.dienste[this.columns[i][j]].ext ) {
@@ -286,25 +315,28 @@ class PDFCreator {
             tX += colSpan*wCell;
         } 
         doc.fillAndStroke('black', 'black');
-        doc.lineWidth(2).rect(aX + offsetXWeekend, aY+tableFontSize, colSpanWeekend*wCell, tableRowHeight*2).stroke().lineWidth(1); //x, y, w, h                       
+        doc.lineWidth(1.5).rect(aX + offsetXWeekend, aY+tableFontSize, colSpanWeekend*wCell, tableRowHeight*2).stroke().lineWidth(1); //x, y, w, h                       
         
         // 2nd Page: Remarks (Manager, Scheduler, for each dienst manager/scheduler)       
         if ( this.remarkWeek || this.remarkWeek || this.remarksDienst.length ) {
             doc.addPage({layout: 'landscape', size: 'A4', margin: margin}).fillAndStroke("black", "#000").lineWidth(1);
-            doc.text('Bemerkungen', margin, margin + wCell);
+            doc.fontSize(headerFontSize).font('Times-Bold')
+            .text('Bemerkungen', margin, margin + wCell).moveDown();
             if (this.remarkWeek) {
-                doc.font('Times-Bold').text(this.remarkWeek);
+                doc.fontSize(tableFontSize).font('Times-Bold').text(this.remarkWeek).moveDown();
             }
             if (this.remarkDpl) {
-                doc.font('Times-Roman').text(this.remarkDpl);
+                doc.fontSize(tableFontSize).font('Times-Roman').text(this.remarkDpl).moveDown();
             }
             if (this.remarksDienst.length) {
+                doc.moveDown(2).fontSize(headerFontSize).font('Times-Bold')
+                .text('Fußnoten').moveDown();
                 for ( let i = 0; i < this.remarksDienst.length; i++ ) {
                     doc.font('Times-Roman').fontSize(fontSizeSub).text(i+1 + ' ', {continued: true});
                     doc.fontSize(tableFontSize);
-                    if ( this.dienste[this.remarksDienst[i]].commentManager ) doc.font('Times-Bold').text(this.dienste[this.remarksDienst[i]].commentManager, {continued: true});
-                    if ( this.dienste[this.remarksDienst[i]].commentScheduler ) doc.font('Times-Roman').text(this.dienste[this.remarksDienst[i]].commentScheduler, {continued: true});
-                    doc.text(' ', {continued: false});
+                    if ( this.dienste[this.remarksDienst[i]].commentManager ) doc.font('Times-Bold').text(this.dienste[this.remarksDienst[i]].commentManager);
+                    if ( this.dienste[this.remarksDienst[i]].commentScheduler ) doc.font('Times-Roman').text(this.dienste[this.remarksDienst[i]].commentScheduler);
+                    doc.moveDown();
                 }
             }
         }        
