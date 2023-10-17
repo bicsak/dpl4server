@@ -35,8 +35,9 @@ class PDFCreator {
                 id: wpl.dienst[i]._id,
                 name: dienstLabel,
                 category: category, // italic if category == 2                
-                begin: lxBegin, // for deciding, if am or pm
+                begin: lxBegin, // for deciding, if am or pm                
                 position: {},
+                weight: wpl.dienst[i].weight,
                 commentManager: wpl.dienst[i].comment,
                 nBegin: begin.getTime()
             };            
@@ -68,6 +69,8 @@ class PDFCreator {
         this.tsVersion = DateTime.fromMillis(dpl.state.getTime(), {zone: this.timezone});
         this.members = members;
         this.remarkDpl = dpl.remark;
+        this.nVersion = dpl.version;
+        this.absent = dpl.absent; // ?? deep copy?
         
         for ( let i = 0; i < dpl.seatings.length; i++ ) {
             let dInd = this.dienste.findIndex( d => d.id.toString() == dpl.seatings[i].d.toString() );            
@@ -85,6 +88,18 @@ class PDFCreator {
         }        
     }
 
+    seatingLetter(code, category, weight) {
+        let letter = '';
+        switch (code) {
+            case 1: letter = 'X'; break;            
+            case 4: letter = '*'; break;
+            case 16: letter = (category == 0 ? 'P' : (category > 1 ? 'S' : 'V')); break;
+            case 32: letter = 'A'; break;
+        }
+        if ( weight > 1 && code >= 16 ) letter += letter;
+        return letter;
+    }
+
     createPDF( opt /* changes for the future red markings*/) {        
         const pageWidth = 841.89; // in PS points; 72 points per inch
         const pageHeight = 595.28; // A4, 297x210 mm
@@ -93,6 +108,9 @@ class PDFCreator {
         const fontSizeSub = 8;
         const wCell = 35;
         const tableRowHeight = tableFontSize * 1.7;
+
+        const absentCode = ['', 'k', '~', 'U', ''/* Freiqunsch! */];
+
         let filename = 'dploutput.pdf'; // TODO unique arbitrary name        
         // Create a document
         const doc = new PDFDocument({
@@ -116,13 +134,12 @@ class PDFCreator {
 
             // TODO for client-side rendered PDF: Dienstplan 'Entwurf'
             doc.text(`Dienstplan ${this.sectionName}`).moveUp()
-            .text(`Stand: ${this.tsVersion.toFormat('dd.MM.yyyy hh:mm')}`, {align: 'right'}).moveUp()
+            .text(`Stand: ${this.tsVersion.toFormat('dd.MM.yyyy hh:mm')} (V ${this.nVersion})`, {align: 'right'}).moveUp()
             .text(`Vom ${this.days[0].toFormat('dd.MM.yyyy')} bis ${this.days[6].toFormat('dd.MM.yyyy')} (KW ${this.days[0].toFormat('W')})`, {align: 'center'});
             doc.moveTo(margin, margin + h).lineTo(pageWidth - margin, margin + h);            
             
             doc.moveTo(margin, pageHeight - margin - h*1.5).lineTo(pageWidth - margin, pageHeight - margin - h*1.5);
             doc.text(this.orchFull, pageWidth/2 - w/2, pageHeight-margin-h);
-
         });
                 
         doc.addPage({layout: 'landscape', size: 'A4', margin: margin})
@@ -148,12 +165,14 @@ class PDFCreator {
         doc.font('Times-Roman');
         for ( let i = 0; i < this.members.length; i++ ) {         
             doc.text(`${i+1} ${this.members[i].sn}`, aX - maxSurnameWidth, aY+(i+3.25)*tableRowHeight);
-            doc.moveTo(aX - maxSurnameWidth, aY+(i+4)*tableRowHeight).lineTo(aX + this.tableWidth * wCell, aY+(i+4)*tableRowHeight).stroke();
+            doc.text(`${i+1}`, aX + this.tableWidth*wCell + tableFontSize, aY+(i+3.25)*tableRowHeight);
+            doc.moveTo(aX - maxSurnameWidth, aY+(i+4)*tableRowHeight).lineTo(aX + this.tableWidth * wCell + tableFontSize * 2, aY+(i+4)*tableRowHeight).stroke();
         }
         doc.font('Times-Italic').text(`Aushilfe(n)`, aX - maxSurnameWidth, aY + (this.members.length+3.25)*tableRowHeight).font('Times-Roman');
 
         let colCount = 0;  
         doc.moveTo(aX+colCount*wCell, aY+2*tableRowHeight).lineTo(aX+colCount*wCell, aY+(3+this.members.length)*tableRowHeight).stroke();      
+        console.log(this.absent);
         for ( let i = 0; i < 14; i++) {
             for ( let j = 0; j < this.columns[i].length; j++ ) {                
                 if ( this.dienste[this.columns[i][j]].remarkIndex ) {
@@ -163,8 +182,22 @@ class PDFCreator {
                     }).fontSize(tableFontSize);
                 }
                 for ( let m = 0; m < this.members.length; m++ ) {
-                    if ( this.dienste[this.columns[i][j]].sp[m] > 0) {
-                        doc.text('DD', aX + colCount * wCell, aY+(m + 4.25)*tableRowHeight, {
+                    if ( this.absent[i][m] ) {
+                        doc.text(
+                            this.dienste[this.columns[i][j]].sp[m] > 0 ? 
+                            ( this.dienste[this.columns[i][j]].weight > 1 ? 'KK' : 'K') : absentCode[this.absent[i][m]],
+                            aX + colCount * wCell, aY+(m + 3.25)*tableRowHeight, {
+                                width: wCell,
+                                align: 'center'
+                        });
+                    } else 
+                    if ( this.dienste[this.columns[i][j]].sp[m] > 0) {   
+                        // TODO P/V/S/A/X/P-/ *                       
+                        doc.text(this.seatingLetter(
+                            this.dienste[this.columns[i][j]].sp[m],
+                            this.dienste[this.columns[i][j]].category,
+                            this.dienste[this.columns[i][j]].weight
+                        ), aX + colCount * wCell, aY+(m + 3.25)*tableRowHeight, {
                             width: wCell,
                             align: 'center'
                         });
@@ -178,7 +211,17 @@ class PDFCreator {
                 }
                 colCount++;
             }
-            if ( !this.columns[i].length ) colCount++;
+            if ( !this.columns[i].length ) {
+                for ( let m = 0; m < this.members.length; m++ ) {
+                    if ( this.absent[i][m] ) {
+                        doc.text(absentCode[this.absent[i][m]], aX + colCount * wCell, aY+(m + 3.25)*tableRowHeight, {
+                            width: wCell,
+                            align: 'center'
+                        });
+                    } 
+                }
+                colCount++;
+            }
             // PM, draw grey background for cells
             if ( i % 2 ) {
                 doc.fillColor('grey', 0.2).rect(aX+(colCount-Math.max(1, this.columns[i].length))*wCell, aY+3*tableRowHeight, Math.max(1, this.columns[i].length)*wCell, (this.members.length+1)*tableRowHeight).fill().fillColor("black", 1);
@@ -223,28 +266,32 @@ class PDFCreator {
             }
         }
         
-        let tX = 0;        
+        let tX = 0; let offsetXWeekend = 0; let colSpanWeekend = 0;      
         for ( let i = 0; i < 7; i++ ) {
+            if ( i == 5 ) offsetXWeekend = tX;
             let colSpan = Math.max(1, this.columns[i*2].length)+Math.max(1, this.columns[i*2+1].length);
+            if ( i > 4 ) colSpanWeekend += Math.max(1, this.columns[i*2].length)+Math.max(1, this.columns[i*2+1].length);
             doc.rect(aX + tX, aY+tableFontSize, colSpan*wCell, tableRowHeight*2).stroke(); //x, y, w, h            
+            if ( i == 6 ) doc.fillAndStroke('red', 'red'); else doc.fillAndStroke('black', 'black');
             doc.font('Times-Bold').text(Info.weekdays('long')[i], aX + tX, aY+tableRowHeight, {
                 width: colSpan*wCell,
                 height: wCell,
                 align: 'center'                
-            });                        
-            //doc.rect(aX + tX, aY+20, colSpan*20, 20).stroke(); //x, y, w, h            
-            doc.font('Times-Roman').text(this.days[i].toFormat('dd.MM'), aX + tX, aY+tableRowHeight+tableFontSize, {
+            });                                                
+            doc.font('Times-Roman').text(this.days[i].toFormat('dd.MM.'), aX + tX, aY+tableRowHeight+tableFontSize, {
                 width: colSpan*wCell,
                 height: wCell,
                 align: 'center'                
             });                        
             tX += colSpan*wCell;
-        }            
+        } 
+        doc.fillAndStroke('black', 'black');
+        doc.lineWidth(2).rect(aX + offsetXWeekend, aY+tableFontSize, colSpanWeekend*wCell, tableRowHeight*2).stroke().lineWidth(1); //x, y, w, h                       
         
         // 2nd Page: Remarks (Manager, Scheduler, for each dienst manager/scheduler)       
         if ( this.remarkWeek || this.remarkWeek || this.remarksDienst.length ) {
             doc.addPage({layout: 'landscape', size: 'A4', margin: margin}).fillAndStroke("black", "#000").lineWidth(1);
-            doc.text('Bemerkungen zum Dienstplan', margin, margin + wCell);
+            doc.text('Bemerkungen', margin, margin + wCell);
             if (this.remarkWeek) {
                 doc.font('Times-Bold').text(this.remarkWeek);
             }
