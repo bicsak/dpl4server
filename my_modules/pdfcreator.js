@@ -116,8 +116,7 @@ class PDFCreator {
         const pageWidth = 841.89; // in PS points; 72 points per inch
         const pageHeight = 595.28; // A4, 297x210 mm
         const margin = 36; // half inch
-        const tableFontSize = 12;
-        //const remarkFontSize = 10;
+        const tableFontSize = 12;        
         const headerFontSize = 16;
         const fontSizeSub = 8;
         const wCell = 35;
@@ -125,15 +124,27 @@ class PDFCreator {
 
         const absentCode = ['', 'k', '~', 'U', ''/* Freiqunsch! */];
 
-        let filename = 'dploutput.pdf'; // TODO unique arbitrary name        
+        let filename = 'dploutput.pdf'; // unique arbitrary name        
+        // generate unique filename
+        let stub = 'dplaspdf_' + Date.now(), id = 0;
+        let test = //path.join(filePath, stub + id++);
+        path.join(__dirname, '..', 'output') + `/${stub + '_' + id++}.pdf`;
+        while ( fs.existsSync(test) )
+        {
+            test = //path.join(filePath, stub + id++)
+            path.join(__dirname, '..', 'output') + `/${stub + '_' + id++}.pdf`;
+        }
+        filename = stub + '_' + (id-1)+'.pdf';
+
         // Create a document
         const doc = new PDFDocument({
             autoFirstPage: false,
             layout: 'landscape',
-            size: 'A4'
+            size: 'A4',
+            bufferPages: true
         });
         doc.font('Times-Roman', tableFontSize);
-        let maxLabelLength = 0;
+        let maxLabelLength = doc.widthOfString('frei');
         for ( let i = 0; i < this.dienste.length; i++ ) {            
             maxLabelLength = Math.max(maxLabelLength, doc.widthOfString(this.dienste[i].name));
             console.log(maxLabelLength);
@@ -153,7 +164,24 @@ class PDFCreator {
             doc.moveTo(margin, margin + h).lineTo(pageWidth - margin, margin + h);            
             
             doc.moveTo(margin, pageHeight - margin - h*1.5).lineTo(pageWidth - margin, pageHeight - margin - h*1.5);
-            doc.text(this.orchFull, pageWidth/2 - w/2, pageHeight-margin-h);
+            // TODO create link:
+            /*
+                // Add the link text
+                doc.fontSize(25)
+                .fillColor('blue')
+                .text('This is a link!', 20, 0);
+
+                // Measure the text
+                const width = doc.widthOfString('This is a link!');
+                const height = doc.currentLineHeight();
+
+                // Add the underline and link annotations
+                doc.underline(20, 0, width, height, {color: 'blue'})
+                .link(20, 0, width, height, 'http://google.com/');
+            */
+            
+            doc.text('ODP', margin, pageHeight-margin-h).moveUp()
+            .text(this.orchFull, { align: 'center'});
         });
                 
         doc.addPage({layout: 'landscape', size: 'A4', margin: margin})
@@ -318,7 +346,7 @@ class PDFCreator {
         doc.lineWidth(1.5).rect(aX + offsetXWeekend, aY+tableFontSize, colSpanWeekend*wCell, tableRowHeight*2).stroke().lineWidth(1); //x, y, w, h                       
         
         // 2nd Page: Remarks (Manager, Scheduler, for each dienst manager/scheduler)       
-        if ( this.remarkWeek || this.remarkWeek || this.remarksDienst.length ) {
+        if ( this.remarkWeek || this.remarkWeek || this.remarksDienst.length ) {            
             doc.addPage({layout: 'landscape', size: 'A4', margin: margin}).fillAndStroke("black", "#000").lineWidth(1);
             doc.fontSize(headerFontSize).font('Times-Bold')
             .text('Bemerkungen', margin, margin + wCell).moveDown();
@@ -342,6 +370,15 @@ class PDFCreator {
         }        
 
         // Finalize PDF file
+        // see the range of buffered pages
+        const range = doc.bufferedPageRange(); // => { start: 0, count: 2 }
+        doc.font('Times-Roman', tableFontSize);
+        for (let i = range.start, end = range.start + range.count; i < end; i++) {
+            let text = `Seite ${i + 1}/${range.count}`;
+            let w = doc.widthOfString(text), h = doc.heightOfString(text);
+            doc.switchToPage(i);
+            doc.text(text, pageWidth- margin - w, pageHeight-margin-h);
+        }        
         doc.end();
         this.outputFiles.push(filename);
         return filename;

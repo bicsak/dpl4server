@@ -16,6 +16,7 @@ const Profile = require('../models/profile');
 const { DateTime } = require("luxon");
 
 const { writeOperation } = require('../my_modules/orch-lock');
+const PDFCreator = require('../my_modules/pdfcreator');
 const { 
    createWeekDataRaw, 
    updateProductionsFirstAndLastDienst,
@@ -273,7 +274,7 @@ async function deleteDienst(session, params, createEvent ) {
 
    let weekDoc = await Week.findOneAndUpdate( { o: params.o, 'dienst._id': params.did }, 
     //{ '$pull': { dienst: { '$elemMatch': {_id: params.did} } } } ).session(session);
-    { '$pull': { dienst: { _id: params.did} } }).session(session);
+    { '$pull': { dienst: { _id: params.did} } }, {new: true}).session(session);
     
     //delete dienst from dienstextref coll
     //await Dienst.deleteOne( { '_id': params.did } ).session(session);
@@ -335,11 +336,25 @@ async function deleteDienst(session, params, createEvent ) {
       }).session(session);
       for ( let i = 0; i < touchedDpls.length; i++ ) {      
          // current section: touchedDpls[i].s
-         // TODO generate PDF for this section's current dpl (new version)
+         // generate PDF for this section's current dpl (new version)
+         let newDpl = await Dpl.findById(touchedDpls[i]._id).session(session).populate('periodMembers');    
+      
+         let sectionName = orchestraDoc.sections.get(newDpl.s).name;
+         let sectionAbbr = orchestraDoc.sections.get(newDpl.s).abbr;            
+         PDFCreator.parseWeekData(orchestraDoc, weekDoc);
+         PDFCreator.parseDpl(newDpl, sectionName, newDpl.periodMembers.map(
+            pm => {
+               return {
+                  fn: pm.userFn,
+                  sn: pm.userSn
+               }
+            }
+         ) );
+         let filename = PDFCreator.createPDF( );     
          // get scheduler profile for section     
          let schedulerProfile = await Profile.find({
             o: params.o,
-            section: touchedDpls[i].s,
+            section: newDpl.s,
             role: 'scheduler',
             'notifications.dplChanged': true
          }).session(session);
@@ -350,7 +365,7 @@ async function deleteDienst(session, params, createEvent ) {
             section: touchedDpls[i].s,
             role: 'musician',
             _id: {
-               $in: touchedDpls[i].periodMembers.map( (id, index) => touchedDpls[i].seatings[seatingIndex].sp[index] > 0 ? id : null )
+               $in: touchedDpls[i].periodMembers.map( (pm, index) => touchedDpls[i].seatings[seatingIndex].sp[index] > 0 ? pm._id : null )
             },
             'notifications.dplChanged': true
          }).session(session);
@@ -365,10 +380,10 @@ async function deleteDienst(session, params, createEvent ) {
                      filename: 'logo.png',
                      path: path.join(__dirname, '..') + '/favicon-32x32.png',
                      cid: 'logo'
-                  }/*, {
-                     filename: 'dpl.pdf',
-                     path: path.join(__dirname, '..') + '/dpl.pdf',
-                  }*/]
+                  }, {
+                     filename: `dpl_${orchestraDoc.code}_${sectionAbbr}_${dtBegin.toFormat("yyyy_W")}.pdf`,
+                     path: path.join(__dirname, '..', 'output') + `/${filename}`,
+                  }]
                },
                locals: { 
                   name: allProfiles[j].userFn,               
@@ -512,7 +527,21 @@ async function cleanWeek(session, params, createEvent) {
       }).session(session);
       for ( let i = 0; i < touchedDpls.length; i++ ) {      
          // current section: touchedDpls[i].s
-         // TODO generate PDF for this section's current dpl (new version)
+         // generate PDF for this section's current dpl (new version)
+         let newDpl = await Dpl.findById(touchedDpls[i]._id).session(session).populate('periodMembers');    
+      
+         let sectionName = orchestraDoc.sections.get(newDpl.s).name;
+         let sectionAbbr = orchestraDoc.sections.get(newDpl.s).abbr;            
+         PDFCreator.parseWeekData(orchestraDoc, weekDoc);
+         PDFCreator.parseDpl(newDpl, sectionName, newDpl.periodMembers.map(
+            pm => {
+               return {
+                  fn: pm.userFn,
+                  sn: pm.userSn
+               }
+            }
+         ) );
+         let filename = PDFCreator.createPDF( );    
          // get scheduler profile for section     
          let schedulerProfile = await Profile.find({
             o: params.o,
@@ -540,10 +569,10 @@ async function cleanWeek(session, params, createEvent) {
                      filename: 'logo.png',
                      path: path.join(__dirname, '..') + '/favicon-32x32.png',
                      cid: 'logo'
-                  }/*, {
-                     filename: 'dpl.pdf',
-                     path: path.join(__dirname, '..') + '/dpl.pdf',
-                  }*/]
+                  }, {
+                     filename: `dpl_${orchestraDoc.code}_${sectionAbbr}_${dtBegin.toFormat("yyyy_W")}.pdf`,
+                     path: path.join(__dirname, '..', 'output') + `/${filename}`,
+                  }]
                },
                locals: { 
                   name: allProfiles[j].userFn,               

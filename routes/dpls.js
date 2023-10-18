@@ -6,9 +6,6 @@ const mongoose = require( 'mongoose' );
 const nodemailer = require('nodemailer');
 const Email = require('email-templates');
 
-const PDFDocument = require('pdfkit');
-const fs = require('fs');
-
 const { writeOperation } = require('../my_modules/orch-lock');
 const { createWeekDataRaw } = require('../my_modules/week-data-raw');
 const PDFCreator = require('../my_modules/pdfcreator');
@@ -433,7 +430,20 @@ async function voteSurvey(session, params, createEvent ) {
          }
       } else {
          // send email for all (scheduler, office, groupe members with notifications.dplFinal) with the final DPL incl. PDF      
-       // TODO create PDF version of DPL with pdfKit
+         // create PDF version of DPL with pdfKit
+         let weekDoc = await Week.findById(affectedDpl.w).session(session);
+         let sectionName = orchestraDoc.sections.get(params.sec).name;
+         let sectionAbbr = orchestraDoc.sections.get(params.sec).abbr;            
+         PDFCreator.parseWeekData(orchestraDoc, weekDoc);
+         PDFCreator.parseDpl(affectedDpl, sectionName, affectedDpl.periodMembers.map(
+            pm => {
+               return {
+                  fn: pm.userFn,
+                  sn: pm.userSn
+               }
+            }
+         ) );
+         let filename = PDFCreator.createPDF( );     
        let profiles = await Profile.find({
          o: params.o,
          role: 'office',
@@ -462,6 +472,9 @@ async function voteSurvey(session, params, createEvent ) {
                   filename: 'logo.png',
                   path: path.join(__dirname, '..') + '/favicon-32x32.png',
                   cid: 'logo'
+               }, {
+                  filename: `dpl_${orchestraDoc.code}_${sectionAbbr}_${dtBegin.toFormat("yyyy_W")}.pdf`,
+                  path: path.join(__dirname, '..', 'output') + `/${filename}`,
                }]
             },
             locals: { 
@@ -580,7 +593,7 @@ async function editDplStatus(session, params, createEvent ) {
       o: params.o,
       weekBegin: params.begin,
       s: params.sec
-   }).session(session);
+   }).session(session).populate('periodMembers');
    if ( dplDoc.version > params.ver ) return {
       statusCode: 409,
       body: 'Dienstplan nicht mehr aktuell. Aktualisiere bitte deine Ansicht!'
@@ -648,22 +661,19 @@ async function editDplStatus(session, params, createEvent ) {
    if ( params.status == 'public' && !params.approve && !params.noEmail) {
        // send email for all (scheduler, office, groupe members with notifications.dplFinal) with the final DPL incl. PDF      
        
-       // TODO create PDF version of DPL with pdfKit
-       // Create a document
-         const doc = new PDFDocument();
-
-         // Pipe its output somewhere, like to a file or HTTP response
-         // See below for browser usage
-         doc.pipe(fs.createWriteStream(path.join(__dirname, '..', 'output') + '/dpl.pdf'));
-
-         // Add some text with annotations
-         doc/*.addPage()*/.fillColor('blue')
-         .text('Here is a link to ODP!', 100, 100)
-         .underline(100, 100, 160, 27, { color: '#0000FF' })
-         .link(100, 100, 160, 27, 'http://odp.bicsak.net/');
-
-         // Finalize PDF file
-         doc.end();
+      // create PDF version of DPL with pdfKit
+      let sectionName = orchestraDoc.sections.get(params.sec).name;
+      let sectionAbbr = orchestraDoc.sections.get(params.sec).abbr;            
+      PDFCreator.parseWeekData(orchestraDoc, weekDoc);
+      PDFCreator.parseDpl(dplDoc, sectionName, dplDoc.periodMembers.map(
+         pm => {
+            return {
+               fn: pm.userFn,
+               sn: pm.userSn
+            }
+         }
+      ) );
+      let filename = PDFCreator.createPDF( );       
 
        let profiles = await Profile.find({
          o: params.o,
@@ -675,7 +685,7 @@ async function editDplStatus(session, params, createEvent ) {
          section: params.sec,
          role: 'musician',
          _id: {
-            $in: dplDoc.periodMembers
+            $in: dplDoc.periodMembers.map(pm => pm._id)
          },
          'notifications.dplFinal': true
        }).session(session), await Profile.find({
@@ -694,8 +704,8 @@ async function editDplStatus(session, params, createEvent ) {
                   path: path.join(__dirname, '..') + '/favicon-32x32.png',
                   cid: 'logo'
                }, {
-                  filename: 'dpl.pdf',
-                  path: path.join(__dirname, '..', 'output') + '/dpl.pdf'                  
+                  filename: `dpl_${orchestraDoc.code}_${sectionAbbr}_${lxBegin.toFormat("yyyy_W")}.pdf`,
+                  path: path.join(__dirname, '..', 'output') + `/${filename}`,                  
                }]
             },
             locals: { 
@@ -1132,12 +1142,12 @@ async function editDpl( session, params, createEvent ) {
       let allProfiles = officeProfiles.concat(memberProfiles, schedulerProfile);
       // send "dplchanged" email for all officeProfiles, scheduler of section and members where      
       for ( let j = 0; j < allProfiles.length; j++ ) {
-         /*email.send({
+         email.send({
             template: 'dplchanged',
             message: { 
                to: `"${allProfiles[j].userFn} ${allProfiles[j].userSn}" ${allProfiles[j].email}`, 
                attachments: [{
-                  filename: 'favicon-32x32.png',
+                  filename: 'logo.png',
                   path: path.join(__dirname, '..') + '/favicon-32x32.png',
                   cid: 'logo'
                }, {
@@ -1155,7 +1165,7 @@ async function editDpl( session, params, createEvent ) {
                orchestra: orchestraDoc.code,
                orchestraFull: orchestraDoc.fullName,                              
             }
-         }).catch(console.error);*/
+         }).catch(console.error);
       }   
       //PDFCreator.deleteOutputFiles();
    }       
