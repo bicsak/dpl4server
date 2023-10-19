@@ -391,7 +391,10 @@ async function deleteDienst(session, params, createEvent ) {
                   instrument: orchestraDoc.sections.get(touchedDpls[i].s).name,
                   kw: dtBegin.toFormat("W"),
                   period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,        
-                  scheduler: allProfiles[j].role == 'scheduler',               
+                  scheduler: allProfiles[j].role == 'scheduler',  
+                  change: "dienst",
+                  day: dtDienstBegin.toFormat('dd.MM.'),
+                  time: dtDienstBegin.toFormat('HH:mm'),
                   orchestra: orchestraDoc.code,
                   orchestraFull: orchestraDoc.fullName,                              
                }
@@ -581,6 +584,7 @@ async function cleanWeek(session, params, createEvent) {
                   kw: dtBegin.toFormat("W"),
                   period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,        
                   scheduler: allProfiles[j].role == 'scheduler',               
+                  change: 'week',
                   orchestra: orchestraDoc.code,
                   orchestraFull: orchestraDoc.fullName,                              
                }

@@ -10,8 +10,11 @@ html
     else
       p Hallo #{name},
     p 
-      strong Der Dienstplan der Fachgruppe #{instrument} für die Kalenderwoche #{kw} (#{period}) ist geändert worden.            
-    | Im Anhang findest du den aktuellen Dienstplan als PDF Dokument.
+      strong Der Dienstplan der Fachgruppe #{instrument} für die Kalenderwoche #{kw} (#{period}) ist geändert worden.
+    case change
+      when "dienst": p Dienst am #{day} um #{time} wurde gestrichen. Im Anhang findest du den aktuell gültigen, neuen Dienstplan als PDF Dokument.
+      when "week": p Alle Dienste der Woche wurden gestrichen. Im Anhang findest du den aktuell gültigen, neuen Dienstplan als PDF Dokument.
+      when "seating": p Im Anhang findest du den aktuell gültigen, neuen Dienstplan als PDF Dokument. Änderungen in der Einteilung sind mit rot markiert.    
     div(style='text-align: center;') 
       p Hier geht es zum Dienstplan mit allen Informationen: 
       table(align='center' style='margin-top: 12px')

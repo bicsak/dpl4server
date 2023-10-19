@@ -1006,6 +1006,7 @@ async function createSurvey( session, params, createEvent ) {
 async function editDpl( session, params, createEvent ) {
    let returnVal;   
 
+   let orchestraDoc = await Orchestra.findById(params.o).session(session);
    let affectedDpl = await Dpl.findOne( {
       o: params.o,
       s: params.sec,
@@ -1022,7 +1023,50 @@ async function editDpl( session, params, createEvent ) {
       reason: 'Dienstplan ist nicht mehr aktuell. Bitte aktualisiere deine Ansicht'
    };   
 
-   let oldDelta = affectedDpl.delta;   
+   let oldDelta = affectedDpl.delta; 
+   // for pdf red
+   let groupSize = affectedDpl.periodMembers.length;
+   let days = [];
+   let dtMonday = DateTime.fromMillis(affectedDpl.weekBegin.getTime(), { timezone: orchestraDoc.timezone});
+   for ( let i = 0; i < 7; i++ ) {
+      days.push(dtMonday.plus({day: i}));            
+   }        
+   let changes = []; // for red markings in PDF (changes), columns
+   //params.sps.sort( (a, b) => a.dienstBegin.getTime() - b.dienstBegin.getTime() );        
+   for ( let i = 0; i < 14; i++ ) {
+      changes[i] = [];
+      let dayIndex = Math.floor(i/2);
+      let pmShift = i % 2;
+      params.sps.forEach( d => {
+         let oldSeating = affectedDpl.seatings.find( dienst => dienst.d == d.d );      
+          let dtDienstBegin = DateTime.fromMillis(oldSeating.dienstBegin.getTime(), {zone: orchestraDoc.timezone});                   
+          if ( dtDienstBegin.day == days[dayIndex].day && (!pmShift && dtDienstBegin.hour < 12 || pmShift && dtDienstBegin.hour >= 12) ) {               
+               let comment = false, ext = false;
+               let sp = Array(groupSize).fill(false);
+               if ( d.comment != oldSeating.comment ) comment = true;
+               if ( d.ext != oldSeating.ext ) ext = true;
+               for ( let m = 0; m < groupSize; m++ ) {
+                  sp[m] = oldSeating.sp[m] != d.sp[m] || params.absent[i][m] != affectedDpl.absent[i][m];
+               }
+               changes[i].push( {
+                  seating: sp,
+                  ext: ext,
+                  comment: comment
+               } );
+          }
+      });
+      if ( !changes[i].length ) {
+         changes[i].push({
+            seating: Array(groupSize).fill(false),
+            ext: false,
+            comment: false
+         });
+         for ( let j = 0; j < groupSize; j++ ) {
+            if ( affectedDpl.absent[i][j] != params.absent[i][j] ) changes[i][0].seating[j] = true; // mark cell with red
+         }
+      }
+   }
+   
    let seatingChanged = []; // for each dienst an array of size groupsize with info if their seating code has changed. for PDF generation's future red markings   
    for ( let i = 0; i < affectedDpl.seatings.length; i++ ) {      
       let newSeating = params.sps.find( dienst => dienst.d == affectedDpl.seatings[i].d );      
@@ -1059,6 +1103,8 @@ async function editDpl( session, params, createEvent ) {
    await Week.findOneAndUpdate({
          o: params.o, begin: params.begin
    }, updateObj).session(session);
+   
+   affectedDpl = await Dpl.findById( affectedDpl._id ).session(session);
 
    if ( affectedDpl.officeSurvey && affectedDpl.officeSurvey.status != 'confirmed') {
       // change dpl state back to closed      
@@ -1074,22 +1120,12 @@ async function editDpl( session, params, createEvent ) {
       await Week.findOneAndUpdate({
          o: params.o, begin: params.begin
       }, updateObj).session(session);            
-   }   
-      
-   /*let row = affectedDpl.p.members.findIndex( mem => mem.prof == params.prof );
-   if ( row == -1 || !affectedDpl.p.members[row].canWish ) return { 
-      success: false, 
-      reason: 'Nicht berechtigt'
-   };*/
+   }         
 
    // update dz end and dz begin for all succeeding weeks         
    await recalcNumbersAfterEdit(session, params.o, params.sec, params.begin, 
       affectedDpl.p._id, diff);
-
-   /*console.log('In editDpl');
-   console.log(params);
-   console.log(affectedDpl);*/
-   let orchestraDoc = await Orchestra.findById(params.o).session(session);                      
+   
    let dtBegin = DateTime.fromJSDate(affectedDpl.weekBegin, {zone: orchestraDoc.timezone});
    let dtEnd = dtBegin.plus({day: 7});
    await createEvent({
@@ -1121,7 +1157,7 @@ async function editDpl( session, params, createEvent ) {
             }
          }
       ) );
-      let filename = PDFCreator.createPDF( /* seatingChanged */ );
+      let filename = PDFCreator.createPDF( changes );
       // get scheduler profile for section     
       let schedulerProfile = await Profile.find({
          o: params.o,
@@ -1161,7 +1197,8 @@ async function editDpl( session, params, createEvent ) {
                instrument: sectionName,
                kw: dtBegin.toFormat("W"),
                period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,        
-               scheduler: allProfiles[j].role == 'scheduler',               
+               scheduler: allProfiles[j].role == 'scheduler',
+               change: 'seating',               
                orchestra: orchestraDoc.code,
                orchestraFull: orchestraDoc.fullName,                              
             }

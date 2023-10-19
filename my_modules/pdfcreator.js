@@ -112,7 +112,7 @@ class PDFCreator {
         return letter;
     }
 
-    createPDF( opt /* changes for the future red markings*/) {        
+    createPDF( changes /* changes for red markings*/) {        
         const pageWidth = 841.89; // in PS points; 72 points per inch
         const pageHeight = 595.28; // A4, 297x210 mm
         const margin = 36; // half inch
@@ -153,8 +153,7 @@ class PDFCreator {
 
         // Pipe its output somewhere, like to a file or HTTP response        
         doc.pipe(fs.createWriteStream(path.join(__dirname, '..', 'output') + `/${filename}`));
-        doc.on('pageAdded', () => {                        
-            let w = doc.widthOfString(this.orchFull);
+        doc.on('pageAdded', () => {                                    
             let h = doc.heightOfString(this.orchFull);
 
             // TODO for client-side rendered PDF: Dienstplan 'Entwurf'
@@ -163,9 +162,9 @@ class PDFCreator {
             .text(`Vom ${this.days[0].toFormat('dd.MM.yyyy')} bis ${this.days[6].toFormat('dd.MM.yyyy')} (KW ${this.days[0].toFormat('W')})`, {align: 'center'});
             doc.moveTo(margin, margin + h).lineTo(pageWidth - margin, margin + h);            
             
-            doc.moveTo(margin, pageHeight - margin - h*1.5).lineTo(pageWidth - margin, pageHeight - margin - h*1.5);
-            // TODO create link:
+            doc.moveTo(margin, pageHeight - margin - h*1.5).lineTo(pageWidth - margin, pageHeight - margin - h*1.5);            
             /*
+                // create link
                 // Add the link text
                 doc.fontSize(25)
                 .fillColor('blue')
@@ -218,12 +217,19 @@ class PDFCreator {
         for ( let i = 0; i < 14; i++) {
             for ( let j = 0; j < this.columns[i].length; j++ ) {                
                 if ( this.dienste[this.columns[i][j]].remarkIndex ) {
+                    if ( changes && changes[i][j].comment ) doc.fillAndStroke('red', 'red');
                     doc.fontSize(fontSizeSub).text(`(${this.dienste[this.columns[i][j]].remarkIndex})`, aX + colCount * wCell, aY+(this.members.length + 4.25)*tableRowHeight, {
                         width: wCell,
                         align: 'center'
                     }).fontSize(tableFontSize);
+                    doc.fillAndStroke('black', 'black');
                 }
                 for ( let m = 0; m < this.members.length; m++ ) {
+                    if ( changes && changes[i][j].seating[m] ) {
+                        doc.fillAndStroke('red', 'red').lineWidth(1.5);
+                        doc.rect(aX + colCount * wCell, aY+(m + 3)*tableRowHeight, wCell, tableRowHeight).stroke();
+                        doc.fillAndStroke('black', 'black').lineWidth(1);
+                    }
                     if ( this.absent[i][m] ) {
                         doc.text(
                             this.dienste[this.columns[i][j]].sp[m] ? 
@@ -265,6 +271,11 @@ class PDFCreator {
                         width: wCell,
                         align: 'center'
                     });
+                    if ( changes && changes[i][j].ext ) {
+                        doc.fillAndStroke('red', 'red').lineWidth(1.5);
+                        doc.rect(aX + colCount * wCell, aY+(this.members.length + 3)*tableRowHeight, wCell, tableRowHeight).stroke();
+                        doc.fillAndStroke('black', 'black').lineWidth(1);
+                    }
                 }
                 colCount++;
             }
@@ -276,6 +287,11 @@ class PDFCreator {
                             align: 'center'
                         });
                     } 
+                    if ( changes[i][0].seating[m] ) {
+                        doc.fillAndStroke('red', 'red').lineWidth(1.5);
+                        doc.rect(aX + colCount * wCell, aY+(m+3)*tableRowHeight, wCell, tableRowHeight).stroke();
+                        doc.fillAndStroke('black', 'black').lineWidth(1);
+                    }
                 }
                 colCount++;
             }
