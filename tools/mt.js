@@ -1009,7 +1009,8 @@ async function run(hc) {
               flSeatings.push( {
                 d: d._id, 
                 ext: 0, 
-                sp: [0, 0, 0, 0],              
+                sp: [0, 0, 0, 0],  
+                available: [false, false, false, false],
                 dienstBegin: d.begin,
                 dienstWeight: d.weight,
                 dienstInstr: 0
@@ -1061,7 +1062,8 @@ async function run(hc) {
               fgSeatings.push( {
                 d: d._id, 
                 ext: 0, 
-                sp: [0, 0, 0, 0],              
+                sp: [0, 0, 0, 0],  
+                available: [false, false, false, false],            
                 dienstBegin: d.begin,
                 dienstWeight: d.weight,
                 dienstInstr: 0

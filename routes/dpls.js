@@ -142,7 +142,7 @@ async function editFwDw( session, params, createEvent ) {
       }; else {
          affectedDpl.seatings[seatingIndex].available[params.mi] = !params.erase;
          affectedDpl.version = affectedDpl.version + 1;
-         affected.state = new Date();
+         affectedDpl.state = new Date();
          await affectedDpl.save();
          returnVal = { 
             success: true,
@@ -199,11 +199,11 @@ async function editFwDw( session, params, createEvent ) {
          // no available, no seatings[...].sp[...] and has enough collegues
          let unavailableCount = affectedDpl.absent[params.col].reduce(
             (prev, curr,i) => prev + (curr == 0 ? 0 : 1), 0            
-         );
+         );         
          let groupSize = affectedDpl.p.members.length;         
          let colBegin = DateTime.fromMillis(affectedDpl.weekBegin.getTime(), {zone: tz})
          .plus( {days: Math.floor(params.col / 2), hours: params.col % 2 * 12} );
-         let colEnd = colBegin.plus( {hours: 12} );
+         let colEnd = colBegin.plus( {hours: 12} );         
          let isEditable = params.erase || affectedDpl.seatings.filter( 
             s => s.dienstBegin.getTime() >= colBegin.toMillis() && s.dienstBegin.getTime() < colEnd.toMillis()
          ).every( s => {
@@ -212,7 +212,8 @@ async function editFwDw( session, params, createEvent ) {
             if ( groupSize + s.ext - unavailableCount - s.dienstInstr - s.sp.filter( v => v >= 64 ).length <= 0 ) return false;
             return s.available[params.mi] == 0 && s.sp[params.mi] == 0;               
             }
-         );         
+         );
+         console.log('isEditable', isEditable)         ;
          // and no fw/fw is marked
          if ( params.erase && affectedDpl.absent[params.col][params.mi] != 4 ||
             !params.erase && affectedDpl.absent[params.col][params.mi] != 0 ||
@@ -1068,6 +1069,7 @@ async function editDpl( session, params, createEvent ) {
    }
    
    let seatingChanged = []; // for each dienst an array of size groupsize with info if their seating code has changed. for PDF generation's future red markings   
+   console.log('params.sps', params.sps);
    for ( let i = 0; i < affectedDpl.seatings.length; i++ ) {      
       let newSeating = params.sps.find( dienst => dienst.d == affectedDpl.seatings[i].d );      
       seatingChanged.push(
