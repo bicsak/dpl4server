@@ -401,6 +401,7 @@ class PDFCreator {
     }
 
     deleteOutputFiles() {
+        console.log('Deleting generated PDF files...');
         for ( let i = 0; i < this.outputFiles.length; i++ ) {
             //delete file this.outputFiles[i]...
             fs.unlink(path.join(__dirname, '..', 'output') + `/${this.outputFiles[i]}`,

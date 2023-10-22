@@ -38,6 +38,8 @@ router.get('/', async function(req, res) {
         { '$sort': { 'seatings.dienstBegin': 1 } }, 
         //{ '$limit': 3 },
         { '$lookup': { from: 'dienst', localField: 'seatings.d', foreignField: '_id', as: 'dienst' } },
+        // tODO lookup production for duration
+        // lookup period for initials??
         { '$project': {    
           'published': 1,
           'weekBegin': 1,
@@ -68,21 +70,21 @@ router.get('/', async function(req, res) {
     }
 
     const { error, value } = ics.createEvents(
-      /* result.map(dpl => {
+       result.map(dpl => {
         let event = {
-          start: [2018y, 5m, 30d, 6h, 30m], from dpl.begin
+          start: [dpl.dienst.begin.getUTCFullYear(), dpl.dienst.begin.getUTCMonth()+1, dpl.dienst.begin.getUTCDate(), dpl.dienst.begin.getUTCHours(), dpl.dienst.begin.getUTCMinutes()], 
           startInputType: 'utc',
-          duration: { hours: 6, minutes: 30 }, 
-          title: 'Bolder Boulder', dpl.dienst.name + subtype, suffix, seq 
-          description: 'Annual 10-kilometer run in Boulder, Colorado',
-          location: 'Folsom Field, University of Colorado (finish line)',
-          url: 'https://odp.bicsak.net/',  
-          status: 'CONFIRMED'/'TENTATIVE', from dpl.published
+          duration: { hours: 3, minutes: 0 }, // TODO from orch or production
+          title: dpl.dienst.name, // TODO + subtype, suffix, seq toUpperCase, zLM etc.
+          description: 'Status:, Genehmigung:, Einteilung, Aushilfen:, Dienstkommentar von DE, OD, Freiwünsche:, Einteilung OK?', // TODO
+          location: 'Wiesbaden GH', // TODO dpl.location or from orch.categories
+          url: `https://odp.bicsak.net/musician/week/?mts=${dpl.weekBegin.getTime()}`,  // TODO url from env
+          status: dpl.published ? 'CONFIRMED' : 'TENTATIVE', 
           productID: 'ODP'
         }
         return event;
-      })*/
-      [
+      })
+      /*[
         {
           title: 'Lunch',
           start: [2023, 11, 15, 12, 15],
@@ -93,7 +95,7 @@ router.get('/', async function(req, res) {
           start: [2023, 11, 15, 12, 15],
           duration: { hours: 1, minutes: 30 }
         }
-      ]);
+      ]*/);
       
       if (error) {
         console.log(error);

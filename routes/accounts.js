@@ -3,6 +3,7 @@ const nodemailer = require('nodemailer');
 const Email = require('email-templates');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
+const path = require('node:path');
 
 const User = require('../models/user');
 
@@ -54,28 +55,42 @@ router.post('/sign-up', async (req, res, next) => {
             fn: req.body.fn,
             sn: req.body.sn,
             birthday: new Date(bdString), // will be treated as UTC
-            email: req.body.email,
-            pw: req.body.pw,
+            email: req.body.email,             
             confirmationCode: token,
             profiles: []
         });        
-        await userDoc.save();
-        
+        bcrypt.hash(req.body.pw, 10, async (err, hash) => {
+            if (err) {
+              console.log("bcrypt error");
+              userDoc = null;
+            } else {                    
+                userDoc.pw = hash;                              
+                await userDoc.save();
+            }
+        });                    
+                
         // if user email already exists, send error code
         if ( !userDoc) {
             res.status(400).send({
-                msg: 'User alerady exists'
+                msg: 'User already exists or other error'
             });
         } else {
             // on success send email with link to app route /verify-email (code: token + userId: userDoc._id)                                   
             email.send({
                 template: 'signup',
-                message: { to: userDoc.email },
+                message: { 
+                    to: userDoc.email,
+                    attachments: [{
+                        filename: 'favicon-32x32.png',
+                        path: path.join(__dirname, '..') + '/favicon-32x32.png',
+                        cid: 'logo' //same cid value as in the html img src
+                    }]
+                 },
                 locals: {
                     name: userDoc.fn,
-                    link: `${req.get('origin')}/verify-email?id=${userDoc.id}&token=${token}`
+                    link: `${req.get('origin')}/accounts/verifyemail?id=${userDoc.id}&token=${token}`
                 }
-            }).then(console.log).catch(console.error);
+            })/*.then(console.log)*/.catch(console.error);
             //.then(res => { console.log('res.originalMessage', res.originalMessage) }).cathch...            
             res.json(null);
         }
@@ -92,14 +107,15 @@ router.post('/sign-up', async (req, res, next) => {
     try {        
         await deleteOldPendingRequests();
 
-        let userDoc = User.findById(req.body.id);        
-                
+        let userDoc = await User.findById(req.body.id);                        
         if ( !userDoc || userDoc.status != 'pending' || userDoc.confirmationCode != req.body.token
         ) {
             res.status(400).send({
                 msg: 'Verifying not succeeded'
             });
-        } else {            
+        } else {      
+            userDoc.status = 'active';
+            await userDoc.save();
             res.json(null);
         }
     }
@@ -143,12 +159,19 @@ router.post('/forgot-password', async (req, res, next) => {
         // send email with link to app/resetpw?userId&token                           
         email.send({
             template: 'forgotpw',
-            message: { to: userDoc.email },
+            message: { 
+                to: userDoc.email,
+                attachments: [{
+                    filename: 'favicon-32x32.png',
+                    path: path.join(__dirname, '..') + '/favicon-32x32.png',
+                    cid: 'logo' //same cid value as in the html img src
+                }]
+             },
             locals: {
                 name: userDoc.fn,
-                link: `${req.get('origin')}/resetpw?id=${userDoc.id}&token=${token}`
+                link: `${req.get('origin')}/accounts/resetpw?id=${userDoc.id}&token=${token}`
             }
-        }).then(console.log).catch(console.error);
+        })/*.then(console.log)*/.catch(console.error);
         //.then(res => { console.log('res.originalMessage', res.originalMessage) }).cathch...            
         res.json(null);
     }

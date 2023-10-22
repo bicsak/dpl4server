@@ -55,7 +55,7 @@ router.post('/', async (req, res, next) => {
                 case reasons.PASSWORD_INCORRECT:
                     // note: these cases are usually treated the same - don't tell
                     // the user *why* the login failed, only that it did
-                    console.log('Wrong PW or user not found');
+                    console.log(reason, 'Wrong PW or user not found');
                     return res.status(401).send({
                         msg: 'Username or password is incorrect!'
                     });                    

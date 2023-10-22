@@ -213,7 +213,7 @@ async function editFwDw( session, params, createEvent ) {
             return s.available[params.mi] == 0 && s.sp[params.mi] == 0;               
             }
          );
-         console.log('isEditable', isEditable)         ;
+         console.log('isEditable', isEditable);
          // and no fw/fw is marked
          if ( params.erase && affectedDpl.absent[params.col][params.mi] != 4 ||
             !params.erase && affectedDpl.absent[params.col][params.mi] != 0 ||
@@ -430,7 +430,7 @@ async function voteSurvey(session, params, createEvent ) {
             }).catch(console.error);
          }
       } else {
-         // send email for all (scheduler, office, groupe members with notifications.dplFinal) with the final DPL incl. PDF      
+         // send email for all (scheduler, office, group members with notifications.dplFinal) with the final DPL incl. PDF      
          // create PDF version of DPL with pdfKit
          let weekDoc = await Week.findById(affectedDpl.w).session(session);
          let sectionName = orchestraDoc.sections.get(params.sec).name;
@@ -1204,9 +1204,9 @@ async function editDpl( session, params, createEvent ) {
                orchestra: orchestraDoc.code,
                orchestraFull: orchestraDoc.fullName,                              
             }
-         }).catch(console.error);
+         })/*.then(PDFCreator.deleteOutputFiles()) - does not work, emails are in loop*/.catch(console.error);
       }   
-      //PDFCreator.deleteOutputFiles();
+      //PDFCreator.deleteOutputFiles(); does not work, sync
    }       
 
    returnVal = true;   
