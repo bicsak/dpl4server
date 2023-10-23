@@ -6,6 +6,7 @@ const { Schema } = mongoose;
 const dienstSchema = new Schema({    
     name: String,
     begin: Date,
+    col: { type: Number, min: 0, max: 13 }, // to which column this dienst belongs to; calculated upn beginning time
     prod: { type: Schema.Types.ObjectId, ref: 'Production' },
     category: { type: Number, min: 0, max: 2 },
     subtype: { type: Number, min: 0, max: 6 },
@@ -13,8 +14,8 @@ const dienstSchema = new Schema({
     weight: { type: Number, min: 0, max: 3 },
     duration: Number, // or undefined for auto duration calculation    
     location: { // or undefined for auto location detection
-        full: { type: String }, 
-        abbr: { type: String }
+        full: String, //{ type: String }, 
+        abbr: String //{ type: String }
     },
     instrumentation: { type: Map, of: Number },
     comment: String, // by manager (for example: Kleiderordnung, Anspielprobe etc.)

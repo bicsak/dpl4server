@@ -1139,7 +1139,7 @@ async function editDpl( session, params, createEvent ) {
       extra: `Dienstplan ${orchestraDoc.sections.get(params.sec).name}, ${dtBegin.toFormat("kkkk 'KW' W")}`, 
       user: params.user
    });
-   if ( affectedDpl.published && !affectedDpl.officeSurvey ) {
+   if ( affectedDpl.published && !affectedDpl.officeSurvey && !( affectedDpl.weekBegin.getTime() + 7*24*3600*1000 < Date.now() ) ) {
       // get all office profiles
       let officeProfiles = await Profile.find({
          o: params.o,

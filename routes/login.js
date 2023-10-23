@@ -1,3 +1,4 @@
+const path = require('node:path');
 let express = require('express');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
@@ -87,7 +88,14 @@ router.post('/', async (req, res, next) => {
                     // send email
                     email.send({
                         template: 'locklogin',
-                        message: { to: user.email },
+                        message: { 
+                            to: user.email,
+                            attachments: [{
+                                filename: 'logo.png',
+                                path: path.join(__dirname, '..') + '/favicon-32x32.png',
+                                cid: 'logo'
+                             }]                          
+                        },
                         locals: { name: user.fn }
                     }).then(console.log).catch(console.error);
                                                 

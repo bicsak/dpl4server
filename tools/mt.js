@@ -908,11 +908,14 @@ async function run(hc) {
                 prod = productions[prodName];       
               }
             } 
+
+            let col = tmp.day * 2 + (result[i].start.getHours() >= 12);
             
             let d = {
               _id: dienst_id,
               name: result[i].production,
               begin: result[i].start,
+              col: col,
               prod: prod.id,
               category: cat,
               subtype: subtypeMap[ result[i].subtype ],
@@ -920,6 +923,7 @@ async function run(hc) {
               duration: result[i].duration,
 
               //location: result[i].location, 
+              // comment: maanger's comment? ''
               //TODO if necessary (everything is now set to auto)
 
               instrumentation: instr,
@@ -928,7 +932,7 @@ async function run(hc) {
             };
 
             dienste.push( d );          
-            dienstOldIds.push( tmp );
+            dienstOldIds.push( tmp );            
 
             let dienstExtRef = new DienstExtRef( {            
               _id: d._id,
@@ -937,11 +941,13 @@ async function run(hc) {
               w: week.id,
               name: d.name,
               begin: d.begin,
+              col: col,
               prod: d.prod,
               category: d.category,
               subtype: d.subtype,
               weight: d.weight,
               instrumentation: d.instrumentation,
+              duration: result[i].duration,
               seq: 0,
               total: 0
             });

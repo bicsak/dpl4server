@@ -1,4 +1,14 @@
-p Hallo #{name},
-p Die Anzahl maximale Loginversuche wurde erreicht. 
-| Bunutzerkonto wurde vorübergehend gesperrt. 
-| Bitte versuche es wenige Stunden später erneut!
+- var dplColor = "#e3f2fd";    
+html
+  head
+    meta(charset='UTF-8')
+    title Konto vorübergehend gesperrt
+  body(bgcolor=dplColor style=`background-color: ${dplColor}; font-size: 12px;`)
+    div(style='text-align: center;') Die maximale Anzahl von Loginversuchen wurde erreicht. Dein Bunutzerkonto wurde vorübergehend gesperrt. Bitte versuche es wenige Stunden später erneut!
+    table 
+      tr 
+        td(style='padding: 10px;')
+          img(style='height: auto;' height='32' width='32' src="cid:logo" alt="ODP")
+        td(style='font-size: 10px;') Das ist eine automatisch generierte Nachricht. Bitte nicht antworten
+    p(style='text-align: center') 
+      a(href="https://odp.bicsak.net") &#9838; odp.&#8492;icsak.net &#9836;     

@@ -23,6 +23,7 @@ const {
    recalcNumbersOnWeightChange,
    renumberProduction   
  } = require('../my_modules/week-data-raw');
+const orchestra = require('../models/orchestra');
 
 
 const transporter = nodemailer.createTransport({                
@@ -187,7 +188,7 @@ async function editInstrumentation( session, params, createEvent ) {
                'state': ts,
                '$inc': { version: 1}
             }, { session: session } ); 
-            if ( oldDoc.published ) {
+            if ( oldDoc.published && dienstDoc.begin.getTime() > Date.now() ) {
                // send emails with template wplchanged for oldDoc.s section's scheduler if he has notifications.wplChanged
                let profile = await Profile.findOne({
                   o: params.o,
@@ -675,6 +676,9 @@ async function createDienst(session, params, createEvent) {
          dienstInstrumentation.set(key, value);   
       });               
    }
+   
+   let lxDienstBegin = DateTime.fromMillis(params.begin, {zone: orchestraDoc.timezone});
+   let col = (lxDienstBegin.weekday-1) * 2 + (lxDienstBegin.hour >= 12);
 
    // insert new week for dienst ext ref collection
    const dienstDoc = new Dienst( {
@@ -683,6 +687,7 @@ async function createDienst(session, params, createEvent) {
       season: weekDoc.season,
       w: weekDoc._id,
       begin: new Date(params.begin), 
+      col: col,      
       name: params.name,
       prod: prodDoc?._id,
       category: params.category,
@@ -701,6 +706,7 @@ async function createDienst(session, params, createEvent) {
       _id: dienstDoc._id,
       name: dienstDoc.name,
       begin: dienstDoc.begin,
+      col: col,
       prod: dienstDoc.prod,
       category: dienstDoc.category,
       subtype: dienstDoc.subtype,
@@ -744,7 +750,7 @@ async function createDienst(session, params, createEvent) {
       dpl.state = ts;
       //console.log(seatingDoc);
       await dpl.save();
-      if ( dpl.published && dienstDoc.instrumentation.get(dpl.s) != 0 ) {
+      if ( dpl.published && dienstDoc.instrumentation.get(dpl.s) != 0 && dienstDoc.begin.getTime() > Date.now() ) {
          // send email (template wplchanged) to scheduler of the group if notifications.wplChanged and isntrumentation of new dienst for this group <> 0
          let profile = await Profile.findOne({
             o: params.o,
@@ -814,6 +820,9 @@ async function editDienst(session, params, createEvent) {
    await recalcNumbersOnWeightChange(session, params.o, dienstDoc.w, params.did,
       params.weight); 
 
+   let lxDienstBegin = DateTime.fromMillis(params.begin, {zone: orchestraDoc.timezone});
+   let col = (lxDienstBegin.weekday-1) * 2 + (lxDienstBegin.hour >= 12);
+
    let weekDoc = await Week.findOneAndUpdate( { 
       o: params.o,
       /*begin: new Date(params.mts * 1000),*/
@@ -823,6 +832,7 @@ async function editDienst(session, params, createEvent) {
          'dienst.$.subtype': params.subtype,
          'dienst.$.suffix': params.suffix,
          'dienst.$.begin': new Date(params.begin),
+         'dienst.$.col': col,
          'dienst.$.name': params.name,
          'dienst.$.weight': params.weight,
          'dienst.$.comment': params.comment,
@@ -838,11 +848,12 @@ async function editDienst(session, params, createEvent) {
    dienstDoc.begin= new Date(params.begin);
    dienstDoc.name= params.name;
    dienstDoc.weight= params.weight;
-   //dienstDoc.comment= params.comment;
-   //dienstDoc.duration= params.duration;
-   /*dienstDoc.location= params.location ? { 
+   dienstDoc.comment= params.comment;
+   dienstDoc.col = col;
+   dienstDoc.duration= params.duration;
+   dienstDoc.location= params.location ? { 
       full: params.location.full, 
-      abbr: params.location.abbr} : undefined;*/
+      abbr: params.location.abbr} : undefined;
 
    await dienstDoc.save();
 
