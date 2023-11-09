@@ -7,6 +7,7 @@ const orchestraSchema = new Schema({
     location: String,   // "Wiesbaden"
     timezone: String,   // "Europe/Berlin"
     maxDienst: [Number], // [10, 9, 10, 8]; 1st value max, afterwards smaller numbers, max length: 4
+    calendar: Boolean, // if calendar-feed is allowed
     venues: [ {
         full: { type: String },
         abbr: { type: String }

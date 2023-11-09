@@ -97,25 +97,27 @@ async function run(hc) {
         location: "Wiesbaden",
         timezone: "Europe/Berlin",
         maxDienst: [10, 9, 10, 8],
+        calendar: true,
         venues: [ 
           { full: "OPR", abbr: "OPR" }, 
           { full: "Großes Haus", abbr: "GH" },
           { full: "Kurhaus", abbr: "KH" }
         ],
         sections: { 
-          sec0: { abbr: "Fl", name: "Flöte", maxFW: 1, active: true },
-          sec1: { abbr: "Ob", name: "Oboe", maxFW: 1, active: false },
-          sec2: { abbr: "Kl", name: "Klarinette", maxFW: 1, active: false },                    
-          sec3: { abbr: "Fg", name: "Fagott", maxFW: 1, active: true },
-          sec4: { abbr: "Hr", name: "Horn", maxFW: 1, active: false },                    
-          sec5: { abbr: "Tp", name: "Trompete", maxFW: 1, active: false },          
-          sec6: { abbr: "Pos", name: "Posaune", maxFW: 1, active: false },                    
-          sec7: { abbr: "Tb", name: "Tuba", maxFW: 1, active: false },
-          sec8: { abbr: "1. Vl", name: "1. Violine", maxFW: 1, active: false },          
-          sec9: { abbr: "2. Vl.", name: "2. Violine", maxFW: 1, active: false },          
-          sec10: { abbr: "Va", name: "Bratsche", maxFW: 1, active: false },                    
-          sec11: { abbr: "Vc", name: "Cello", maxFW: 1, active: false },                    
-          sec12: { abbr: "Kb", name: "Kontrabass", maxFW: 1, active: false }                    
+          sec0: { abbr: "1. Vl", name: "1. Violine", maxFW: 1, active: false },          
+          sec1: { abbr: "2. Vl.", name: "2. Violine", maxFW: 1, active: false },          
+          sec2: { abbr: "Va", name: "Bratsche", maxFW: 1, active: false },                    
+          sec3: { abbr: "Vc", name: "Cello", maxFW: 1, active: false },                    
+          sec4: { abbr: "Kb", name: "Kontrabass", maxFW: 1, active: false },                
+          sec5: { abbr: "Fl", name: "Flöte", maxFW: 1, active: true },
+          sec6: { abbr: "Ob", name: "Oboe", maxFW: 1, active: false },
+          sec7: { abbr: "Kl", name: "Klarinette", maxFW: 1, active: false },                    
+          sec8: { abbr: "Fg", name: "Fagott", maxFW: 1, active: true },
+          sec9: { abbr: "Tp", name: "Trompete", maxFW: 1, active: false },          
+          sec10: { abbr: "Hr", name: "Horn", maxFW: 1, active: false },                              
+          sec11: { abbr: "Pos", name: "Posaune", maxFW: 1, active: false },                    
+          sec12: { abbr: "Tb", name: "Tuba", maxFW: 1, active: false },
+          sec13: { abbr: "Hf", name: "Harfe", maxFW: 1, active: false },              
         },
         categories: [ 
           {
@@ -144,25 +146,27 @@ async function run(hc) {
         location: "Wiesbaden",
         timezone: "Europe/Berlin",
         maxDienst: [10, 9, 10, 8],
+        calendar: true,
         venues: [ 
           { full: "OPR", abbr: "OPR" }, 
           { full: "Großes Haus", abbr: "GH" },
           { full: "Kurhaus", abbr: "KH" }
         ],
         sections: { 
-          sec0: { abbr: "Fl", name: "Flöte", maxFW: 1, active: true },
-          sec1: { abbr: "Ob", name: "Oboe", maxFW: 1, active: false },
-          sec2: { abbr: "Kl", name: "Klarinette", maxFW: 1, active: false },                    
-          sec3: { abbr: "Fg", name: "Fagott", maxFW: 1, active: true },
-          sec4: { abbr: "Hr", name: "Horn", maxFW: 1, active: false },                    
-          sec5: { abbr: "Tp", name: "Trompete", maxFW: 1, active: false },          
-          sec6: { abbr: "Pos", name: "Posaune", maxFW: 1, active: false },                    
-          sec7: { abbr: "Tb", name: "Tuba", maxFW: 1, active: false },
-          sec8: { abbr: "1. Vl", name: "1. Violine", maxFW: 1, active: false },          
-          sec9: { abbr: "2. Vl.", name: "2. Violine", maxFW: 1, active: false },          
-          sec10: { abbr: "Va", name: "Bratsche", maxFW: 1, active: false },                    
-          sec11: { abbr: "Vc", name: "Cello", maxFW: 1, active: false },                    
-          sec12: { abbr: "Kb", name: "Kontrabass", maxFW: 1, active: false }                    
+          sec0: { abbr: "1. Vl", name: "1. Violine", maxFW: 1, active: false },          
+          sec1: { abbr: "2. Vl.", name: "2. Violine", maxFW: 1, active: false },          
+          sec2: { abbr: "Va", name: "Bratsche", maxFW: 1, active: false },                    
+          sec3: { abbr: "Vc", name: "Cello", maxFW: 1, active: false },                    
+          sec4: { abbr: "Kb", name: "Kontrabass", maxFW: 1, active: false },                    
+          sec5: { abbr: "Fl", name: "Flöte", maxFW: 1, active: true },
+          sec6: { abbr: "Ob", name: "Oboe", maxFW: 1, active: false },
+          sec7: { abbr: "Kl", name: "Klarinette", maxFW: 1, active: false },                    
+          sec8: { abbr: "Fg", name: "Fagott", maxFW: 1, active: true },
+          sec9: { abbr: "Tp", name: "Trompete", maxFW: 1, active: false },          
+          sec10: { abbr: "Hr", name: "Horn", maxFW: 1, active: false },                    
+          sec11: { abbr: "Pos", name: "Posaune", maxFW: 1, active: false },                    
+          sec12: { abbr: "Tb", name: "Tuba", maxFW: 1, active: false },
+          sec13: { abbr: "Hf", name: "Harfe", maxFW: 1, active: false },
         },
         categories: [ 
           {
@@ -256,7 +260,7 @@ async function run(hc) {
         await userManager.save();
         
         let flUsersDictionary = {}; let fgUsersDictionary = {};
-        let sec = "sec0";                         
+        let sec = "sec5";                         
 
         let userRows = await mysqlDb.query(
           `SELECT id_user,login_name,pw,first_name,surname,usergroup,email,birthday 
@@ -374,7 +378,7 @@ async function run(hc) {
           
         }
         
-        sec = "sec3"; 
+        sec = "sec8"; 
         userRows = await mysqlDb.query(
           `SELECT id_user,login_name,pw,first_name,surname,usergroup,email,birthday 
           FROM fg3_user WHERE usergroup>20`); // for fg only members and scheduler
@@ -523,7 +527,7 @@ async function run(hc) {
         for ( p of result ) {        
           if ( !newFlPeriods[p.begin.toISOString()] ) newFlPeriods[p.begin.toISOString()] = {          
               o: hsw._id,
-              s: "sec0",
+              s: "sec5",
               begin: p.begin,   
               nextPBegin: p.next ? p.next : undefined,
               members: []                         
@@ -554,7 +558,7 @@ async function run(hc) {
             o: hsw._id,
             weekBegin: val.begin,
             profiles: [], //TODO
-            sec: 'sec0',
+            sec: 'sec5',
             entity: 'period',
             action: 'new',
             extra: '',
@@ -572,7 +576,7 @@ async function run(hc) {
         for ( p of result ) {        
           if ( !newFgPeriods[p.begin.toISOString()] ) newFgPeriods[p.begin.toISOString()] = {          
               o: hsw._id,
-              s: "sec3",
+              s: "sec8",
               begin: p.begin,  
               nextPBegin: p.next ? p.next: undefined, 
               members: []                         
@@ -650,7 +654,7 @@ async function run(hc) {
 
             let dpl = new Dpl( {
               o: hsw._id,
-              s: 'sec0',
+              s: 'sec5',
               remark: result[0].remark,
               weekBegin: weekBegin,
               weekEditable: true,
@@ -671,7 +675,7 @@ async function run(hc) {
             week.fl_newid = dpl._id;         
             await Week.findByIdAndUpdate(week.id, {
               $set: {
-                "dpls.sec0": {closed:dpl.closed, published: dpl.published, dplRef: dpl._id}} 
+                "dpls.sec5": {closed:dpl.closed, published: dpl.published, dplRef: dpl._id}} 
               });                                 
 
             let meta = new DplMeta( {
@@ -725,7 +729,7 @@ async function run(hc) {
 
             let dpl = new Dpl( {
               o: hsw._id,
-              s: 'sec3',
+              s: 'sec8',
               remark: result[0].remark,
               weekBegin: weekBegin,
               weekEditable: true,
@@ -746,7 +750,7 @@ async function run(hc) {
             week.fg_newid = dpl._id;         
             await Week.findByIdAndUpdate(week.id, {
               $set: {
-                "dpls.sec3": {closed:dpl.closed, published: dpl.published, dplRef: dpl._id}
+                "dpls.sec8": {closed:dpl.closed, published: dpl.published, dplRef: dpl._id}
                 } 
               });
             
@@ -833,17 +837,17 @@ async function run(hc) {
               fg_did: -1 
             };
             if ( !result[i].flutetable ) {
-              instr.sec3 = result[i].instrumentation;
+              instr.sec8 = result[i].instrumentation;
               tmp.fg_did = result[i].id_dienst;
               tmp.fg_comm = result[i].comment; 
               tmp.fg_extern = result[i].helpers;
             } else {
-              instr.sec0 = result[i].instrumentation;
+              instr.sec5 = result[i].instrumentation;
               tmp.fl_did = result[i].id_dienst;
               tmp.fl_comm = result[i].comment; 
               tmp.fl_extern = result[i].helpers;
               if ( result[i].fg_id ) {
-                instr.sec3 = result[i].fg_instr;
+                instr.sec8 = result[i].fg_instr;
                 tmp.fg_did = result[i].fg_id;
                 tmp.fg_comm = result[i].fg_comm; 
                 tmp.fg_extern = result[i].fg_extern;
@@ -1009,7 +1013,7 @@ async function run(hc) {
                 comment: dienstOldIds[index].fl_comm,
                 dienstBegin: d.begin,
                 dienstWeight: d.weight,
-                dienstInstr: d.instrumentation.sec0
+                dienstInstr: d.instrumentation.sec5
               } );
             } else { 
               flSeatings.push( {
@@ -1062,7 +1066,7 @@ async function run(hc) {
                 comment: dienstOldIds[index].fg_comm,
                 dienstBegin: d.begin,
                 dienstWeight: d.weight,
-                dienstInstr: d.instrumentation.sec3
+                dienstInstr: d.instrumentation.sec8
               } );            
             } else { 
               fgSeatings.push( {
