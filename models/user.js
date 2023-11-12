@@ -39,6 +39,8 @@ const userSchema = new Schema({
     resetPwToken: String,
     resetPwTokenIssued: Date,
 
+    orchCredit: Number, // count of possible orchestra registrations; normally 1; if a new orchestra already created by user, 0
+
     profiles: [
         {
             //_id = _id of doc in profiles collection

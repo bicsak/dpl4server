@@ -118,6 +118,7 @@ async function run(hc) {
           sec11: { abbr: "Pos", name: "Posaune", maxFW: 1, active: false },                    
           sec12: { abbr: "Tb", name: "Tuba", maxFW: 1, active: false },
           sec13: { abbr: "Hf", name: "Harfe", maxFW: 1, active: false },              
+          sec14: { abbr: "Pk/Schl", name: "Pauke/Schlagwerk", maxFW: 1, active: false },              
         },
         categories: [ 
           {
@@ -167,6 +168,7 @@ async function run(hc) {
           sec11: { abbr: "Pos", name: "Posaune", maxFW: 1, active: false },                    
           sec12: { abbr: "Tb", name: "Tuba", maxFW: 1, active: false },
           sec13: { abbr: "Hf", name: "Harfe", maxFW: 1, active: false },
+          sec14: { abbr: "Pk/Schl", name: "Pauke/Schlagwerk", maxFW: 1, active: false },              
         },
         categories: [ 
           {
@@ -216,7 +218,8 @@ async function run(hc) {
             birthday: new Date(Date.UTC(1970,0,1)),
               //'1970-01-01T00:00:00.000Z'),
             status: 'active',            
-            confirmationCode: 'CreatedByMT_bicsak@gmx.net'            
+            confirmationCode: 'CreatedByMT_bicsak@gmx.net',            
+            orchCredit: 1
           } },
           { upsert: true, new: true } 
         );
@@ -277,7 +280,8 @@ async function run(hc) {
               sn: currentUser.surname,
               birthday: bd,
               status: 'active',
-              confirmationCode: 'CreatedByMT_'+currentUser.email              
+              confirmationCode: 'CreatedByMT_'+currentUser.email,
+              orchCredit: 1              
             } },
             { upsert: true, new: true } 
           );
@@ -395,7 +399,8 @@ async function run(hc) {
               sn: currentUser.surname,
               birthday: bd,
               status: 'active',
-              confirmationCode: 'CreatedByMT_'+currentUser.email              
+              confirmationCode: 'CreatedByMT_'+currentUser.email,
+              orchCredit: 1              
             } },
             { upsert: true, new: true } 
           );
