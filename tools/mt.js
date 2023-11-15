@@ -119,6 +119,7 @@ async function run(hc) {
           sec12: { abbr: "Tb", name: "Tuba", maxFW: 1, active: false },
           sec13: { abbr: "Hf", name: "Harfe", maxFW: 1, active: false },              
           sec14: { abbr: "Pk/Schl", name: "Pauke/Schlagwerk", maxFW: 1, active: false },              
+          sec15: { abbr: "", name: "", maxFW: 1, active: false }, // other instrument             
         },
         categories: [ 
           {
@@ -169,6 +170,7 @@ async function run(hc) {
           sec12: { abbr: "Tb", name: "Tuba", maxFW: 1, active: false },
           sec13: { abbr: "Hf", name: "Harfe", maxFW: 1, active: false },
           sec14: { abbr: "Pk/Schl", name: "Pauke/Schlagwerk", maxFW: 1, active: false },              
+          sec15: { abbr: "", name: "", maxFW: 1, active: false }, // other instrument             
         },
         categories: [ 
           {
