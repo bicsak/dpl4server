@@ -834,8 +834,11 @@ async function run(hc) {
             let dienst_id = new mongoose.Types.ObjectId();
 
             let instr = { }; 
-            for ( let sInd = 0; sInd <= 12; sInd++ ) {
+            /*for ( let sInd = 0; sInd < Object.keys(orchConfig.sections).length; sInd++ ) {
               instr["sec" + sInd] = 0;
+            }*/
+            for ( let s in orchConfig.sections ) {
+              instr[s] = 0;
             }
             let cat = 2; 
             let tmp = { 
@@ -862,12 +865,17 @@ async function run(hc) {
             }
             if ( result[i].subtype < 0 ) cat = 0;
             else if ( result[i].subtype > 0 ) cat = 1;
+
+            let st = subtypeMap[ result[i].subtype ];
             
             let prod = {}; 
             let prodName = result[i].production; 
-            let dur = 180;
+            let dur = 0;
                       
-            if ( cat === 2 ) { prod = { id: null }; } else {
+            if ( cat === 2 ) { 
+              prod = { id: null }; 
+              dur = orchConfig.categories[2].durations[0];
+            } else {
 
               if ( result[i].production.match( /siko|konzert/gi ) ) 
                 prodName = result[i].production + result[i].label;          
@@ -887,9 +895,10 @@ async function run(hc) {
                   productions[prodName].last = result[i].start;
                 }
               } else {            
+                let prodDur = 180;
                 let durationRows = await mysqlDb.query(
                   `SELECT duration FROM fl3_duration WHERE name='${result[i].production}'`);                   
-                if ( durationRows.length ) dur = durationRows[0].duration;  
+                if ( durationRows.length ) prodDur = durationRows[0].duration;
 
                 let prodInstr = {};
                 for ( const key in instr ) {
@@ -906,7 +915,7 @@ async function run(hc) {
                   comment: "Automatically generated from DPL3 by mt",
                   lastDienst: dienst_id,
                   firstDienst: dienst_id,
-                  duration: dur,
+                  duration: prodDur,
                   weight: onePerformance[0] ? onePerformance[0].weight : 1,
                   instrumentation: prodInstr
                 });
@@ -918,6 +927,8 @@ async function run(hc) {
                 };
                 prod = productions[prodName];       
               }
+              if ( cat != 1 && st < 4 ) dur = orchConfig.categories[cat].durations[st];
+              // otherwise take duration of prod (dur := 0)
             } 
 
             let col = tmp.day * 2 + (result[i].start.getHours() >= 12);
@@ -929,13 +940,13 @@ async function run(hc) {
               col: col,
               prod: prod.id,
               category: cat,
-              subtype: subtypeMap[ result[i].subtype ],
+              subtype: st,
               weight: result[i].weight,            
-              duration: result[i].duration,
+              duration: dur,// result[i].duration,
 
               //location: result[i].location, 
-              // comment: maanger's comment? ''
-              //TODO if necessary (everything is now set to auto)
+              location: orchConfig.venues[orchConfig.categories[cat].locations[st]],
+              // comment: maanger's comment? ''              
 
               instrumentation: instr,
               seq: 0,
@@ -958,7 +969,8 @@ async function run(hc) {
               subtype: d.subtype,
               weight: d.weight,
               instrumentation: d.instrumentation,
-              duration: result[i].duration,
+              location: orchConfig.venues[orchConfig.categories[cat].locations[st]],
+              duration: dur, //result[i].duration,
               seq: 0,
               total: 0
             });

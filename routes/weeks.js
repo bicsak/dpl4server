@@ -813,7 +813,7 @@ router.post('/:mts', async function(req, res) {
 
 async function editDienst(session, params, createEvent) {
    console.log(params);
-
+   let orchestraDoc = await Orchestra.findById(params.o).session(session);                  
    // read dienst to get season id and prod id for renumber function
    let dienstDoc = await Dienst.findById( params.did ).session(session);    
    // recalc dienstzahlen for all dpls for this week    
@@ -837,9 +837,9 @@ async function editDienst(session, params, createEvent) {
          'dienst.$.weight': params.weight,
          'dienst.$.comment': params.comment,
          'dienst.$.duration': params.duration,
-         'dienst.$.location': params.location ? { 
+         'dienst.$.location': params.location,/*{ 
             full: params.location.full, 
-            abbr: params.location.abbr} : undefined
+            abbr: params.location.abbr } */
        }      
    }, {session: session});
 
@@ -851,9 +851,10 @@ async function editDienst(session, params, createEvent) {
    dienstDoc.comment= params.comment;
    dienstDoc.col = col;
    dienstDoc.duration= params.duration;
-   dienstDoc.location= params.location ? { 
+   dienstDoc.location= params.location; /*{ 
       full: params.location.full, 
-      abbr: params.location.abbr} : undefined;
+      abbr: params.location.abbr
+   }*/
 
    await dienstDoc.save();
 
@@ -899,7 +900,7 @@ async function editDienst(session, params, createEvent) {
       // dpl.seatings.id(dienstDoc._id) not the id but d      
     }
     
-    let orchestraDoc = await Orchestra.findById(params.o).session(session);                  
+    
     let dtDienstBegin = DateTime.fromJSDate(dienstDoc.begin, {zone: orchestraDoc.timezone});
 
    await createEvent({
