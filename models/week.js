@@ -19,7 +19,7 @@ const dienstSchema = new Schema({
     },
     instrumentation: { type: Map, of: Number },
     comment: String, // by manager (for example: Kleiderordnung, Anspielprobe etc.)
-    seq: Number, // -1 for exluded, 0: not calculated, 1..n
+    seq: Number, // <1 for exluded, not calculated (if <0, show abs(seq)), otherwise 1..n
     total: Number // total of performances/rehearsals this kind in the season
 }, {
     toJSON: {

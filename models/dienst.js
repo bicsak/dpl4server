@@ -17,9 +17,8 @@ const dienstExtRefSchema = new Schema({
     suffix: String, // only for non-standard rehearsal types (like BM, Aufnahme KHP etc.)
     weight: { type: Number, min: 0, max: 3 },
     instrumentation: { type: Map, of: Number },
-    seq: Number, // 0: not calculated (not shown), otherwise >= 1 - if total == -1, set manually
-    total: Number, // total of performances/rehearsals this kind in the season
-    /* -1 for excluded dienste (ignored for the calculation) */
+    seq: Number, // <1: not calculated, if <0, show abs(seq), otherwise >= 1
+    total: Number, // total of performances/rehearsals this kind in the season    
     comment: String, // manager's comment on this dienst; same as in week collection
     duration: Number, // or undefined for auto duration calculation    
     location: { // or undefined for auto location detection
