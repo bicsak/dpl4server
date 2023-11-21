@@ -227,7 +227,8 @@ async function renumberProduction(session, sId /* season */, pId /* prod id */ )
       prod: pId,
       category: { '$ne': 2 },
       subtype: { '$ne': 6 },
-      total: { '$ne': -1 }
+      //total: { '$ne': -1 }
+      seq: { '$gte': 1 }
    }).session(session).sort('begin');
    /*let aggregatedDienst = await Week.aggregate( [        
      { "$match": { season: sId }  }, // specified season

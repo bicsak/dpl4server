@@ -696,7 +696,9 @@ async function createDienst(session, params, createEvent) {
       comment: params.comment,
       instrumentation: dienstInstrumentation,
       location: params.location,
-      duration: params.duration
+      duration: params.duration,
+      seq:params.noCount ? params.extraNr*(-1) : 1,
+      total: 1
    } );
    dienstDoc.$session(session);
    await dienstDoc.save();
@@ -716,8 +718,8 @@ async function createDienst(session, params, createEvent) {
       location: dienstDoc.location,
       instrumentation: dienstDoc.instrumentation,
       comment: dienstDoc.comment, // by manager (for example: Kleiderordnung, Anspielprobe etc.)
-      seq: 0, // -1 for exluded, 0: not calculated, 1..n
-      total: 0 // total of performances/rehearsals this kind in the season
+      seq: params.noCount ? params.extraNr*(-1) : 1, 
+      total: 1 
    } );
    await weekDoc.save();   
    
@@ -811,8 +813,8 @@ router.post('/:mts', async function(req, res) {
       res.json( resp );              
 });
 
-async function editDienst(session, params, createEvent) {
-   console.log(params);
+async function editDienst(session, params, createEvent) {   
+   console.log('edit dienst params:', params);
    let orchestraDoc = await Orchestra.findById(params.o).session(session);                  
    // read dienst to get season id and prod id for renumber function
    let dienstDoc = await Dienst.findById( params.did ).session(session);    
@@ -840,6 +842,7 @@ async function editDienst(session, params, createEvent) {
          'dienst.$.location': params.location,/*{ 
             full: params.location.full, 
             abbr: params.location.abbr } */
+         'dienst.$.seq': params.noCount ? params.extraNr*(-1) : 1
        }      
    }, {session: session});
 
@@ -855,6 +858,7 @@ async function editDienst(session, params, createEvent) {
       full: params.location.full, 
       abbr: params.location.abbr
    }*/
+   dienstDoc.seq = params.noCount ? params.extraNr*(-1) : 1;
 
    await dienstDoc.save();
 

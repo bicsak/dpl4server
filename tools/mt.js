@@ -97,6 +97,7 @@ async function run(hc) {
         location: "Wiesbaden",
         timezone: "Europe/Berlin",
         maxDienst: [10, 9, 10, 8],
+        lastPerformance: true,
         calendar: true,
         venues: [ 
           { full: "OPR", abbr: "OPR" }, 
@@ -126,19 +127,22 @@ async function run(hc) {
               subtypes: ["OA", "OS", "BO", "vBO", "HP", "GP", "..."],             
               suffixes: ["OA", "OS", "BO", "vBO", "HP", "GP", ""],             
               locations: [0, 0, 1, 1, 1, 1, 0], 
-              durations: [150, 150, 180, 220, 180, 180, 150]
+              durations: [150, 150, 180, 220, 180, 180, 150],
+              numbers: [true, true, true, false, false, false, false]
           },
           {
             subtypes: ["Vorst.", "WA", "Prem.", "Konz."], 
             suffixes: ["", "WA", "Premiere", ""],
             locations: [1, 1, 1, 2],
-            durations: [180, 180, 180, 150]
+            durations: [180, 180, 180, 150],
+            numbers: [false, false, false, false]
           },
           {
             subtypes: ["Sonst."],
             suffixes: [""],
             locations: [0],
-            durations: [150]
+            durations: [150],
+            numbers: [false]
           } ]
       };
 
@@ -148,6 +152,7 @@ async function run(hc) {
         location: "Wiesbaden",
         timezone: "Europe/Berlin",
         maxDienst: [10, 9, 10, 8],
+        lastPerformance: true,
         calendar: true,
         venues: [ 
           { full: "OPR", abbr: "OPR" }, 
@@ -177,19 +182,22 @@ async function run(hc) {
               subtypes: ["OA", "OS", "BO", "vBO", "HP", "GP", "..."],             
               suffixes: ["OA", "OS", "BO", "vBO", "HP", "GP", ""],             
               locations: [0, 0, 1, 1, 1, 1, 0], 
-              durations: [150, 150, 180, 220, 180, 180, 150]
+              durations: [150, 150, 180, 220, 180, 180, 150],
+              numbers: [true, true, true, false, false, false, false]
           },
           {
             subtypes: ["Vorst.", "WA", "Prem.", "Konz."], 
             suffixes: ["", "WA", "Premiere", ""],
             locations: [1, 1, 1, 2],
-            durations: [180, 180, 180, 150]
+            durations: [180, 180, 180, 150],
+            numbers: [false, false, false, false]
           },
           {
             subtypes: ["Sonst."],
             suffixes: [""],
             locations: [0],
-            durations: [150]
+            durations: [150],
+            numbers: [false]
           } ],
           writeLock: false
       };
@@ -949,8 +957,8 @@ async function run(hc) {
               // comment: maanger's comment? ''              
 
               instrumentation: instr,
-              seq: 0,
-              total: 0            
+              seq: 1,
+              total: 1            
             };
 
             dienste.push( d );          
@@ -971,8 +979,8 @@ async function run(hc) {
               instrumentation: d.instrumentation,
               location: orchConfig.venues[orchConfig.categories[cat].locations[st]],
               duration: dur, //result[i].duration,
-              seq: 0,
-              total: 0
+              seq: 1,
+              total: 1
             });
             await dienstExtRef.save();
 
@@ -1158,7 +1166,8 @@ async function run(hc) {
             { "$unwind": { 'path': '$dienst'} },
             { "$match": { 
               'dienst.category': { '$ne': 2 }, // no special dienste
-              'dienst.total': { '$ne': -1 } }  // no excluded dienste
+              //'dienst.total': { '$ne': -1 } }  // no excluded dienste
+              'dienst.seq': { '$gte': 1 } } // serial nr. only if not explicit declared
             },
             { "$group": { 
               "_id": "$dienst.prod",
