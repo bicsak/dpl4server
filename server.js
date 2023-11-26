@@ -32,6 +32,7 @@ const next = require('./routes/next.js');
 const calendar = require('./routes/calendar.js');      
 const events = require('./routes/events.js');      
 const pending = require('./routes/pending.js');      
+const orchestra = require('./routes/orchestra.js');      
 const login = require('./routes/login.js');      
 const accounts = require('./routes/accounts.js');      
 
@@ -78,6 +79,7 @@ async function run() {
       app.use('/api/calendar', calendar);            
       app.use('/api/events', verifyToken, events);            
       app.use('/api/pending', verifyToken, pending);            
+      app.use('/api/orchestra', verifyToken, orchestra);            
       app.use('/api/login', login);
 
       app.use('/api/accounts', accounts);
