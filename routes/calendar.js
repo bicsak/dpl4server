@@ -245,7 +245,7 @@ router.get('/', async function(req, res) {
           title: name,
           description: description, 
           location: dienst.location.full,
-          url: `${url}/musician/week/?mts=${dienst.weekBegin.getTime()}`,
+          url: `${url}/musician/week/?profId=${prof}&mts=${dienst.weekBegin.getTime()/1000}`,
           status: dpl?.published ? 'CONFIRMED' : 'TENTATIVE'           
         };
         //console.log(event);
