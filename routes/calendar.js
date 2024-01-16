@@ -48,7 +48,8 @@ router.get('/', async function(req, res) {
           '$addFields': {
             'dienst.wId': '$_id', 
             'dienst.weekRemark': '$remark',
-            'dienst.weekBegin': '$begin'
+            'dienst.weekBegin': '$begin',
+            'dienst.weekEditable': '$editable'
           }
         }, {
           '$replaceRoot': {
@@ -156,6 +157,7 @@ router.get('/', async function(req, res) {
             'col': 1, 
             'begin': 1, 
             'category': 1, 
+            // 'comment': 1, // by manager only for this dienst
             'subtype': 1, 
             'weight': 1, 
             'duration': 1, 
@@ -165,12 +167,13 @@ router.get('/', async function(req, res) {
             'seq': 1, 
             'total': 1, 
             'prodDuration': 1, 
-            'weekRemark': 1, 
+            // 'weekRemark': 1, // by manager for the whole week
+            // 'weekEditable': 1,
             'weekBegin': 1,
-            'dpl.seatings': 1, 
+            'dpl.seatings': 1, //.comment: by scheduler only for this dienst
             'dpl.closed': 1, 
             'dpl.published': 1, 
-            'dpl.remark': 1, 
+            //'dpl.remark': 1, // by scheduler for the whole week
             'dpl.memberInd': 1, 
             'dpl.absent': 1, 
             'period.members': 1
@@ -181,15 +184,16 @@ router.get('/', async function(req, res) {
     //console.log('Aggregation result:', result);   
     
     let events = [];
-    //let url = req.get('host');
-    let url = "https://odp.bicsak.net"; // TODO
+    let url = req.get('host'); // origin
+    //let url = "https://odp.bicsak.net"; // TODO
     console.log(url);
     console.log(req.query.type);
+    console.log('Origin', req.headers);
     for ( let i = 0; i < result.length; i++ ) {
       let dienst = result[i];
       let dpl = result[i].dpl;
       let hasDienst =  dpl &&
-       (dpl.seatings[dpl.memberInd] == 16 || dpl.seatings[dpl.memberInd] == 1) && 
+       (dpl.seatings.sp[dpl.memberInd] == 16 || dpl.seatings.sp[dpl.memberInd] == 1) && 
        dpl.absent[dienst.col][dpl.memberInd] == 0;
       if ( req.query.type == 'all' ||
         req.query.type == 'dienst' && hasDienst ||
@@ -206,13 +210,40 @@ router.get('/', async function(req, res) {
           name += Math.abs(dienst.seq);
           if ( orchDoc.lastPerformance && dienst.category == 2 && dienst.seq == dienst.total ) name += ' z.l.M.';
         }
+        let description = "";
+        if ( !dpl ) description = "Kein DPL vorhanden";
+        else {
+          if ( dpl.published && dpl.officeSurvey && dpl.officeSurvey.status != 'confirmed') description = "Endgültiger DPL unter Genehmigung";
+          else if ( dpl.published ) description = "Dienstplan offiziell und verbindlich";
+          else if ( dpl.closed ) description = "Bearbeitung vom DPL abgeschlossen";
+          else description = "Bearbeitung vom DPL offen";
+          
+          // 'aktuelle Einteilung, Aushilfen:'
+          description += "\\n\\nAktuelle Einteilung: ";
+          let currentSeating = "";
+          for ( let j = 0; j < dienst.period.members.length; j++) {
+            if (dpl.seatings.sp[j] == 16 || dpl.seatings.sp[j] == 1)
+            currentSeating += (currentSeating ? "," : "")+dienst.period.members[j].initial;
+          }
+          if ( currentSeating ) description += currentSeating; else description += "-";
+          if (dpl.seatings.ext) description += ' +'+dpl.seatings.ext;
+
+          let currentAbsence = "";
+          for ( let j = 0; j < dienst.period.members.length; j++) {
+            if ( dpl.absent[dienst.col][j] ) {
+              currentAbsence += (currentAbsence ? "," : "")+dienst.period.members[j].initial;
+              if ( dpl.absent[dienst.col][j] == 4 ) currentAbsence += '(FW)';
+            }
+          }
+          if ( currentAbsence ) description += `\\n\\nAbwesenheiten: ${currentAbsence}`;
+        }
         let event = {
           productId: 'ODP',
           start: [dienst.begin.getUTCFullYear(), dienst.begin.getUTCMonth()+1, dienst.begin.getUTCDate(), dienst.begin.getUTCHours(), dienst.begin.getUTCMinutes()], 
           startInputType: 'utc',
           duration: { minutes: duration },
           title: name,
-          description: 'Status:, Genehmigung:, Einteilung, Aushilfen:, Dienstkommentar von DE, OD, Freiwünsche:, Einteilung OK?', // TODO
+          description: description, 
           location: dienst.location.full,
           url: `${url}/musician/week/?mts=${dienst.weekBegin.getTime()}`,
           status: dpl?.published ? 'CONFIRMED' : 'TENTATIVE'           
@@ -240,7 +271,7 @@ router.get('/', async function(req, res) {
       return;
     }
     
-    console.log(value);
+    //console.log(value);
     res.set({
       'Content-Type': 'text/calendar',        
       'Content-Disposition': `attachment; filename=odp_dienste.ics`,
