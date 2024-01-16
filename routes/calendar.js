@@ -184,8 +184,8 @@ router.get('/', async function(req, res) {
     //console.log('Aggregation result:', result);   
     
     let events = [];
-    let url = req.get('host'); // origin
-    //let url = "https://odp.bicsak.net"; // TODO
+    //let url = req.get('host'); // origin
+    let url = "https://odp.bicsak.net"; // TODO
     console.log(url);
     console.log(req.query.type);
     console.log('Origin', req.headers);
