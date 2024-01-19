@@ -184,11 +184,12 @@ router.get('/', async function(req, res) {
     //console.log('Aggregation result:', result);   
     
     let events = [];
-    //let url = req.get('host'); // origin
-    let url = "https://odp.bicsak.net"; // TODO
-    console.log(url);
-    console.log(req.query.type);
-    console.log('Origin', req.headers);
+    //let url = req.get('host');
+    let url = process.env.HOSTNAME;
+    //let url = "https://odp.bicsak.net"; // for localhost
+    //console.log(url);
+    //console.log(req.query.type);
+    //console.log('Origin', req.headers);
     for ( let i = 0; i < result.length; i++ ) {
       let dienst = result[i];
       let dpl = result[i].dpl;
