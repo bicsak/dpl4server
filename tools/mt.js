@@ -809,11 +809,12 @@ async function run(hc) {
            * 2020-01-01
            */
           //Emulating full outer join in mysql:        
+          // 5th row: ON fl.start=fg.start AND fl.production=fg.production AND fl.subtype=fg.subtype
           let sql = `SELECT fl.*, 
           fg.instrumentation AS fg_instr,fg.id_dienst AS fg_id,fg.comment AS fg_comm,fg.helpers AS fg_extern,
           1 AS flutetable, fls.label 
           FROM fl3_dienst fl LEFT JOIN fg3_dienst fg         
-          ON fl.start=fg.start AND fl.production=fg.production AND fl.subtype=fg.subtype
+          ON fl.start=fg.start 
           INNER JOIN fl3_week flw ON fl.id_week=flw.id_week
           INNER JOIN fl3_season fls ON fls.id_season=flw.id_season
           WHERE fl.production IS NOT NULL AND fl.start BETWEEN '${monday}' AND DATE_ADD('${monday}', INTERVAL 1 WEEK)
@@ -821,7 +822,7 @@ async function run(hc) {
           SELECT fg.*,
           NULL AS fg_instr, NULL AS fg_id, NULL AS fg_comm,NULL AS fg_extern,0 AS flutetable, fgs.label
           FROM fl3_dienst fl RIGHT JOIN fg3_dienst fg 
-          ON fl.start=fg.start AND fl.production=fg.production AND fl.subtype=fg.subtype
+          ON fl.start=fg.start 
           INNER JOIN fg3_week fgw ON fg.id_week=fgw.id_week
           INNER JOIN fg3_season fgs ON fgs.id_season=fgw.id_season
           WHERE fl.id_dienst IS NULL AND fg.production IS NOT NULL 
@@ -839,6 +840,9 @@ async function run(hc) {
           let absentArrayField;
 
           for ( let i = 0; i < result.length; i++) {
+            while (result[i].production.charAt(result[i].production.length - 1) == ' ' )
+              result[i].production = result[i].production.slice(0, -1);
+
             let dienst_id = new mongoose.Types.ObjectId();
 
             let instr = { }; 

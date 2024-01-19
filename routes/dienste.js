@@ -48,7 +48,7 @@ router.get('/', async function(req, res) {
             let resp = await DienstExtRef
             .find( q )
             .limit(50)
-            .select('-o -prod -weight -season');                
+            .select('-o -prod -weight -season');                            
             res.json( resp );
          }        
 
