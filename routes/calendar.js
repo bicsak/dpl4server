@@ -220,7 +220,7 @@ router.get('/', async function(req, res) {
           else description = "Bearbeitung vom DPL offen";
           
           // 'aktuelle Einteilung, Aushilfen:'
-          description += "\\n\\nAktuelle Einteilung: ";
+          description += "\n\nAktuelle Einteilung: ";
           let currentSeating = "";
           for ( let j = 0; j < dienst.period.members.length; j++) {
             if (dpl.seatings.sp[j] == 16 || dpl.seatings.sp[j] == 1)
@@ -236,7 +236,7 @@ router.get('/', async function(req, res) {
               if ( dpl.absent[dienst.col][j] == 4 ) currentAbsence += '(FW)';
             }
           }
-          if ( currentAbsence ) description += `\\n\\nAbwesenheiten: ${currentAbsence}`;
+          if ( currentAbsence ) description += `\n\nAbwesenheiten: ${currentAbsence}`;
         }
         let event = {
           productId: 'ODP',
@@ -244,7 +244,7 @@ router.get('/', async function(req, res) {
           startInputType: 'utc',
           duration: { minutes: duration },
           title: name,
-          description: description, 
+          descrip: description, 
           location: dienst.location.full,
           url: `${url}/musician/week/?profId=${prof}&mts=${dienst.weekBegin.getTime()/1000}`,
           status: dpl?.published ? 'CONFIRMED' : 'TENTATIVE'           
