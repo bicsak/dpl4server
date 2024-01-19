@@ -185,8 +185,8 @@ router.get('/', async function(req, res) {
     
     let events = [];
     //let url = req.get('host');
-    let url = process.env.HOSTNAME;
-    //let url = "https://odp.bicsak.net"; // for localhost
+    //let url = process.env.HOSTNAME;
+    let url = "https://odp.bicsak.net"; // for localhost
     //console.log(url);
     //console.log(req.query.type);
     //console.log('Origin', req.headers);
