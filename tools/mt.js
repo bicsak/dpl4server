@@ -1229,13 +1229,14 @@ async function run(hc) {
       }
 
       await transformData(hswConfig);
-      await transformData(testorchConfig);
+      //await transformData(testorchConfig);
        //Creating indexes for the collections
 
        await client.connect();
        const database = client.db(mongoDBName);       
               
        await database.collection("orchestras").createIndex( { code: 1 }, { unique: true } );
+       await database.collection("orchestras").createIndex( { fullName: 1 }, { unique: true } );
        await database.collection("users").createIndex( { email: 1 }, { unique: true } );
        await database.collection("profiles").createIndex( { 
          user: 1, o: 1, role: 1, section: 1 

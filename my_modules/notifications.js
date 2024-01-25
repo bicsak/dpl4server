@@ -19,6 +19,7 @@ exports.notificationDefaults = {
         commentNew: true,
         dplChanged: true,
         dplFinal: true,
-        surveyNew: true // neue Umfrage
+        surveyNew: true, // neue Umfrage
+        fwRejected: true
     }
 };

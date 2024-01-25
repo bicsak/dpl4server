@@ -1033,9 +1033,11 @@ async function editDpl( session, params, createEvent ) {
       days.push(dtMonday.plus({day: i}));            
    }        
    let changes = []; // for red markings in PDF (changes), columns
+   let rejectedFw = [];
    //params.sps.sort( (a, b) => a.dienstBegin.getTime() - b.dienstBegin.getTime() );        
    for ( let i = 0; i < 14; i++ ) {
       changes[i] = [];
+      rejectedFw[i] = Array(groupSize).fill(false);
       let dayIndex = Math.floor(i/2);
       let pmShift = i % 2;
       params.sps.forEach( d => {
@@ -1055,6 +1057,10 @@ async function editDpl( session, params, createEvent ) {
                   comment: comment
                } );
           }
+          rejectedFw[i] = d.sp.map( (sp, mi) => affectedDpl.absent[i][mi] == 4 && !(sp == 0 || sp == 32 || sp == 1 ) );
+          /*for ( let m = 0; m < groupSize; m++ ) {
+            if ( affectedDpl.absent[i][m] == 4 && !(d.sp[m] == 0 || d.sp[m] == 32 || d.sp[m] == 1 ) ) rejectedFw[i][m] = true;            
+         }*/
       });
       if ( !changes[i].length ) {
          changes[i].push({
@@ -1139,6 +1145,48 @@ async function editDpl( session, params, createEvent ) {
       extra: `Dienstplan ${orchestraDoc.sections.get(params.sec).name}, ${dtBegin.toFormat("kkkk 'KW' W")}`, 
       user: params.user
    });
+
+
+   let weekdays = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+   rejectedFwPositions = rejectedFw.map( mem => mem.reduce(
+      (prev, current) => 
+      current ? prev + (prev ? ', ' : '') + weekdays[Math.floor(current/2)] + (current%2 ? ' Vormittag':' Nachmittag/Abend') : prev, ""
+   ));
+   let memberProfiles = await Profile.find({
+      o: params.o,
+      role: 'musician',
+      'notifications.fwRejected': true,
+      _id: {
+         $in: affectedDpl.periodMembers.map( 
+            (pm, index) => rejectedFwPositions[index] ? pm._id : null )
+      },
+   });
+   for ( let j = 0; j < memberProfiles.length; j++ ) {
+      email.send({
+         template: 'fwrejected',
+         message: { 
+            to: `"${memberProfiles[j].userFn} ${memberProfiles[j].userSn}" ${memberProfiles[j].email}`, 
+            attachments: [{
+               filename: 'logo.png',
+               path: path.join(__dirname, '..') + '/favicon-32x32.png',
+               cid: 'logo'
+            }]
+         },
+         locals: { 
+            name: allProfiles[j].userFn,               
+            link: `${params.origin}/musician/week?profId=${memberProfiles[j]._id}&mts=${params.begin}`,                                               
+            instrument: sectionName,
+            kw: dtBegin.toFormat("W"),
+            columns: rejectedFwPositions[affectedDpl.periodMembers.find( pm => pm._id == memberProfiles[j]._id).row], // ???
+            period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,                                
+            orchestra: orchestraDoc.code,
+            orchestraFull: orchestraDoc.fullName,                              
+         }
+      }).catch(console.error);
+   }   
+   
+
+
    if ( affectedDpl.published && !affectedDpl.officeSurvey && !( affectedDpl.weekBegin.getTime() + 7*24*3600*1000 < Date.now() ) ) {
       // get all office profiles
       let officeProfiles = await Profile.find({
