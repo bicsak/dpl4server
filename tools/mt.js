@@ -16,7 +16,7 @@ const { notificationDefaults } = require('../my_modules/notifications');
 
 //const mongoUri = "mongodb://myUserAdmin:csakMalajDB@127.0.0.1:27017";
 const mongoUri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.js8ztlf.mongodb.net/test`;
-const mongoDBName = "odp_test" /* "odp_production" */;
+const mongoDBName = "odp_test" /* "odp_production"*/ ;
 //const mongoDBName = /*"odp_test"*/ "odp_production";
 
 const client = new MongoClient(mongoUri, {
@@ -220,7 +220,7 @@ async function run(hc) {
         //*********** USERS && PROFILES ******************                   
 
         let userManager = await User.findOneAndUpdate(
-          { email: 'bicsak@gmx.net' },
+          { email: 'a.koch@staatstheater-wiesbaden.de' },
           { $set: { 
             pw: hc,
             fn: 'Alexandra',

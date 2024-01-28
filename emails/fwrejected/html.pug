@@ -3,11 +3,13 @@
 html
   head
     meta(charset='UTF-8')
-    title Freiwunsch konnte nicht berücksichtigt werden
+    title Freiwünsche konnten nicht berücksichtigt werden
   body(bgcolor=dplColor style=`background-color: ${dplColor}; font-size: 12px;`)
     p Hallo #{name},    
     p 
-      strong Dein/e DiensteinteilerIn konnte deinen Freiwunsch (deine Freiwünsche) für #{columns} im Dienstplan #{instrument} (#{orchestra}) der Kalenderwoche #{kw} (#{period}) nicht (vollständig) berücksichtigen und hat ihn/sie deswegen gelöscht. Bitte prüfe nach, ob die Einteilung so in Ordnung ist.
+      strong dein/e DiensteinteilerIn konnte nicht alle Freiwünsche von dir im Dienstplan #{instrument} (#{orchestra}) für die Kalenderwoche #{kw} (#{period}) (vollständig) berücksichtigen, deswegen sind diese Freiwünsche gelöscht worden.
+    p Konkret betroffen sind folgende Freiwünsche: 
+      i #{columns}
     div(style='text-align: center;') Um alle Infos zu sehen und den DPL anzuschauen, klicke hier:
       table(align='center' style='margin-top: 12px')
         tr

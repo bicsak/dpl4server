@@ -1013,7 +1013,7 @@ async function editDpl( session, params, createEvent ) {
       s: params.sec,
       weekBegin: params.begin,
       weekEditable: true
-   } ).session(session).populate('periodMembers')/*.populate('p').populate('weekSeason')*/;   
+   } ).session(session).populate('periodMembers p')/*.populate('weekSeason')*/;   
      
    if ( !affectedDpl ) return { 
       success: false, 
@@ -1024,6 +1024,8 @@ async function editDpl( session, params, createEvent ) {
       reason: 'Dienstplan ist nicht mehr aktuell. Bitte aktualisiere deine Ansicht'
    };   
 
+   //console.log('affectedDpl', affectedDpl);
+   let members = affectedDpl.p.members;
    let oldDelta = affectedDpl.delta; 
    // for pdf red
    let groupSize = affectedDpl.periodMembers.length;
@@ -1035,7 +1037,9 @@ async function editDpl( session, params, createEvent ) {
    let changes = []; // for red markings in PDF (changes), columns
    let rejectedFw = [];
    //params.sps.sort( (a, b) => a.dienstBegin.getTime() - b.dienstBegin.getTime() );        
+   //console.log('ciklus 0..13');
    for ( let i = 0; i < 14; i++ ) {
+      console.log('i:', i);
       changes[i] = [];
       rejectedFw[i] = Array(groupSize).fill(false);
       let dayIndex = Math.floor(i/2);
@@ -1056,11 +1060,8 @@ async function editDpl( session, params, createEvent ) {
                   ext: ext,
                   comment: comment
                } );
-          }
-          rejectedFw[i] = d.sp.map( (sp, mi) => affectedDpl.absent[i][mi] == 4 && !(sp == 0 || sp == 32 || sp == 1 ) );
-          /*for ( let m = 0; m < groupSize; m++ ) {
-            if ( affectedDpl.absent[i][m] == 4 && !(d.sp[m] == 0 || d.sp[m] == 32 || d.sp[m] == 1 ) ) rejectedFw[i][m] = true;            
-         }*/
+               rejectedFw[i] = d.sp.map( (sp, mi) => (rejectedFw[i][mi] || (affectedDpl.absent[i][mi] == 4) && !(sp == 0 || sp == 32 || sp >= 64) ));          
+          }                    
       });
       if ( !changes[i].length ) {
          changes[i].push({
@@ -1075,7 +1076,8 @@ async function editDpl( session, params, createEvent ) {
    }
    
    let seatingChanged = []; // for each dienst an array of size groupsize with info if their seating code has changed. for PDF generation's future red markings   
-   console.log('params.sps', params.sps);
+   //console.log('params.sps', params.sps);
+   //console.log('params.absent', params.absent);
    for ( let i = 0; i < affectedDpl.seatings.length; i++ ) {      
       let newSeating = params.sps.find( dienst => dienst.d == affectedDpl.seatings[i].d );      
       seatingChanged.push(
@@ -1146,21 +1148,34 @@ async function editDpl( session, params, createEvent ) {
       user: params.user
    });
 
-
+   //console.log("rejectedFw", rejectedFw);
    let weekdays = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
-   rejectedFwPositions = rejectedFw.map( mem => mem.reduce(
-      (prev, current) => 
-      current ? prev + (prev ? ', ' : '') + weekdays[Math.floor(current/2)] + (current%2 ? ' Vormittag':' Nachmittag/Abend') : prev, ""
+   rejectedFwPositions = rejectedFw.map( (pos, ind) => pos.map(
+       posMem => posMem ? weekdays[Math.floor(ind/2)] + (ind%2 ? ' Nachmittag/Abend' : ' Vormittag') : null
    ));
+   
+   let rejectedFws = Array(groupSize).fill("");
+   for ( let ind = 0; ind < groupSize; ind++ ) {
+      rejectedFws[ind] = rejectedFwPositions.map( rp => rp[ind] ).filter(v => v).join(", ");      
+   }
+   //console.log("positions raw",  rejectedFwPositions);
+   //console.log("positions for member:", rejectedFws);
+
+
    let memberProfiles = await Profile.find({
       o: params.o,
       role: 'musician',
       'notifications.fwRejected': true,
       _id: {
          $in: affectedDpl.periodMembers.map( 
-            (pm, index) => rejectedFwPositions[index] ? pm._id : null )
+            (pm, index) => rejectedFws[index] ? pm._id : null )
       },
    });
+
+   //console.log('rejectedFw', rejectedFw);
+   //console.log('rejectedPos', rejectedFwPositions);
+   
+   let sectionName = orchestraDoc.sections.get(params.sec).name;
    for ( let j = 0; j < memberProfiles.length; j++ ) {
       email.send({
          template: 'fwrejected',
@@ -1173,19 +1188,17 @@ async function editDpl( session, params, createEvent ) {
             }]
          },
          locals: { 
-            name: allProfiles[j].userFn,               
+            name: memberProfiles[j].userFn,               
             link: `${params.origin}/musician/week?profId=${memberProfiles[j]._id}&mts=${params.begin}`,                                               
             instrument: sectionName,
             kw: dtBegin.toFormat("W"),
-            columns: rejectedFwPositions[affectedDpl.periodMembers.find( pm => pm._id == memberProfiles[j]._id).row], // ???
+            columns: rejectedFws[members.find( m => m.prof.toString() == memberProfiles[j]._id.toString()).row],
             period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,                                
             orchestra: orchestraDoc.code,
             orchestraFull: orchestraDoc.fullName,                              
          }
       }).catch(console.error);
-   }   
-   
-
+   }      
 
    if ( affectedDpl.published && !affectedDpl.officeSurvey && !( affectedDpl.weekBegin.getTime() + 7*24*3600*1000 < Date.now() ) ) {
       // get all office profiles
