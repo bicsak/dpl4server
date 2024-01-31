@@ -7,7 +7,9 @@ const bcrypt = require('bcryptjs');
 
 router.get('/', async function(req, res) { 
     try {
-       let profDoc = await Profile.findById( req.authData.pid );                            
+      console.log('get settings authData:', req.authData);
+       let profDoc = await Profile.findById( req.authData.pid ); 
+       console.log('get settings profdoc', profDoc);
        response = {
         fw: null,
         email: profDoc.email,

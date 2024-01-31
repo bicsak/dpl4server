@@ -1,6 +1,7 @@
 let express = require('express');
 const jwt = require('jsonwebtoken');
 let router = express.Router();
+const mongoose = require( 'mongoose' );
 const Orchestra = require('../models/orchestra');
 const Profile = require('../models/profile');
 const User = require('../models/user');
@@ -45,7 +46,7 @@ router.patch('', async function(req, res) {
       fullName: params.orchName,
       location: params.orchLocation,
       timezone: params.orchTimezone,
-      // ... add default values for fields :
+      // add default values for fields :
       maxDienst: [10, 9, 10, 8],
       lastPerformance: true,
       calendar: true,
@@ -72,14 +73,14 @@ router.patch('', async function(req, res) {
         {
             subtypes:  ["OA", "OS", "BO", "VBO", "HP", "GP", "?"],          
             suffixes:  ["OA", "OS", "BO", "VBO", "HP", "GP", ""],
-            locations: [0, 0, 1, 1, 1, 1, 0], 
+            locations: [0, 0, 0, 0, 0, 0, 0], 
             durations: [150, 150, 180, 220, 180, 180, 150], 
             numbers: [true, true, true, true, false, false, false] // show nubmers like OA1, OA1 in suffix [true, true, true, ...], [false, false,...], [false]
         },
         {
             subtypes:  ["Vorst.", "WA", "Prem.", "Konz."],
             suffixes:  ["", "WA", "Premiere", ""],
-            locations: [1, 1, 1, 2],
+            locations: [0, 0, 0, 0],
             durations: [180, 180, 180, 180],
             numbers: [false, false, false, false] // show nubmers like OA1, OA1 in suffix [true, true, true, ...], [false, false,...], [false]
          },
@@ -92,21 +93,19 @@ router.patch('', async function(req, res) {
 
         }
     ],
-    writeLock: Boolean 
+    writeLock: false
    }], {session}); 
    console.log(orchDoc);   
-   if ( !orchDoc ) return { statusCode: 400 };
-   
-  
+   if ( !orchDoc ) return { statusCode: 400 };     
 
    let profileDoc = await Profile.create([{  
-      o: orchDoc._id,
-      user: params.auth.user,
+      o: new mongoose.Types.ObjectId(orchDoc[0]._id),
+      user: new mongoose.Types.ObjectId(params.auth.user),
       role: 'office',
       manager: true,
       confirmed: true,
-      //permanentMember: true,
-      //trial: true, 
+      permanentMember: true,
+      trial: true, 
       factor: 1, // 0 < x <= 1, 100%, 50% etc. Vollzeit/Teilzeit
       remark: '', // 'Praktikant'/'ZV bis...'/'festangestellt seit...'
       position: '', // '1. Flöte', 'Solo-Picc','Stimmführer' etc.
@@ -129,34 +128,37 @@ router.patch('', async function(req, res) {
      statusCode: 400,
      content: "Benutzerprofil konnte nicht erzeugt werden"
    };   
+   console.log('new profile Doc', profileDoc);
  
-   // update doc in users collection (push profile to profiles array) 
-     
-   //let userDoc = await User.findById(profileDoc.user).session(session);  
+   // update doc in users collection (push profile to profiles array)         
    let profileParams = {
-     _id: profileDoc._id,
-     o: profileDoc.o,
+     _id: new mongoose.Types.ObjectId(profileDoc[0]._id),
+     o: new mongoose.Types.ObjectId(orchDoc[0]._id),
      role: 'office',
      manager: true,
-     //section: 'all',
-     //permanentMember: profileDoc.permanentMember,
-     //trial: profileDoc.trial,
-     factor: profileDoc.factor,
-     remark: profileDoc.remark,
-     position: profileDoc.position,
+     section: 'all',
+     permanentMember: true,
+     trial: false,
+     factor: 1,
+     remark: '',
+     position: '',
    };
+   
    userDoc.orchCredit = userDoc.orchCredit - 1;  
    userDoc.profiles.push( profileParams );  
    await userDoc.save();
     
    profileParams.token = jwt.sign({
        user: userDoc._id,
-       pid: profileDoc._id,
+       pid: profileDoc[0]._id,
        r: 'office',
        m: true,
        o: orchDoc._id,
        s: 'all'
    }, process.env.JWT_PASS, { expiresIn: '1h' } );  
+
+   console.log('profile params', profileParams);
+   profileParams.o = orchDoc[0];
      
    return {
      statusCode: 201,
