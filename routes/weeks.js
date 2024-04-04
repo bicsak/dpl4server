@@ -95,12 +95,14 @@ async function changeEditable( session, params, createEvent ) {
 } // End of transaction function
 
 router.get('/:mts', async function(req, res) {   
-   let resp = await createWeekDataRaw(req.params.mts, req.authData);          
+   let resp = await createWeekDataRaw(req.params.mts, req.authData);     
    res.json( resp );      
 });
 
 router.get('/:section/:mts', async function(req, res) {   
+   console.log(req.authData, req.params.mts)        ;
    let resp = await createWeekDataRaw(req.params.mts, req.authData, req.params.section);                   
+   console.log(resp);
    res.json( resp );
 });
 

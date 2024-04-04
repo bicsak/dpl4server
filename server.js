@@ -29,6 +29,7 @@ const settings = require('./routes/settings.js');
 const dienste = require('./routes/dienste.js');      
 const users = require('./routes/users.js');      
 const next = require('./routes/next.js');      
+const preview = require('./routes/preview.js');      
 const calendar = require('./routes/calendar.js');      
 const events = require('./routes/events.js');      
 const pending = require('./routes/pending.js');      
@@ -76,6 +77,7 @@ async function run() {
       app.use('/api/settings', verifyToken, settings);                    
       app.use('/api/dienste', verifyToken, dienste);            
       app.use('/api/next', verifyToken, next);            
+      app.use('/api/preview', verifyToken, checkPeriodPermission, preview);            
       app.use('/api/calendar', calendar);            
       app.use('/api/events', verifyToken, events);            
       app.use('/api/pending', verifyToken, pending);            
