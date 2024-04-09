@@ -29,20 +29,26 @@ router.get('/', async function(req, res) {
       filterObj.category = { '$ne': 2};
       let key = `instrumentation.${req.authData.s}`;
       filterObj[key] = { '$ne': 0 };
-      //console.log('filter', filterObj);
+      console.log('filter', filterObj);
+      let test = await DienstExtRef.aggregate( [
+        {
+          '$match': filterObj
+        }
+      ]).session(session);
+      //console.log('Test:', test);
       let dienste = await DienstExtRef.aggregate( [
         {
           '$match': filterObj
-        }, 
+        },         
         {
             '$group': {
                 _id: `$instrumentation.${req.authData.s}`,
-                count: { $sum: '$weight'}
+                count: { $sum: '$weight'}           
             }
         },
         { '$sort': {_id: 1} }      
       ]).session(session);
-    console.log('Aggregation result dienste:', dienste);
+    //console.log('Aggregation result dienste:', dienste);
     let special = await DienstExtRef.aggregate( [
       {
         '$match': { 
@@ -57,7 +63,7 @@ router.get('/', async function(req, res) {
     let result = Array(groupSize).fill(0);
     dienste.forEach( obj => result[ obj._id - 1] = obj.count );
     res.status(200).json( {
-      n: result, special: special[0].countSpecial
+      n: result, special: special.length ? special[0].countSpecial : 0
     } );       
     } catch (err) {
       console.log(err);
