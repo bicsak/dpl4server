@@ -113,6 +113,7 @@ class PDFCreator {
     }
 
     createPDF( changes /* changes for red markings*/) {        
+        console.log('Creating PDF');
         const pageWidth = 841.89; // in PS points; 72 points per inch
         const pageHeight = 595.28; // A4, 297x210 mm
         const margin = 36; // half inch
