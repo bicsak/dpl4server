@@ -287,7 +287,7 @@ class PDFCreator {
                             align: 'center'
                         });
                     } 
-                    if ( changes[i][0].seating[m] ) {
+                    if ( changes && changes[i][0].seating[m] ) {
                         doc.fillAndStroke('red', 'red').lineWidth(1.5);
                         doc.rect(aX + colCount * wCell, aY+(m+3)*tableRowHeight, wCell, tableRowHeight).stroke();
                         doc.fillAndStroke('black', 'black').lineWidth(1);
