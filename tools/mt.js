@@ -16,8 +16,8 @@ const { notificationDefaults } = require('../my_modules/notifications');
 
 //const mongoUri = "mongodb://myUserAdmin:csakMalajDB@127.0.0.1:27017";
 const mongoUri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.js8ztlf.mongodb.net/test`;
-const mongoDBName = "odp_test"; //  "odp_production" ;
-//const mongoDBName = /*"odp_test"*/ "odp_production";
+//const mongoDBName = "odp_test"; //  "odp_production" ;
+const mongoDBName = /*"odp_test"*/ "odp_production";
 
 const client = new MongoClient(mongoUri, {
   useNewUrlParser: true,
@@ -785,7 +785,7 @@ async function run(hc) {
               comments: []
             } );
             let comments = await mysqlDb.query(
-              `SELECT message,id_user,email,posted FROM fg3_comment WHERE id_week='${week.fl_id}'`);
+              `SELECT message,id_user,email,posted FROM fg3_comment WHERE id_week='${week.fg_id}'`);
             for ( let i = 0; i < comments.length; i++) {                        
               meta.comments.push( {
                 message: comments[i].message,
