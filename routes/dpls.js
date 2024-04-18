@@ -1114,7 +1114,7 @@ async function editDpl( session, params, createEvent ) {
          o: params.o, begin: params.begin
    }, updateObj).session(session);
    
-   affectedDpl = await Dpl.findById( affectedDpl._id ).session(session);
+   affectedDpl = await Dpl.findById( affectedDpl._id ).session(session).populate('periodMembers p');
 
    if ( affectedDpl.officeSurvey && affectedDpl.officeSurvey.status != 'confirmed') {
       // change dpl state back to closed      
@@ -1212,6 +1212,7 @@ async function editDpl( session, params, createEvent ) {
       let sectionName = orchestraDoc.sections.get(params.sec).name;
       let sectionAbbr = orchestraDoc.sections.get(params.sec).abbr;            
       PDFCreator.parseWeekData(orchestraDoc, weekDoc);
+      //console.log('DEBUG', affectedDpl.periodMembers);
       PDFCreator.parseDpl(affectedDpl, sectionName, affectedDpl.periodMembers.map(
          pm => {
             return {

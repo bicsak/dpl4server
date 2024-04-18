@@ -78,6 +78,7 @@ class PDFCreator {
         this.sectionName = sectionName; // 'Flöte'
         this.tsVersion = DateTime.fromMillis(dpl.state.getTime(), {zone: this.timezone});
         this.members = members;
+        //console.log(this.members);
         this.remarkDpl = dpl.remark;
         this.nVersion = dpl.version;
         this.absent = dpl.absent; // ?? deep copy?
@@ -205,7 +206,8 @@ class PDFCreator {
                 baseline: 'top'                
         });                        
         doc.font('Times-Roman');
-        for ( let i = 0; i < this.members.length; i++ ) {         
+        for ( let i = 0; i < this.members.length; i++ ) {
+            //console.log(`writing member ${i}:`, this.members[i]);         
             doc.text(`${i+1} ${this.members[i].sn}`, aX - maxSurnameWidth, aY+(i+3.25)*tableRowHeight);
             doc.text(`${i+1}`, aX + this.tableWidth*wCell + tableFontSize, aY+(i+3.25)*tableRowHeight);
             doc.moveTo(aX - maxSurnameWidth, aY+(i+4)*tableRowHeight).lineTo(aX + this.tableWidth * wCell + tableFontSize * 2, aY+(i+4)*tableRowHeight).stroke();
