@@ -196,11 +196,17 @@ router.get('/', async function(req, res) {
       let hasDienst =  dpl &&
        (dpl.seatings.sp[dpl.memberInd] == 16 || dpl.seatings.sp[dpl.memberInd] == 1) && 
        dpl.absent[dienst.col][dpl.memberInd] == 0;
-      if ( req.query.type == 'all' ||
+      if ( req.query.type == 'all' || req.query.type == 'prefix' ||
         req.query.type == 'dienst' && hasDienst ||
         req.query.type == 'no-dienst' && !hasDienst ) {
-        let duration = dienst.duration ? dienst.duration : dienst.prodDuration;                 
-        let name = dienst.name;
+        let duration = dienst.duration ? dienst.duration : dienst.prodDuration;                         
+        let prefix = '';        
+        if ( req.query.type == 'prefix' ) {
+          prefix = hasDienst ? '+' : '-';
+          if ( dpl?.published && (dpl.officeSurvey && dpl.officeSurvey.status == 'confirmed' || !dpl.officeSurvey)) prefix += "!";
+          else prefix += "?";
+        }
+        let name = prefix + dienst.name;
         let suffix = orchDoc.categories[dienst.category].suffixes[dienst.subtype];
         if (suffix) name += " " + suffix;        
         if ( dienst.category == 0 && dienst.subtype == 6 ) name += " " + dienst.suffix;
