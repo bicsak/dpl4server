@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "run": "nodemon server.js",
-    "migrate": "node tools\\mt.js"
+    "migrate": "node tools\\mt.js",
+    "backup": "node tools\\backup.js"
   },
   "author": "BM",
   "license": "ISC",

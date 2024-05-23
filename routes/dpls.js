@@ -32,7 +32,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const email = new Email({
-   message: { from: '"Orchesterdienstplan" no-reply@odp.bicsak.net' },
+   message: { from: '"Orchesterdienstplan" admin@odp.bicsak.net' },
    // uncomment below to send emails in development/test env:
    //send: true,
    transport: transporter,

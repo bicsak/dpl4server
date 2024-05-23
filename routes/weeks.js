@@ -103,6 +103,7 @@ router.get('/:section/:mts', async function(req, res) {
    console.log(req.authData, req.params.mts)        ;
    let resp = await createWeekDataRaw(req.params.mts, req.authData, req.params.section);                   
    console.log(resp);
+   //setTimeout(() => {res.json( resp )}, 1000);
    res.json( resp );
 });
 
