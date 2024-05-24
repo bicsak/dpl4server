@@ -37,11 +37,16 @@ const transporter = nodemailer.createTransport({
    },
    tls:{
        rejectUnauthorized:false  // if on local
-   }
+   },
+   dkim: {
+      domainName: "odp.bicsak.net",
+      keySelector: "default",
+      privateKey: "-----BEGIN PRIVATE KEY-----\nMIICXAIBAAKBgQC40ANDOghp0pyEFI3I3QoP/bAE76is2reGGXCNGYZCOHT2kr8EP9plD5TcJVKSC5+3CieGJUFalNnZDUmBXweDdC7V4ACvand1IOlTogCs4Ncmkp85QcFySusKsRjp6BsRd97l8Bv/s8XsVR13TI5L62umB7A19l262pFn3C6nUwIDAQABAoGAKEN5Un4kMxnla4km0qoFdTJp1Ml50B7eeOK1+Kek7mxqXwXdg8l9hSL95XBkKtlJdJFLxxf6wwdG5tjUONFBS2z7QXbsmgbfurW7by5jnDi+9F4aHCw12Yq4MD1jqV90agFC8h49yKlUePtW1YbUH+LaG06CFAk4Xrv1CgmEqyECQQDy7iROD73LIUBe2tcaiawo5ZTMvez17DsXj2op0Sddt2TEvVedPudkxNWfYv+cXlKwRhCIWBwSlKiXxrffbEc5AkEAwsFrtnsOmy5yDSS9HXNMYBpbf7HZ5ivSB/kRfjWsUtjWOw6Pxctvmy9gp78dHRALwLkbRxeCN54KeTr2lZ126wJANANpIo2cRXHJJoYUqEnx4o/FXFEN+1mpDVJXmLx/gUFTAgzIRZLCWIEMfCPmNsS7T6Kwx4CWAiRyNI0HsX6tgQJAaAJUPAhMLKQJVOuh8/B3gXuSEggxjrMoYAmsRfL0LOqQvslwDvouiHos7GksazD+ldZFsxni+UD15viOaCjIMQJBALFZSKMgT0L6U+COa3QuVAgcUFfVMiTyY4SOCmyXFBCcE4TZgmjsf7AdGtH/wjrq5mow/LTgUAuDSbtTxunNLi4=\n-----END RSA PRIVATE KEY-----"
+    }
 });
 
 const email = new Email({
-   message: { from: '"Orchesterdienstplan" no-reply@odp.bicsak.net' },
+   message: { from: '"Orchesterdienstplan" admin@odp.bicsak.net' },
    // uncomment below to send emails in development/test env:
    //send: true,
    transport: transporter,
