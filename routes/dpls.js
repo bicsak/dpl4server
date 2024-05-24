@@ -21,14 +21,19 @@ const transporter = nodemailer.createTransport({
    host: process.env.MAIL_HOST,                        
    port: process.env.MAIL_PORT,
 
-   secure: false, // upgrade later with STARTTLS
+   secure: true, 
    auth: {                          
      user: process.env.MAIL_USER,                          
      pass: process.env.MAIL_PASS
    },
    tls:{
        rejectUnauthorized:false  // if on local
-   }
+   },
+   dkim: {
+      domainName: "odp.bicsak.net",
+      keySelector: "default",
+      privateKey: "-----BEGIN PRIVATE KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA41hWCaOapFzIFjnKkOMUFultFxN2UwmVihPtfu8eebwKSBOeW3Gz/1kj+CiYMRHO19wPB23gEIu6MVMI4+5Da/jKM8w/PQU8yVnsPmL+I5/W+SOwotdJDZS2UXxdRZnxx2qMPwuXSSTN9wNK55B4yVyaZWL3djgiuWD1Eu4wYUcWumL/MN0rChC9i4UI0lYO6uwWsYgyeVbdoyxemGprucy4g9tcOGub0f7yWB416NCuHoc9O4L3hHjmt1wWoMVLK8lLN8wOsXtGDSv/Yh3ZGBjXt7Ty2p25DzAvzXTMX1VFOqlsUPk8uX7hwQ0SmF+SMvJRIacOaEYo9K2fadljcwIDAQAB;"
+    }
 });
 
 const email = new Email({
