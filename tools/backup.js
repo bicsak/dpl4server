@@ -9,7 +9,6 @@ if (process.env.NODE_ENV !== 'production') {
   
 const bcrypt = require('bcryptjs');  
 const { MongoClient } = require( 'mongodb' );
-const mongoose = require('mongoose');
 
 const mongoUri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.js8ztlf.mongodb.net/test`;
 const client = new MongoClient(mongoUri, {
@@ -18,25 +17,7 @@ const client = new MongoClient(mongoUri, {
 });
       
 async function copyCollections(config) {
-    try {            
-        mongoose.connection.on('connected', () => {
-            console.log('Mongoose connected to DB Cluster');
-        });
-        mongoose.connection.on('error', (error) => {
-            console.error(error.message);
-        });
-        mongoose.connection.on('disconnected', () => {
-            console.log('Mongoose Disconnected');
-        });
-
-        await mongoose.connect(`${mongoUri}`, {
-            dbName: config.destDb,
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });            
-
-        const User = require('../models/user');
-        const Profile = require('../models/profile');        
+    try {                    
 
         let dbCollections = [
             'orchestras', 'seasons', 'users', 
@@ -64,24 +45,27 @@ async function copyCollections(config) {
                 
                 // Execute the aggregation
                 console.log(`Copying collection ${config.sourcePref+coll} from Db ${config.sourceDb} to ${config.destPref+coll} in ${config.destDb}...`);
-                currColl.aggregate(pipeline);       
+                await currColl.aggregate(pipeline).toArray();       
              });            
 
             if ( config.newPw ) {
-                // reset pw
-                await User.updateMany({}, {
-                    $set: { pw: config.newPw }
-                });
+                // reset pw                
+                await client.db(config.destDb).collection(config.destPref+'users').updateMany({}, {
+                    $set: {
+                        pw: config.newPw
+                    }
+                });                
             }
             if ( config.newEmail ) {
-                //reset email
-                await Profile.updateMany({}, {
-                    $set: { email: config.newEmail }
-                });
+                //reset email                
+                await client.db(config.destDb).collection(config.destPref+'profiles').updateMany({}, {
+                    $set: {
+                        email: config.newEmail
+                    }
+                });                
             }
         }
         await copyData(dbCollections);
-
         
         //Creating indexes on the new collections        
         const destDatabase = client.db(config.destDb);       
@@ -105,8 +89,7 @@ async function copyCollections(config) {
         console.log(err);
         // handle the error
     } 
-    finally {        
-        await mongoose.connection.close();            
+    finally {                
         await client.close();
     }
 }
@@ -125,7 +108,7 @@ bcrypt.hash("testbetrieb", 10, async (err, hash) => {
             sourceDb: "odp_production",
             destDb: "odp_test",
             sourcePref: "",
-            destPref: ""
+            destPref: "backup_"
         } ).catch(console.dir);
     }
 });
