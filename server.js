@@ -13,7 +13,8 @@ const checkPeriodPermission = require('./middleware/check-period-permission');
 //const mongoUri = "mongodb://myUserAdmin:csakMalajDB@127.0.0.1:27017";
 //const mongoUri = `mongodb://${process.env.DB_USER}:${process.env.DB_PASS}@127.0.0.1:27017`;
 //const mongoUri = `mongodb://Malaj:27017,Malaj:27018,Malaj:27019?replicaSet=rs`;
-const mongoUri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.js8ztlf.mongodb.net/test`;
+//const mongoUri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.js8ztlf.mongodb.net/test`;
+const mongoUri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.js8ztlf.mongodb.net`;
 const mongoDBName = process.env.DB_NAME;
 
 var app = module.exports = express();
@@ -53,6 +54,7 @@ async function run() {
       mongoose.connection.on('disconnected', () => {
             console.log('Mongoose Disconnected');
       });      
+      mongoose.set('strictQuery', true);
       await mongoose.connect(`${mongoUri}`, {
          dbName: mongoDBName,
          useNewUrlParser: true,
@@ -83,7 +85,6 @@ async function run() {
       app.use('/api/pending', verifyToken, pending);            
       app.use('/api/orchestra', verifyToken, orchestra);            
       app.use('/api/login', login);
-
       app.use('/api/accounts', accounts);
 
 
@@ -94,12 +95,33 @@ async function run() {
       });
  
       app.listen(3000);
-      console.log("Application is running...");
+      console.log("Application is running...");      
+
+      const cron = require('node-cron');
+      const spawn = require('child_process').spawn;
+      //run at 5 after 4 every sunday
+      let dbBackupTask = cron.schedule('5 4 * * sun', () => {
+         let backupProcess = spawn('mongodump', [
+            '--uri='+mongoUri,
+            '--db='+mongoDBName,
+            '--out=./odp_backups_1/',
+            '--gzip'
+         ]);
+            
+         backupProcess.on('exit', (code, signal) => {
+              if (code) 
+                  console.log('Backup process exited with code ', code);
+              else if (signal)
+                  console.error('Backup process was killed with singal ', signal);
+              else 
+                  console.log('Successfully backedup the database');
+         });            
+      });
    }
    catch (err) {
       console.log(err);
    }
-   finally {      
+   finally {         
       //session.endSession();
       //await mongoose.connection.close();                        
    }

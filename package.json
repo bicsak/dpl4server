@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "run": "nodemon server.js",
     "migrate": "node tools\\mt.js",
-    "backup": "node tools\\backup.js"
+    "testdb": "node tools\\testdb.js"
   },
   "author": "BM",
   "license": "ISC",
@@ -22,6 +22,7 @@
     "luxon": "^2.2.0",
     "mongoose": "^6.0.12",
     "mysql": "^2.18.1",
+    "node-cron": "^3.0.3",
     "nodemailer": "^6.7.2",
     "pdfkit": "^0.13.0",
     "pug": "^3.0.2"

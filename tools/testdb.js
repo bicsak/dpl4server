@@ -10,7 +10,8 @@ if (process.env.NODE_ENV !== 'production') {
 const bcrypt = require('bcryptjs');  
 const { MongoClient } = require( 'mongodb' );
 
-const mongoUri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.js8ztlf.mongodb.net/test`;
+//const mongoUri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.js8ztlf.mongodb.net/test`;
+const mongoUri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.js8ztlf.mongodb.net`;
 const client = new MongoClient(mongoUri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
