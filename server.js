@@ -105,7 +105,7 @@ async function run() {
             let backupProcess = spawn('mongodump', [
                '--uri='+mongoUri,
                '--db='+mongoDBName,
-               '--out=./odp_backups_1/',
+               '--out=/odp_backups_1/',
                '--gzip'
             ]);
                
