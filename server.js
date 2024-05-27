@@ -100,12 +100,12 @@ async function run() {
       if (process.env.NODE_ENV === 'production') {
          const cron = require('node-cron');
          const spawn = require('child_process').spawn;
-         //run at 5 after 4 every sunday
-         let dbBackupTask = cron.schedule(/*'5 4 * * sun'*/ '* * * * *', () => {
+         //run at 25 after 4 every sunday
+         let dbBackupTask = cron.schedule('25 4 * * sun', () => {
             let backupProcess = spawn('mongodump', [
                '--uri='+mongoUri,
                '--db='+mongoDBName,
-               '--out=./odp_backups/',
+               '--out=./mongodb_backups/',
                '--gzip'
             ]);
                
