@@ -437,7 +437,7 @@ async function voteSurvey(session, params, createEvent ) {
       } else {
          // send email for all (scheduler, office, group members with notifications.dplFinal) with the final DPL incl. PDF      
          // create PDF version of DPL with pdfKit
-         let weekDoc = await Week.findById(affectedDpl.w).session(session);
+         let weekDoc = await Week.findById(affectedDpl.w).session(session).populate('season o');
          let sectionName = orchestraDoc.sections.get(params.sec).name;
          let sectionAbbr = orchestraDoc.sections.get(params.sec).abbr;            
          PDFCreator.parseWeekData(orchestraDoc, weekDoc);
@@ -590,7 +590,7 @@ async function editDplStatus(session, params, createEvent ) {
       o: params.o,
       begin: params.begin,      
       editable: true
-   }, updateObj).session(session);
+   }, updateObj).session(session).populate('season o');
    if ( !weekDoc ) return {
       statusCode: 400,
       body: 'Wochenplan nicht gefunden oder nicht editierbar'
@@ -1213,7 +1213,7 @@ async function editDpl( session, params, createEvent ) {
          'notifications.dplChanged': true
       }).session(session);      
       // generate PDF for this section's current dpl (new version)
-      let weekDoc = await Week.findById(affectedDpl.w).session(session);
+      let weekDoc = await Week.findById(affectedDpl.w).session(session).populate('season o');
       let sectionName = orchestraDoc.sections.get(params.sec).name;
       let sectionAbbr = orchestraDoc.sections.get(params.sec).abbr;            
       PDFCreator.parseWeekData(orchestraDoc, weekDoc);

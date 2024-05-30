@@ -1,7 +1,7 @@
 const path = require('node:path');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
-const { DateTime, Info } = require('luxon');
+const { DateTime, Info, Interval } = require('luxon');
 
 class PDFCreator {
     outputFiles = []; // name list for generated PDF files
@@ -13,7 +13,14 @@ class PDFCreator {
         this.timezone = orch.timezone;
         this.orchFull = orch.fullName;
         this.orchCode = orch.code;
-        this.remarkWeek = wpl.remark;        
+        this.remarkWeek = wpl.remark;   
+        this.sLabel = wpl.season.label;
+        let sBegin = DateTime.fromMillis(wpl.season.begin.getTime(), { zone: wpl.o.timezone });
+        let wBegin = DateTime.fromMillis(wpl.begin.getTime(), { zone: wpl.o.timezone });
+        this.dw = Interval.fromDateTimes(
+            sBegin, 
+            wBegin
+          ).length('weeks') + 1;        
         this.remarksDienst = [];
 
         this.days = [];
@@ -198,8 +205,8 @@ class PDFCreator {
         let aX = margin + maxSurnameWidth; 
         let aY = margin+heightRotatedHeaders+20;
         
-        doc.font('Times-Bold').text(`KW ${this.days[0].toFormat('W')}`, 
-            aX - maxSurnameWidth, aY+1.5*tableRowHeight, {
+        doc.font('Times-Bold').text(`SZ ${this.sLabel} DW ${this.dw}` /*`KW ${this.days[0].toFormat('W')}`*/, 
+            aX - maxSurnameWidth, aY+tableRowHeight, {
                 width: maxSurnameWidth,
                 height: tableRowHeight*2,
                 align: 'center',
