@@ -1205,7 +1205,7 @@ async function editDpl( session, params, createEvent ) {
       }).catch(console.error);
    }      
 
-   if ( affectedDpl.published && !affectedDpl.officeSurvey && !( affectedDpl.weekBegin.getTime() + 7*24*3600*1000 < Date.now() ) ) {
+   if ( !params.noEmails && affectedDpl.published && !affectedDpl.officeSurvey && !( affectedDpl.weekBegin.getTime() + 7*24*3600*1000 < Date.now() ) ) {
       // get all office profiles
       let officeProfiles = await Profile.find({
          o: params.o,

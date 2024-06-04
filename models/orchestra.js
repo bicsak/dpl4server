@@ -34,7 +34,8 @@ const orchestraSchema = new Schema({
             numbers: [Boolean] // show nubmers like OA1, OA1 in suffix [true, true, true, ...], [false, false,...], [false]
         }
     ],
-    writeLock: Boolean 
+    writeLock: Boolean,
+    acceptTokensFrom: Date 
 } );
 
 module.exports = mongoose.model('Orchestra', orchestraSchema);

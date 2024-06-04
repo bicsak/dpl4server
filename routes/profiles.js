@@ -20,6 +20,7 @@ router.get('/', async function(req, res) {
           return {
             id: p._id,
             orchestraFullName: p.o.fullName,
+            intendedManager: false,
             role: p.role,   
             section: p.section == 'all' ? 'all' : p.o.sections.get(p.section).name, // 'Flöte' statt 'sec0'
             factor: p.factor,
@@ -30,6 +31,24 @@ router.get('/', async function(req, res) {
           }
         }
       );      
+      let newManagerDoc = await Profile.find( {        
+        user: req.authData.user,
+        intendedManager: true
+      }).populate('o');
+      if ( newManagerDoc.length ) {
+        resp.push( {
+          id: newManagerDoc[0]._id,
+          orchestraFullName: newManagerDoc[0].o.fullName,
+          role: 'office',   
+          section: 'all',
+          intendedManager: true,
+          factor: newManagerDoc[0].factor,
+          trial: newManagerDoc[0].trial,
+          remark: newManagerDoc[0].remark,
+          position: newManagerDoc[0].position,
+          permanent: newManagerDoc[0].permanentMember
+        } );
+      }
       res.json(resp);
       return;
     }

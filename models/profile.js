@@ -10,6 +10,7 @@ const profileSchema = new Schema({
      * */   
     section: String, // section, not required
     manager: Boolean,
+    intendedManager: Boolean, // if should be new manager
     confirmed: Boolean, // if pending request, false
     permanentMember: Boolean, // currently permanent employee (festangestellt) - only for musicians
     trial: Boolean, // only for musicians with permanentMember == true
