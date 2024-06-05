@@ -4,6 +4,7 @@ let router = express.Router();
 const Profile = require('../models/profile');
 const User = require('../models/user');
 const Period = require('../models/period');
+const Orchestra = require('../models/orchestra');
 
 const { writeOperation } = require('../my_modules/orch-lock');
 const { notificationDefaults } = require('../my_modules/notifications');
@@ -205,6 +206,52 @@ router.get('/', async function(req, res) {
   };  
  }
 
+ async function confirmNewManager(session, params) { 
+  // orchestra doc, set acceptTokensFrom value
+  console.log(params.prof);
+  await Orchestra.findByIdAndUpdate(params.o, {
+    acceptTokensFrom: new Date()
+  }).session(session);
+
+  let oldManagersProfileDoc = await Profile.findOne({manager: true}).session(session);
+  
+  let profileDoc = await Profile.findById(params.prof).session(session);
+  if ( !profileDoc ) return {
+    success: false,
+    reason: "Benutzerprofil nicht gefunden"
+  };
+  profileDoc.manager = true;
+  profileDoc.intendedManager = false;
+  await profileDoc.save();    
+
+  // update doc in users collection (update profile in profiles array)     
+  let userDoc = await User.findById(profileDoc.user).session(session);
+  let indexOfProfile =  userDoc.profiles.findIndex(
+    p => p._id == params.prof
+  );    
+  userDoc.profiles[indexOfProfile].manager = true;
+  await userDoc.save();
+
+  oldManagersProfileDoc.manager = false;  
+  await oldManagersProfileDoc.save();    
+
+  // update doc in users collection (update profile in profiles array)     
+  let oldUserDoc = await User.findById(oldManagersProfileDoc.user).session(session);
+  console.log('oldManagersProfileDoc._id', oldManagersProfileDoc._id);
+  console.log('oldUserDoc', oldUserDoc._id);
+  console.log('oldUserDoc profiles', oldUserDoc.profiles);
+  let indexOfOldProfile =  oldUserDoc.profiles.findIndex(
+    p => p._id == oldManagersProfileDoc._id.toString()
+  );    
+  oldUserDoc.profiles[indexOfOldProfile].manager = false;
+  await oldUserDoc.save();
+     
+  return {
+    success: true,
+    content: true
+  }  
+ }
+
  async function confirmProfile(session, params) { 
   let profileDoc = await Profile.findById(params.prof).session(session);
   if ( !profileDoc ) return {
@@ -261,18 +308,32 @@ router.get('/', async function(req, res) {
    });         
     
     res.json( result );     
+  } else if ( req.body.op == 'newIntendedManager' ) {
+    if ( req.body.newManager ) {
+      //set intendedManager to true
+      await Profile.findOneAndUpdate({_id: req.params.id, o: req.authData.o, manager: false, role: 'office'}, {intendedManager: true});  
+    } else {
+      //set intendedManager to false
+      await Profile.findOneAndUpdate({_id: req.params.id, o: req.authData.o, manager: false, role: 'office'}, {intendedManager: false});  
+    }
+    res.json( {
+      success: true,
+      content: req.body.newManager
+    });
+  } else if ( req.body.op == 'confirmNewManager' ) {
+    let result = await writeOperation( req.authData.o, confirmNewManager, {      
+      o: req.authData.o,             
+      prof: req.params.id
+    });             
+    res.json( result );
+
   } else {
     let result = await writeOperation( req.authData.o, confirmProfile, {      
       o: req.authData.o,             
       prof: req.params.id
-   });         
-    
-    res.json( result );  
-    
-
-  }
-  
-   
+   });             
+  res.json( result );      
+  }     
  });
  
  //export this router to use in server.js
