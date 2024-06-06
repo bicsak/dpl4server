@@ -100,7 +100,7 @@ router.get('/', async function(req, res) {
             'pipeline': [
               {
                 '$match': {
-                  's': 'sec5', 
+                  's': profDoc.section, 
                   'periodMembers': mongoose.Types.ObjectId(prof)
                 }
               }, {
