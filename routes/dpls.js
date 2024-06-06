@@ -824,7 +824,8 @@ router.patch('/:mts', async function(req, res) {
                   message: req.body.message,  
                   ver: req.body.ver,       
                   user: req.authData.pid,
-                  userId: req.authData.user         
+                  userId: req.authData.user,
+                  origin: req.get('origin')         
                });      
                console.log(`Survey created, result of write operation: ${result}`);       
                if ( !result ) res.status(409).send({message: 'DPL existiert nicht oder neuere Version vorhanden. Aktualisiere bitte deine Ansicht!'}); 
