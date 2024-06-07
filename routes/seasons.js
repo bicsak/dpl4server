@@ -238,7 +238,7 @@ async function createSeason(session, params, createEvent ) {
    })
    return {
       statusCode: 201,
-      body: await addStat(seasonDoc[0])
+      season: seasonDoc[0]
    };
 }
 
@@ -252,7 +252,8 @@ router.post('/', async function(req, res){
          user: req.authData.pid         
       });     
       console.log(result);
-      res.status(result.statusCode).send( result.body );      
+      let stat = await addStat(result.season);
+      res.status(result.statusCode).send( stat );      
    } catch (err) {
       res.status(400).send(`Creating season failed`);
    }         

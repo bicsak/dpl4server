@@ -136,6 +136,7 @@ router.get('/', async function(req, res) {
     section: params.section,
     role: params.role,    
     notifications: notificationDefaults[params.role],
+    lastVisitedHome: new Date(),
     userFn: user.fn,
     userSn: user.sn,
     userBirthday: user.birthday,

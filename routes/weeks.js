@@ -187,7 +187,7 @@ async function editInstrumentation( session, params, createEvent ) {
          }, {
             'seatings.$.dienstInstr': params.instr[key]            
          }, { session: session } );          
-         if ( oldDoc.seatings.find(s => s.d == params.did).dienstInstr != params.instr[key] ) {
+         if ( oldDoc && oldDoc.seatings.find(s => s.d == params.did).dienstInstr != params.instr[key] ) {
             await Dpl.findOneAndUpdate({
                o: params.o,
                s: key,
