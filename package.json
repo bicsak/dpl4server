@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "run": "nodemon server.js",
     "migrate": "node tools\\mt.js",
-    "testdb": "node tools\\testdb.js"
+    "testdb": "node tools\\testdb.js",
+    "fixbug": "node tools\\fixprodbug.js"
   },
   "author": "BM",
   "license": "ISC",

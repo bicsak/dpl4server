@@ -665,6 +665,7 @@ async function createDienst(session, params, createEvent) {
             instrumentation: prodInstrumentation, // template instrumentation. Dienst-Besetzung kann abweichen!
             firstDienst: newDienstId,
             lastDienst: newDienstId,    
+            weight: params.prod.weight,
             duration: params.prod.duration // optional, only if duration is specified for this prod            
          } );
          prodDoc.$session(session);

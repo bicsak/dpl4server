@@ -95,9 +95,6 @@ async function copyCollections(config) {
     }
 }
 
-
-
-
 // creating a hash for pw
 bcrypt.hash("testbetrieb", 10, async (err, hash) => {
     if (err) {
@@ -109,7 +106,7 @@ bcrypt.hash("testbetrieb", 10, async (err, hash) => {
             sourceDb: "odp_production",
             destDb: "odp_test",
             sourcePref: "",
-            destPref: "backup_"
+            destPref: ""
         } ).catch(console.dir);
     }
 });

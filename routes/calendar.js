@@ -244,6 +244,7 @@ router.get('/', async function(req, res) {
           }
           if ( currentAbsence ) description += `\nAbwesenheiten: ${currentAbsence}`;
         }
+        description += `\nSoll-Besetzung: ${dienst.instrumentation[profDoc.section]}`;
         let event = {
           productId: 'ODP',
           start: [dienst.begin.getUTCFullYear(), dienst.begin.getUTCMonth()+1, dienst.begin.getUTCDate(), dienst.begin.getUTCHours(), dienst.begin.getUTCMinutes()], 
