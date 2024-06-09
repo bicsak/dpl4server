@@ -217,20 +217,22 @@ router.get('/', async function(req, res) {
           name += Math.abs(dienst.seq);
           if ( orchDoc.lastPerformance && dienst.category == 2 && dienst.seq == dienst.total ) name += ' z.l.M.';
         }
-        let description = "";
+        let description = ""; let countScheduled = 0;
         if ( !dpl ) description = "Kein DPL vorhanden";
         else {
           if ( dpl.published && dpl.officeSurvey && dpl.officeSurvey.status != 'confirmed') description = "Endgültiger DPL unter Genehmigung";
-          else if ( dpl.published ) description = "Dienstplan offiziell und verbindlich";
-          else if ( dpl.closed ) description = "Bearbeitung vom DPL abgeschlossen";
-          else description = "Bearbeitung vom DPL offen";
+          else if ( dpl.published ) description = "Status: offiziell und verbindlich";
+          else if ( dpl.closed ) description = "Status: Bearbeitung abgeschlossen";
+          else description = "Status: Bearbeitung offen";
           
           // 'aktuelle Einteilung, Aushilfen:'
           description += "\nAktuelle Einteilung: ";
-          let currentSeating = "";
+          let currentSeating = ""; 
           for ( let j = 0; j < dienst.period.members.length; j++) {
-            if (dpl.seatings.sp[j] == 16 || dpl.seatings.sp[j] == 1)
-            currentSeating += (currentSeating ? "," : "")+dienst.period.members[j].initial;
+            if (dpl.seatings.sp[j] == 16 || dpl.seatings.sp[j] == 1) {
+              currentSeating += (currentSeating ? "," : "")+dienst.period.members[j].initial;
+              countScheduled++;
+            }
           }
           if ( currentSeating ) description += currentSeating; else description += "-";
           if (dpl.seatings.ext) description += ' +'+dpl.seatings.ext;
@@ -244,7 +246,10 @@ router.get('/', async function(req, res) {
           }
           if ( currentAbsence ) description += `\nAbwesenheiten: ${currentAbsence}`;
         }
-        description += `\nSoll-Besetzung: ${dienst.instrumentation[profDoc.section]}`;
+        //description += `\nSoll-Besetzung: ${dienst.instrumentation[profDoc.section]}`;
+        let ist = dpl ? countScheduled : "-";
+        if (dpl && dpl.seatings.ext) ist += '+'+dpl.seatings.ext;
+        description += `\nIst/Soll: ${ist}/${dienst.instrumentation[profDoc.section]}`;
         let event = {
           productId: 'ODP',
           start: [dienst.begin.getUTCFullYear(), dienst.begin.getUTCMonth()+1, dienst.begin.getUTCDate(), dienst.begin.getUTCHours(), dienst.begin.getUTCMinutes()], 
