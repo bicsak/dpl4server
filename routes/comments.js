@@ -197,10 +197,11 @@ router.get('/:dplId', async function(req, res) {
         // Step 1: get scheduler's profile id (from profiles collection)
         let schedulerProfDoc = await Profile.findOne({
             o: params.o,
-            sec: params.sec,
+            section: params.sec,
             role: 'scheduler',
             'notifications.commentNew': true
         }).session(session);
+        //console.log('Scheduler:', schedulerProfDoc);
         // Step 2: get all profile docs whith ids for the group (dplMeta's periodmembers array) and scheduler where userId field not equal to comment's author's userId and commentnotification is true
         let profiles = await Profile.find({
             o: params.o,
