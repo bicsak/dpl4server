@@ -214,7 +214,7 @@ async function createPeriod(session, params, createEvent) {
    await createEvent({
       weekBegin: dtBegin,
       sec: params.sec, 
-      profiles: period.members.map(m => m.prof), 
+      profiles: newPeriod.members.map(m => m.prof), 
       entity: 'period', 
       action: 'new', 
       extra: `Fachgruppe ${orchDoc.sections.get(params.sec).name}, ab ${lxBegin.toFormat("kkkk 'KW' W")}`,

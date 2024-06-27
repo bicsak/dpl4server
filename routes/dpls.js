@@ -1402,10 +1402,10 @@ async function createDpl( session, params, createEvent ) {
    }).session(session).where('weekBegin').lt(dtBegin) // before this week                                 
    .sort('-weekBegin').limit(1);
 
-   console.log(`lastDpl`);
+   /*console.log(`lastDpl`);
    console.log(lastDplDoc[0]);
    console.log('End: ');
-   console.log(lastDplDoc[0].end);
+   console.log(lastDplDoc[0].end);*/
 
    let dplId = new mongoose.Types.ObjectId();
    let members = week.assignedPeriod.members.map( m => m.prof );
