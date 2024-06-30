@@ -8,7 +8,8 @@
     "run": "nodemon server.js",
     "migrate": "node tools\\mt.js",
     "testdb": "node tools\\testdb.js",
-    "fixbug": "node tools\\fixprodbug.js"
+    "fixbug": "node tools\\fixprodbug.js",
+    "fixbug2": "node tools\\fixprodbug2.js"
   },
   "author": "BM",
   "license": "ISC",

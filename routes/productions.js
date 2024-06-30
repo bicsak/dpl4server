@@ -106,22 +106,21 @@ router.patch('/:id', async function(req, res) {
             
             res.json( {name: changes.name} );
          } else {
-            //console.log( changes );
-            /*let update = {
+            //console.log( 'CHANGES', changes );
+            let update = {
                comment: changes.comment,
                duration: changes.duration,
+               weight: changes.weight,
                extra: changes.extra,            
-            };
-            let instrumentation = {};
-            for ( let i = 0; i < 13; i++ ) {
-               if ( changes['sec'+i] ) instrumentation['sec'+i] = changes['sec'+i];
-            }
-            if ( instrumentation != {} ) update.instrumentation = instrumentation;
-
-            console.log(update);*/
-            
+            };            
+            for (const key in changes.instrumentation) {
+               if (changes.instrumentation.hasOwnProperty(key)) {
+                  update['instrumentation.'+key] = changes.instrumentation[key];
+               }
+            }            
+            //console.log(update);            
             // Update document in productions collection
-            await Production.findByIdAndUpdate( req.params.id, changes);
+            await Production.findByIdAndUpdate( req.params.id, update);
             
             res.json( changes );
 

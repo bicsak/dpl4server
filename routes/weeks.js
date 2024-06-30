@@ -164,15 +164,31 @@ router.patch('/:mts', async function(req, res) {
 });
 
 async function editInstrumentation( session, params, createEvent ) {
+   let update = {};
+   for (const key in params.instr) {
+      if (params.instr.hasOwnProperty(key)) {
+         update['dienst.$.instrumentation.'+key] = params.instr[key];
+      }
+   }  
+   //console.log('UPDATE week', update);
    let weekDoc = await Week.findOneAndUpdate({
       'dienst._id': params.did
    }, {
-      '$set': { 'dienst.$.instrumentation': params.instr }               
+      '$set': update
    }, { session: session } );
 
+
+   let update2 = {};
+   for (const key in params.instr) {
+      if (params.instr.hasOwnProperty(key)) {
+         update2['instrumentation.'+key] = params.instr[key];
+      }
+   }  
    let dienstDoc = await Dienst.findByIdAndUpdate(params.did, {
-      '$set': { 'instrumentation': params.instr }               
+      '$set': update2
    }, { session: session } );    
+   //console.log('Update dienst', update2);
+
    let ts = new Date();  
    let orchestraDoc = await Orchestra.findById(params.o).session(session);                       
    let lxBegin = DateTime.fromJSDate(weekDoc.begin, {zone: orchestraDoc.timezone});   
