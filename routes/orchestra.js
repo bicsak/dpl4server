@@ -10,25 +10,38 @@ const { writeOperation } = require('../my_modules/orch-lock');
 
 const { DateTime } = require("luxon");
 
-
-/*const DienstExtRef = require('../models/dienst');
-const Dpl = require('../models/dpl');
-*/
+async function updateOrchestra( session, params ) { 
+   // Take maxFW value for each section from orchestra doc
+   let orchDocOld = await Orchestra.findById(params.auth.o);
+   let sections = orchDocOld.sections;   
+   sections.forEach( (val, key, map) => { map.set(key, {
+      abbr: val.abbr,
+      name: val.name,
+      active: val.active,
+      maxFW: val.maxFW ? val.maxFW : 1
+   }); } );   
+   console.log(sections);
+   params.config.sections = sections;
+   // update orchestra doc with user input preserving maxFW from DB
+   let updatedO = await Orchestra.findByIdAndUpdate(params.auth.o, params.config, {returnDocument: 'after'}).session(session);       
+   //console.log(updatedO);
+   return {statusCode: 200, content: updatedO};            
+}
 
 router.patch('', async function(req, res) { 
-   console.log(req.body);
-   console.log(req.authData);   
+   //console.log(req.body);
+   //console.log(req.authData);   
     if (req.authData.m ) {
-      let updatedO = await Orchestra.findByIdAndUpdate(req.authData.o, req.body, {returnDocument: 'after'});
-       /*let result = await writeOperation( req.authData.o, replacePeriodComment, {      
-          //o: req.authData.o,       
-          pId: req.params.pId,      
-          //sec: req.authData.s,
-          newComment: req.body.value
-       });      */
-       //console.log(`Comment changed: ${result}`);  
-       console.log(updatedO);
-       res.json(  updatedO );  
+      try {      
+         let result = await writeOperation(req.authData.o, updateOrchestra, {
+            config: req.body,
+            auth: req.authData         
+         });     
+         console.log(result);
+         res.status(result.statusCode).send( result.content );      
+      } catch (err) {
+         res.status(400).send(`Updating orchestra failed`);
+      }          
     } else {
       res.status(404); // Bad request
     }  

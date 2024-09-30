@@ -167,7 +167,9 @@ async function editFwDw( session, params, createEvent ) {
    } else {  
       // *********** Freiwunsch **************           
       let numberOfWeeks = 0;
+      console.log(orch.sections);
       let maxFW = orch.sections.get(params.sec).maxFW;
+      console.log('maxFW from orch', maxFW);
       if ( !params.erase ) { 
          // ****** Add FW *********                                       
          // calculate max fw for this season (section)
