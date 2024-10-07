@@ -78,11 +78,11 @@ router.get('/', async function(req, res) {
       await lastPeriodDoc.save();
    }
    let orchestraDoc = await Orchestra.findById(params.o).session(session);  
-   let lxBegin = DateTime.fromJSDate(period.begin, {zone: orchestraDoc.timezone});
+   let lxBegin = DateTime.fromJSDate(periodDoc.begin, {zone: orchestraDoc.timezone});
    await createEvent({
-      weekBegin: period.begin,
+      weekBegin: periodDoc.begin,
       sec: params.sec, 
-      profiles: period.members.map(m => m.prof), 
+      profiles: periodDoc.members.map(m => m.prof), 
       entity: 'period', 
       action: 'del', 
       extra: `Fachgruppe ${orchestraDoc.sections.get(params.sec).name}, ab ${lxBegin.toFormat("kkkk 'KW' W")}`,
