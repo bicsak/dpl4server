@@ -689,7 +689,8 @@ async function createDienst(session, params, createEvent) {
          
          dienstInstrumentation = new Map(
             Array.from(prodInstrumentation, ([key, value]) => [key, value.count] )            
-         );                    
+         );  
+         console.log('dienst instrumentation:', dienstInstrumentation);
       }
    }
    
