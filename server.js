@@ -37,6 +37,7 @@ const pending = require('./routes/pending.js');
 const orchestra = require('./routes/orchestra.js');      
 const login = require('./routes/login.js');      
 const accounts = require('./routes/accounts.js');      
+const month = require('./routes/month.js');      
 
 const Orchestra = require('./models/orchestra');
 
@@ -84,6 +85,7 @@ async function run() {
       app.use('/api/events', verifyToken, events);            
       app.use('/api/pending', verifyToken, pending);            
       app.use('/api/orchestra', verifyToken, orchestra);            
+      app.use('/api/month', verifyToken, month);            
       app.use('/api/login', login);
       app.use('/api/accounts', accounts);
 
