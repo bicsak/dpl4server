@@ -27,7 +27,7 @@ router.get('/', async function(req, res) {
         findConfig.$or.push( {public: true} );
       }
       //console.log(findConfig);
-      let eventDocs = await Event.find(findConfig).sort({'created_at': -1}).session(session);
+      let eventDocs = await Event.find(findConfig).limit(50).sort({'created_at': -1}).session(session);
       
       //console.log(eventDocs);
       let converted = eventDocs.map( ev => {
