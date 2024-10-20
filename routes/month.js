@@ -6,13 +6,14 @@ const Week = require('../models/week');
 const Orchestra = require('../models/orchestra');
 
 router.get('/', async function(req, res) {  
-    console.log('get request', req.query.year, req.query.month);
-    console.log(req.authData);
+    //console.log('get request', req.query.year, req.query.month);
+    //console.log(req.authData);
 
     let orch = await Orchestra.findById(req.authData.o);
     let tz = orch.timezone;
     let prof = req.authData.pid;
-    let lxBegin = DateTime.fromISO(`${req.query.year}-${req.query.month}-01T00:00:00.000`, {zone: tz})
+    //let lxBegin = DateTime.fromISO(`${req.query.year}-${req.query.month}-01T00:00:00.000`, {zone: tz})
+    let lxBegin = DateTime.fromObject({ year: req.query.year, month: req.query.month, day: 1}, {zone: tz});
     let lxWeekBegin = lxBegin.minus({day: 8});
     let lxNextMonthBegin = lxBegin.plus({month: 1});        
     //console.log(lxBegin.toJSDate());
@@ -22,7 +23,7 @@ router.get('/', async function(req, res) {
       s: req.authData.s, // if == 'all' (office) -> no dpl  
     };
     if (req.authData.r == 'musician') dplMatchCrit.periodMembers = mongoose.Types.ObjectId(prof) // only for musician. they should see only their own dpls
-    console.log(dplMatchCrit);
+    //console.log(dplMatchCrit);
 
     let dienste = await Week.aggregate( [            
           {
@@ -175,7 +176,7 @@ router.get('/', async function(req, res) {
         let begin = d.begin.getTime();
         return {...d, weekBegin: weekBegin, begin: begin};
       } )
-      console.log(diensteConv);
+      //console.log(diensteConv);
       res.json( diensteConv );
    
 });
