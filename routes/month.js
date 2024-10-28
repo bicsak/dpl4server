@@ -3,6 +3,7 @@ let router = express.Router();
 const mongoose = require( 'mongoose' );
 const { DateTime } = require('luxon');
 const Week = require('../models/week');
+const Dpl = require('../models/dpl');
 const Orchestra = require('../models/orchestra');
 
 router.get('/', async function(req, res) {  
@@ -177,8 +178,24 @@ router.get('/', async function(req, res) {
         return {...d, weekBegin: weekBegin, begin: begin};
       } )
       //console.log(diensteConv);
-      res.json( diensteConv );
-   
+      let dpls = [];
+      if ( req.authData.s != 'all' ) {
+        let ts1 = lxBegin.minus({day: 7}).toMillis();
+        let ts2 = lxNextMonthBegin.toMillis();
+        dpls = await Dpl.find({
+          o: req.authData.o,
+          s: req.authData.s,          
+          weekBegin: {
+              $gte: ts1,
+              $lt: ts2
+          }          
+        });
+      }
+      console.log(dpls);
+      res.json( {
+        dienste: diensteConv,
+        dpls: dpls 
+      } );   
 });
 
 

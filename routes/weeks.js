@@ -299,7 +299,7 @@ async function deleteDienst(session, params, createEvent ) {
 
    let weekDoc = await Week.findOneAndUpdate( { o: params.o, 'dienst._id': params.did }, 
     //{ '$pull': { dienst: { '$elemMatch': {_id: params.did} } } } ).session(session);
-    { '$pull': { dienst: { _id: params.did} } }, {new: true}).session(session);
+    { '$pull': { dienst: { _id: params.did} } }, {new: true}).populate('season').session(session);
     
     //delete dienst from dienstextref coll
     //await Dienst.deleteOne( { '_id': params.did } ).session(session);
