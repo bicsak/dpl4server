@@ -180,8 +180,9 @@ router.get('/', async function(req, res) {
       //console.log(diensteConv);
       let dpls = [];
       if ( req.authData.s != 'all' ) {
-        let ts1 = lxBegin.minus({day: 7}).toMillis();
-        let ts2 = lxNextMonthBegin.toMillis();
+        let ts1 = lxBegin.minus({day: 7}).toJSDate();
+        let ts2 = lxNextMonthBegin.toJSDate();
+        console.log(ts1, ts2);
         dpls = await Dpl.find({
           o: req.authData.o,
           s: req.authData.s,          
