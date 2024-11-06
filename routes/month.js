@@ -17,9 +17,9 @@ router.get('/', async function(req, res) {
     let lxBegin = DateTime.fromObject({ year: req.query.year, month: req.query.month, day: 1}, {zone: tz});
     let lxWeekBegin = lxBegin.minus({day: 8});
     let lxNextMonthBegin = lxBegin.plus({month: 1});        
-    //console.log(lxBegin.toJSDate());
-    //console.log(lxWeekBegin.toJSDate());
-    //console.log(lxNextMonthBegin);
+    //console.log('lxBegin', lxBegin.toJSDate());
+    //console.log('lxWeekBEgin', lxWeekBegin.toJSDate());
+    //console.log('lxNextMonthBegin', lxNextMonthBegin.toJSDate());
     let dplMatchCrit = {
       s: req.authData.s, // if == 'all' (office) -> no dpl  
     };
@@ -37,7 +37,7 @@ router.get('/', async function(req, res) {
             }
           },
           { $unwind: { path: '$dienst' } },
-          { $match: { begin: {
+          { $match: { 'dienst.begin': {
                 $gte: lxBegin.toJSDate(),
                 $lt: lxNextMonthBegin.toJSDate()
               }
@@ -192,7 +192,7 @@ router.get('/', async function(req, res) {
           }          
         });
       }
-      console.log(dpls);
+      //console.log(dpls);
       res.json( {
         dienste: diensteConv,
         dpls: dpls 
