@@ -217,7 +217,8 @@ async function editFwDw( session, params, createEvent ) {
             //console.log(`Unavailable count: ${unavailableCount}, gr size: ${groupSize}`);
             //console.log(`Observing ${s}`);
             if ( groupSize + s.ext - unavailableCount - s.dienstInstr - s.sp.filter( v => v >= 64 ).length <= 0 ) return false;
-            return s.available[params.mi] == 0 && s.sp[params.mi] == 0;               
+            //console.log('params.mi', params.mi);
+            return (!s.available.length || s.available[params.mi] == 0) && s.sp[params.mi] == 0;                           
             }
          );
          console.log('isEditable', isEditable);
