@@ -771,7 +771,8 @@ async function createDienst(session, params, createEvent) {
          comment: '',
          dienstBegin: dienstDoc.begin,
          dienstWeight: dienstDoc.weight,
-         dienstInstr: dienstDoc.instrumentation.get(dpl.s)
+         dienstInstr: dienstDoc.instrumentation.get(dpl.s),
+         available: Array(dpl.start.length).fill(false)
       });
       dpl.seatings.push( seatingDoc );      
       dpl.version = dpl.version + 1;

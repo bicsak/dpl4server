@@ -10,7 +10,8 @@
     "testdb": "node tools\\testdb.js",
     "fixbug": "node tools\\fixprodbug.js",
     "fixbug2": "node tools\\fixprodbug2.js",
-    "fixbug3": "node tools\\fixprodbug3.js"
+    "fixbug3": "node tools\\fixprodbug3.js",
+    "fixbug4": "node tools\\fixseatingavailablearraybug.js"
   },
   "author": "BM",
   "license": "ISC",
