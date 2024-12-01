@@ -48,8 +48,8 @@ async function fixBug(config) {
 }
 
 fixBug( {    
-    db: "odp_production"    
-    //db: "odp_test"    
+    //db: "odp_production"    
+    db: "odp_test"    
 } );
 
   
