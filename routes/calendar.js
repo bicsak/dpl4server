@@ -209,7 +209,7 @@ router.get('/', async function(req, res) {
         let name = prefix + dienst.name;
         let suffix = orchDoc.categories[dienst.category].suffixes[dienst.subtype];
         if (suffix) name += " " + suffix;        
-        if ( dienst.category == 0 && dienst.subtype == 6 ) name += " " + dienst.suffix;
+        if ( dienst.category == 0 && dienst.subtype == 6 && dienst.suffix) name += " " + dienst.suffix;
         if ( dienst.category == 1 ) name = name.toUpperCase();
         if ( orchDoc.categories[dienst.category].numbers[dienst.subtype] ) {
           // add numbering

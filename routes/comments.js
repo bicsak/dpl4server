@@ -163,7 +163,7 @@ router.get('/:dplId', async function(req, res) {
     let row = -1;
     if ( params.role == 'musician' ) {
         let member = meta.periodMembers.find( pm => pm.prof == params.prof);
-        if ( meta.closed || !member || !meta.periodMembers[member.row].canComment) return {
+        if ( /*meta.closed ||*/ !member || !meta.periodMembers[member.row].canComment) return {
             success: false,
             reason: 'Commenting not allowed'
         };
