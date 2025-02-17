@@ -723,6 +723,7 @@ async function createDienst(session, params, createEvent) {
       instrumentation: dienstInstrumentation,
       location: params.location,
       duration: params.duration,
+      suffix: params.suffix,
       seq:params.noCount ? params.extraNr*(-1) : 1,
       total: 1
    } );
