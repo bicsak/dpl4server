@@ -120,7 +120,7 @@ class PDFCreator {
         return letter;
     }
 
-    createPDF( changes /* changes for red markings*/) {        
+    createPDF( changes /* changes for red markings*/, cb /* callback to be called when file is ready */) {        
         console.log('Creating PDF');
         const pageWidth = 841.89; // in PS points; 72 points per inch
         const pageHeight = 595.28; // A4, 297x210 mm
@@ -161,7 +161,7 @@ class PDFCreator {
         let heightRotatedHeaders = maxLabelLength * Math.sqrt(0.75);
 
         // Pipe its output somewhere, like to a file or HTTP response        
-        doc.pipe(fs.createWriteStream(path.join(__dirname, '..', 'output') + `/${filename}`));
+        let stream = doc.pipe(fs.createWriteStream(path.join(__dirname, '..', 'output') + `/${filename}`));
         doc.on('pageAdded', () => {                                    
             let h = doc.heightOfString(this.orchFull);
 
@@ -406,6 +406,11 @@ class PDFCreator {
             doc.text(text, pageWidth- margin - w, pageHeight-margin-h);
         }        
         doc.end();
+        if ( cb ) stream.on('finish', function() {            
+            console.log('PDF finished:');
+            //console.log(stream.toString());
+            cb();
+        });
         this.outputFiles.push(filename);
         return filename;
     }

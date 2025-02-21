@@ -112,6 +112,46 @@ router.get('/:section/:mts', async function(req, res) {
    res.json( resp );
 });
 
+
+router.get('/:section/download-pdf/:mts', async function(req, res, next) {   
+   console.log('pdf-download', req.authData, req.params.mts);   
+   let orchestraDoc = await Orchestra.findById(req.authData.o);                            
+   let weekDoc = await Week.findOne({
+      o: req.authData.o,
+      begin: req.params.mts*1000
+   }).populate('season');   
+   let dplDoc = await Dpl.findOne( {
+         o: req.authData.o,
+         s: req.params.section,
+         weekBegin: req.params.mts*1000,      
+   } ).populate('p').populate('periodMembers');  
+   console.log(orchestraDoc);
+   console.log(weekDoc);
+   console.log(dplDoc);
+   PDFCreator.parseWeekData(orchestraDoc, weekDoc);
+   PDFCreator.parseDpl(dplDoc, req.params.section, dplDoc.periodMembers.map(
+      pm => {
+         return {
+            fn: pm.userFn,
+            sn: pm.userSn
+         }
+      }
+   ) );
+   let filename = PDFCreator.createPDF( null, () => {
+      console.log(filename);   
+      const filePath = `./output/${filename}`;
+      const options = { headers: { 'Content-Type': 'application/pdf' } };   
+      res.download(filePath, `dpl.pdf`, options, (err) => {
+         if (err) {
+            console.log('error file not found');
+         //const downloadError = new CustomError(500, 'Error: Unable to download the PDF file');
+         return next('File not found'/*downloadError*/);
+         }
+      });
+   });            
+});
+
+
 async function editManagersRemark( session, params, createEvent ) {
    let weekDoc = await Week.findOneAndUpdate( { 
       o: params.o,
