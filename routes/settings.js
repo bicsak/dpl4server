@@ -12,12 +12,14 @@ router.get('/', async function(req, res) {
        console.log('get settings profdoc', profDoc);
        response = {
         fw: null,
+        dzVisible: false,
         email: profDoc.email,
         notifications: profDoc.notifications
        };
        if ( req.authData.r == 'scheduler' ) {
          let orchDoc = await Orchestra.findById( req.authData.o );                            
          response.fw = orchDoc.sections.get(req.authData.s).maxFW;
+         response.dzVisible = orchDoc.sections.get(req.authData.s).dzVisible;
        }
        res.status(200).json( response );   
     } catch (err) {
@@ -98,6 +100,37 @@ router.patch('/fw', async function(req, res) {
        fw: req.body.fw
       };
       res.status(200).json( response );   
+   } catch (err) {
+      res.status(500).json( { message: err.message } );
+   }
+});
+
+router.patch('/dzVisible', async function(req, res) {    
+   try {      
+      /*let userDoc = await User.findById(req.authData.user);      
+      userDoc.comparePassword(req.body.oldPassword, (err, isMatch) => {         
+         if ( !err && isMatch ) {
+            // old password was correct            
+            bcrypt.hash(req.body.password, 10, async (err, hash) => {
+               if (err) {
+                 console.log("bcrypt error");
+               } else {            
+                 await User.findByIdAndUpdate(req.authData.user, {
+                  pw: hash
+                 });
+               }
+             });    
+             res.status(200).json({});   
+         } else {            
+            // old password is wrong
+            res.status(403).json( { message: 'Not authenticated' } );
+         }
+      } );    */    
+      let path = 'sections.'+req.authData.s+'.dzVisible';
+      let updateObj = {};
+      updateObj[path] = req.body.value;            
+      await Orchestra.findByIdAndUpdate( req.authData.o, { $set: updateObj } );      
+      res.status(200).json(req.body.value); 
    } catch (err) {
       res.status(500).json( { message: err.message } );
    }

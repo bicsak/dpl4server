@@ -20,6 +20,7 @@ const orchestraSchema = new Schema({
             abbr: String, // "Fl"
             name: String,   // "Flöte"
             maxFW: Number,   // default: 1 max allowed FW's per week for this section    
+            dzVisible: Boolean,
             active: Boolean            
         })
     },
