@@ -17,7 +17,7 @@ async function createWeekDataRaw (begin /* UNIX ts in Seconds*/, authData, sec) 
       o: authData.o,
       begin: beginDate               
    }).populate('season', 'label begin end')
-   .populate('o', 'timezone')
+   .populate('o', 'timezone sections')
    //.populate('dienst.prod')
    .populate({
       path: 'dienst.prod',
@@ -139,8 +139,9 @@ async function createWeekDataRaw (begin /* UNIX ts in Seconds*/, authData, sec) 
             };                                             
 
 
-            /* Dienstzahlen --- only if authorized and single section request */
-            if ( (authData.r === 'musician' || authData.r === 'scheduler') && sec ) {   
+            /* Dienstzahlen --- only if authorized and single section request */            
+            if ( sec && (authData.r === 'musician' || authData.r === 'scheduler'
+               || authData.r === 'office' && wplDoc.o.sections.get(sec).dzVisible ) ) {   
                dplRaw[dplDocs[i].s] = {
                   ...dplRaw[dplDocs[i].s],
                   start: dplDocs[i].start.map( (v, ind) => v + dplDocs[i].p.members[ind].start),
