@@ -203,7 +203,7 @@ router.patch('/:mts', async function(req, res) {
       }   
 });
 
-async function editInstrumentation( session, params, createEvent ) {
+async function editInstrumentation( session, params, createEvent ) {   
    let update = {};
    for (const key in params.instr) {
       if (params.instr.hasOwnProperty(key)) {
@@ -233,6 +233,7 @@ async function editInstrumentation( session, params, createEvent ) {
    let orchestraDoc = await Orchestra.findById(params.o).session(session);                       
    let lxBegin = DateTime.fromJSDate(weekDoc.begin, {zone: orchestraDoc.timezone});   
    let lxEnd = lxBegin.plus({day: 7});
+   let mts = lxBegin.toSeconds();
    for (const key in params.instr) {
       if (params.instr.hasOwnProperty(key)) {
          let oldDoc = await Dpl.findOneAndUpdate({
@@ -272,7 +273,7 @@ async function editInstrumentation( session, params, createEvent ) {
                         }]
                      },
                      locals: {                      
-                        link: `${params.origin}/scheduler/week?profId=${profile._id}&mts=${params.begin}`,                                               
+                        link: `${params.origin}/scheduler/week?profId=${profile._id}&mts=${mts}`,                                               
                         instrument: orchestraDoc.sections.get(oldDoc.s).name,
                         kw: lxBegin.toFormat("W"),
                         period: `${lxBegin.toFormat('dd.MM.yyyy')}-${lxEnd.toFormat('dd.MM.yyyy')}`,                             
@@ -452,7 +453,7 @@ async function deleteDienst(session, params, createEvent ) {
                },
                locals: { 
                   name: allProfiles[j].userFn,               
-                  link: `${params.origin}/${allProfiles[j].role}/week?profId=${allProfiles[j]._id}&mts=${params.begin}`,                                               
+                  link: `${params.origin}/${allProfiles[j].role}/week?profId=${allProfiles[j]._id}&mts=${params.mts}`,                                               
                   instrument: orchestraDoc.sections.get(touchedDpls[i].s).name,
                   kw: dtBegin.toFormat("W"),
                   period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,        
@@ -509,7 +510,7 @@ async function cleanWeek(session, params, createEvent) {
    let weekDoc = await Week.findOne({
       o: params.o,
       begin: begin
-   }).session(session);
+   }).populate('season').session(session);
    //console.log('weekDoc', weekDoc);
 
    // find dpls (and save the docs for later) where change could have happened in seating
@@ -644,7 +645,7 @@ async function cleanWeek(session, params, createEvent) {
                },
                locals: { 
                   name: allProfiles[j].userFn,               
-                  link: `${params.origin}/${allProfiles[j].role}/week?profId=${allProfiles[j]._id}&mts=${params.begin}`,                                               
+                  link: `${params.origin}/${allProfiles[j].role}/week?profId=${allProfiles[j]._id}&mts=${params.w/1000}`,                                               
                   instrument: orchestraDoc.sections.get(touchedDpls[i].s).name,
                   kw: dtBegin.toFormat("W"),
                   period: `${dtBegin.toFormat('dd.MM.yyyy')}-${dtEnd.toFormat('dd.MM.yyyy')}`,        
@@ -840,7 +841,7 @@ async function createDienst(session, params, createEvent) {
                   }]
                },
                locals: {                      
-                  link: `${params.origin}/scheduler/week?profId=${profile._id}&mts=${params.begin}`,                                               
+                  link: `${params.origin}/scheduler/week?profId=${profile._id}&mts=${params.mts}`,                                               
                   instrument: orchestraDoc.sections.get(dpl.s).name,
                   kw: lxBegin.toFormat("W"),
                   period: `${lxBegin.toFormat('dd.MM.yyyy')}-${lxEnd.toFormat('dd.MM.yyyy')}`,                             
