@@ -5,13 +5,8 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "run": "nodemon server.js",
-    "migrate": "node tools\\mt.js",
-    "testdb": "node tools\\testdb.js",
-    "fixbug": "node tools\\fixprodbug.js",
-    "fixbug2": "node tools\\fixprodbug2.js",
-    "fixbug3": "node tools\\fixprodbug3.js",
-    "fixbug4": "node tools\\fixseatingavailablearraybug.js"
+    "run": "nodemon server.js",    
+    "testdb": "node tools\\testdb.js"    
   },
   "author": "BM",
   "license": "ISC",
